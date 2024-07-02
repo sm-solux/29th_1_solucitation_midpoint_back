@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Verification Code</title>
+    <style>
+        .container {
+            margin: 100px;
+            font-family: Arial, sans-serif;
+            color: #333;
+        }
+        .header {
+            color: #1b4345;
+        }
+        .code-box {
+            border: 1px solid #ddd;
+            padding: 20px;
+            text-align: center;
+            margin: 20px 0;
+        }
+        .code {
+            font-size: 24px;
+            font-weight: bold;
+            color: #1b4345;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1 class="header">안녕하세요.</h1>
+    <h2>사람들과 만나기 딱 좋은 장소를 찾아 드리는 midpoint입니다.</h2>
+    <p>아래 코드를 회원가입 창으로 돌아가 입력해주세요.</p>
+    <div class="code-box">
+        <h3>회원가입 인증 코드입니다.</h3>
+        <div class="code" th:text="${code}"></div>
+    </div>
+    <p>감사합니다.</p>
+</div>
+</body>
+</html>
