@@ -59,6 +59,8 @@ public class EmailService {
     public String setContext(String code, String type) {
         Context context = new Context();
         context.setVariable("code", code);
-        return templateEngine.process(type, context);
+        String processedHtml = templateEngine.process(type, context);
+//        log.info("Generated HTML: \n{}", processedHtml);  // 생성된 HTML을 로그 출력
+        return processedHtml;
     }
 }
