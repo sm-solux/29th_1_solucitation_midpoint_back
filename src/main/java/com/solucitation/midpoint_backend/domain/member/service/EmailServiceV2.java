@@ -7,25 +7,33 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
-import org.thymeleaf.context.Context;
-
 import org.springframework.stereotype.Service;
+import org.thymeleaf.context.Context;
 import org.thymeleaf.spring6.SpringTemplateEngine;
 
 import java.security.SecureRandom;
+import java.time.LocalDateTime;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class EmailService {
+public class EmailServiceV2 {
 
     private final JavaMailSender javaMailSender;
     private final SpringTemplateEngine templateEngine;
     private final SecureRandom secureRandom = new SecureRandom();
+    private final Map<String, VerificationCode> verificationCodes = new ConcurrentHashMap<>();
+
+    private static final int EXPIRATION_TIME_MINUTES = 4; // 인증코드는 4분의 유효시간을 갖는다.
 
     // 인증코드 이메일 발송
     public String sendVerificationMail(EmailMessage emailMessage, String type) {
         String code = generateVerificationCode();
+        LocalDateTime now = LocalDateTime.now();
+        verificationCodes.put(emailMessage.getTo(), new VerificationCode(code, now.plusMinutes(EXPIRATION_TIME_MINUTES)));
+
         MimeMessage mimeMessage = javaMailSender.createMimeMessage();
 
         try {
@@ -60,7 +68,18 @@ public class EmailService {
         Context context = new Context();
         context.setVariable("code", code);
         String processedHtml = templateEngine.process(type, context);
-//        log.info("Generated HTML: \n{}", processedHtml);  // 생성된 HTML을 로그 출력
         return processedHtml;
     }
+
+    // 인증코드 검증
+    public boolean verifyCode(String email, String code) {
+        VerificationCode verificationCode = verificationCodes.get(email);
+
+        if (verificationCode == null || verificationCode.expiresAt().isBefore(LocalDateTime.now())) {
+            return false;
+        }
+
+        return verificationCode.code().equals(code);
+    }
+    private record VerificationCode(String code, LocalDateTime expiresAt) {}
 }
