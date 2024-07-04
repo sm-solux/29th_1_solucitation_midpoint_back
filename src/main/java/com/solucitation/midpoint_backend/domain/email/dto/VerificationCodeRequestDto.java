@@ -1,4 +1,4 @@
-package com.solucitation.midpoint_backend.domain.member.dto;
+package com.solucitation.midpoint_backend.domain.email.dto;
 
 import lombok.Getter;
 import lombok.Setter;

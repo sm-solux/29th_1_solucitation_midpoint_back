@@ -1,10 +1,10 @@
-package com.solucitation.midpoint_backend.domain.member.api;
+package com.solucitation.midpoint_backend.domain.email.api;
 
-import com.solucitation.midpoint_backend.domain.member.dto.EmailMessage;
-import com.solucitation.midpoint_backend.domain.member.dto.PwResetRequestDto;
-import com.solucitation.midpoint_backend.domain.member.dto.VerificationCodeRequestDto;
-import com.solucitation.midpoint_backend.domain.member.dto.VerificationEmailRequestDto;
-import com.solucitation.midpoint_backend.domain.member.service.EmailServiceV1;
+import com.solucitation.midpoint_backend.domain.email.dto.EmailMessage;
+import com.solucitation.midpoint_backend.domain.email.dto.PwResetRequestDto;
+import com.solucitation.midpoint_backend.domain.email.dto.VerificationCodeRequestDto;
+import com.solucitation.midpoint_backend.domain.email.dto.VerificationEmailRequestDto;
+import com.solucitation.midpoint_backend.domain.email.service.EmailServiceV2;
 import com.solucitation.midpoint_backend.domain.member.service.MemberService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,12 +18,12 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/auth")
-public class EmailControllerV1 {
-    private final EmailServiceV1 emailServiceV1;
+public class EmailControllerV2 {
+    private final EmailServiceV2 emailServiceV2;
     private final MemberService memberService;
 
     // 유효한 이메일인지 판단하기 위해 인증코드 발송하는 api
-    @PostMapping("/verify-email/v1")
+    @PostMapping("/verify-email/v2")
     public ResponseEntity<String> sendVerificationEmail(@RequestBody VerificationEmailRequestDto verificationEmailRequestDto) {
         // 이메일 중복 체크
         if (memberService.isEmailAlreadyInUse(verificationEmailRequestDto.getEmail())) {
@@ -33,12 +33,12 @@ public class EmailControllerV1 {
                 .to(verificationEmailRequestDto.getEmail())
                 .subject("[midpoint] 이메일 인증을 위한 인증 코드 발송")
                 .build();
-        String code = emailServiceV1.sendVerificationMail(emailMessage, "verify");
+        String code = emailServiceV2.sendVerificationMail(emailMessage, "verify");
         return ResponseEntity.ok(code);
     }
 
     // 비밀번호를 잊어버렸을 때 임시 비밀번호를 발급하는 api
-    @PostMapping("/reset-pw/v1")
+    @PostMapping("/reset-pw/v2")
     public ResponseEntity<String> sendPwResetEmail(@RequestBody PwResetRequestDto pwResetRequestDto) {
         // 이름과 이메일이 모두 일치하는지 검증
         if (!memberService.isNameAndEmailMatching(pwResetRequestDto.getName(), pwResetRequestDto.getEmail())) {
@@ -48,14 +48,14 @@ public class EmailControllerV1 {
                 .to(pwResetRequestDto.getEmail())
                 .subject("[midpoint] 비밀번호 초기화를 위한 인증 코드 발송")
                 .build();
-        String code = emailServiceV1.sendVerificationMail(emailMessage, "reset-pw");
+        String code = emailServiceV2.sendVerificationMail(emailMessage, "reset-pw");
         return ResponseEntity.ok(code);
     }
 
-    // 사용자가 입력한 인증 코드를 검증하는 api
-    @PostMapping("/verify-code/v1")
-    public ResponseEntity<String> verifyCodeV1(@RequestBody VerificationCodeRequestDto verificationCodeRequestDto) {
-        boolean isValid = emailServiceV1.verifyCode(verificationCodeRequestDto.getEmail(), verificationCodeRequestDto.getCode());
+    // 사용자가 입력한 이메일 인증 코드를 검증하는 api
+    @PostMapping("/verify-code/v2")
+    public ResponseEntity<String> verifyCodeV2(@RequestBody VerificationCodeRequestDto verificationCodeRequestDto) {
+        boolean isValid = emailServiceV2.verifyCode(verificationCodeRequestDto.getEmail(), verificationCodeRequestDto.getCode());
 
         if (isValid) {
             return ResponseEntity.ok("올바른 인증번호입니다.");
@@ -63,4 +63,6 @@ public class EmailControllerV1 {
             return ResponseEntity.badRequest().body("유효하지 않거나 만료된 인증번호입니다.");
         }
     }
+    // TODO db의 member테이블의 member_pw 필드를 임시비밀번호로 update 필요
+    // TODO 이때, 암호화 필수, 임시비밀번호 타이머 구현 (넉넉하게 10분)
 }

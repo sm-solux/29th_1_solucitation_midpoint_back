@@ -1,6 +1,6 @@
-package com.solucitation.midpoint_backend.domain.member.service;
+package com.solucitation.midpoint_backend.domain.email.service;
 
-import com.solucitation.midpoint_backend.domain.member.dto.EmailMessage;
+import com.solucitation.midpoint_backend.domain.email.dto.EmailMessage;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
