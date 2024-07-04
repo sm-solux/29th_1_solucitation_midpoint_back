@@ -34,7 +34,8 @@ public class EmailControllerV1 {
                 .subject("[midpoint] 이메일 인증을 위한 인증 코드 발송")
                 .build();
         String code = emailServiceV1.sendVerificationMail(emailMessage, "verify");
-        return ResponseEntity.ok(code);
+//        return ResponseEntity.ok(code);
+        return ResponseEntity.ok("인증 코드가 이메일로 발송되었습니다.");
     }
 
     // 비밀번호를 잊어버렸을 때 임시 비밀번호를 발급하는 api
@@ -46,10 +47,11 @@ public class EmailControllerV1 {
         }
         EmailMessage emailMessage = EmailMessage.builder()
                 .to(pwResetRequestDto.getEmail())
-                .subject("[midpoint] 비밀번호 초기화를 위한 인증 코드 발송")
+                .subject("[midpoint] 임시비밀번호 발송")
                 .build();
         String code = emailServiceV1.sendVerificationMail(emailMessage, "reset-pw");
-        return ResponseEntity.ok(code);
+//        return ResponseEntity.ok(code);
+        return ResponseEntity.ok("임시비밀번호가 이메일로 발송되었습니다.");
     }
 
     // 사용자가 입력한 인증 코드를 검증하는 api
