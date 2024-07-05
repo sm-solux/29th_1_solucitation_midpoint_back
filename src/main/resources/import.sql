@@ -1,0 +1,11 @@
+INSERT INTO hashtag (hashtag_name) VALUES ('식사');
+INSERT INTO hashtag (hashtag_name) VALUES ('카페');
+INSERT INTO hashtag (hashtag_name) VALUES ('공부');
+INSERT INTO hashtag (hashtag_name) VALUES ('문화생활');
+INSERT INTO hashtag (hashtag_name) VALUES ('쇼핑');
+INSERT INTO hashtag (hashtag_name) VALUES ('자연');
+INSERT INTO hashtag (hashtag_name) VALUES ('산책');
+INSERT INTO hashtag (hashtag_name) VALUES ('친목');
+INSERT INTO hashtag (hashtag_name) VALUES ('여럿이');
+INSERT INTO hashtag (hashtag_name) VALUES ('어린이');
+INSERT INTO hashtag (hashtag_name) VALUES ('혼자');
