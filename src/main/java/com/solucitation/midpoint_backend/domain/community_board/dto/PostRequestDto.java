@@ -1,32 +1,32 @@
 package com.solucitation.midpoint_backend.domain.community_board.dto;
 
-import com.solucitation.midpoint_backend.domain.member.entity.Member;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
 public class PostRequestDto {
-    private Long post_id;
-    private Member member;
+    private Long memberId;
 
+    @NotBlank(message = "제목은 비워둘 수 없습니다.")
+    @Size(max=100, message="제목은 최대 100자까지 가능합니다.")
     private String title;
-    private String content;
 
-    private LocalDateTime update_date;
-    private LocalDateTime create_date;
+    @NotBlank(message = "내용은 비워둘 수 없습니다.")
+    private String content;
 
     private List<Long> postHashtag;
     private List<String> images;
 
     public void validateImages() {
         if (images == null || images.isEmpty() || images.size() > 3) {
-            throw new IllegalArgumentException("이미지는 최소 1개 이상, 최대 3개까지 가능합니다.");
+            throw new IllegalArgumentException("이미지는 최소 1개 이상 첨부해야 하며, 최대 3개까지 첨부 가능합니다.");
         }
     }
 
