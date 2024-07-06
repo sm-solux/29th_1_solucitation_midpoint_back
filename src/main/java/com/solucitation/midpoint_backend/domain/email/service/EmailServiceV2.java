@@ -25,6 +25,7 @@ public class EmailServiceV2 {
     private final SpringTemplateEngine templateEngine;
     private final SecureRandom secureRandom = new SecureRandom();
     private final Map<String, VerificationCode> verificationCodes = new ConcurrentHashMap<>();
+    private final Map<String, Boolean> verifiedEmails = new ConcurrentHashMap<>();
 
     private static final int EXPIRATION_TIME_MINUTES = 4; // 인증코드는 4분의 유효시간을 갖는다.
 
@@ -67,8 +68,7 @@ public class EmailServiceV2 {
     public String setContext(String code, String type) {
         Context context = new Context();
         context.setVariable("code", code);
-        String processedHtml = templateEngine.process(type, context);
-        return processedHtml;
+        return templateEngine.process(type, context);
     }
 
     // 인증코드 검증
@@ -78,8 +78,17 @@ public class EmailServiceV2 {
         if (verificationCode == null || verificationCode.expiresAt().isBefore(LocalDateTime.now())) {
             return false;
         }
-
-        return verificationCode.code().equals(code);
+        boolean isValid = verificationCode.code().equals(code);
+        if (isValid) {
+            verifiedEmails.put(email, true);
+        }
+        return isValid;
     }
+
+    // 이메일이 인증되었는지 확인
+    public boolean isEmailVerified(String email) {
+        return verifiedEmails.getOrDefault(email, false);
+    }
+
     private record VerificationCode(String code, LocalDateTime expiresAt) {}
 }

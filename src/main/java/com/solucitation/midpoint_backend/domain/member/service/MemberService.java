@@ -1,5 +1,6 @@
 package com.solucitation.midpoint_backend.domain.member.service;
 
+import com.solucitation.midpoint_backend.domain.email.service.EmailServiceV2;
 import com.solucitation.midpoint_backend.domain.member.dto.SignupRequestDto;
 import com.solucitation.midpoint_backend.domain.member.entity.Member;
 import com.solucitation.midpoint_backend.domain.member.repository.MemberRepository;
@@ -18,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class MemberService {
     private final MemberRepository memberRepository;
     private final PasswordEncoder passwordEncoder;
+    private final EmailServiceV2 emailServiceV2;
 
     /**
      * 이메일이 이미 사용 중인지 확인합니다.
@@ -59,14 +61,19 @@ public class MemberService {
      */
     @Transactional
     public void signUpMember(SignupRequestDto signupRequestDto) {
-        // 이메일이 이미 사용 중인지 확인
-        if (isEmailAlreadyInUse(signupRequestDto.getEmail())) {
-            throw new IllegalArgumentException("이미 사용중인 이메일입니다.");
+        // 이메일 인증 여부 확인
+        if (!emailServiceV2.isEmailVerified(signupRequestDto.getEmail())) {
+            throw new IllegalArgumentException("이메일 인증을 먼저 시도해주세요.");
         }
 
         // 닉네임이 이미 사용 중인지 확인
         if (isNicknameAlreadyInUse(signupRequestDto.getNickname())) {
             throw new IllegalArgumentException("이미 사용중인 닉네임입니다.");
+        }
+
+        // 이메일이 이미 사용 중인지 확인
+        if (isEmailAlreadyInUse(signupRequestDto.getEmail())) {
+            throw new IllegalArgumentException("이미 사용중인 이메일입니다.");
         }
 
         // 비밀번호와 비밀번호 확인이 일치하는지 확인

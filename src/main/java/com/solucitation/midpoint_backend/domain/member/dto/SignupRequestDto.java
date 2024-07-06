@@ -27,7 +27,7 @@ public class SignupRequestDto {
     private String email;
 
     @NotBlank(message = "닉네임은 필수 입력 항목입니다.")
-    @Size(max = 100, message = "닉네임은 최대 100글자까지 허용됩니다.")
+    @Size(min = 2, max = 100, message = "닉네임은 최소 2글자, 최대 100글자까지 허용됩니다.")
     private String nickname;
 
     @NotBlank(message = "비밀번호는 필수 입력 항목입니다.")
