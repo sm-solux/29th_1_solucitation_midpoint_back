@@ -6,6 +6,8 @@ import lombok.*;
 import java.util.ArrayList;
 import java.util.List;
 
+import static jakarta.persistence.FetchType.*;
+
 @Entity
 @Getter
 @Table(name="hashtag")
@@ -20,6 +22,6 @@ public class Hashtag {
     @Column(name="hashtag_name", nullable = false)
     private String name;
 
-    @OneToMany(mappedBy = "hashtag")
+    @OneToMany(mappedBy = "hashtag", fetch = LAZY)
     private List<PostHashtag> postHashtags = new ArrayList<>();
 }

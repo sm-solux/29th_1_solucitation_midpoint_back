@@ -5,34 +5,34 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
 
 import static jakarta.persistence.FetchType.LAZY;
 
 @Entity
-@Getter
+@Getter @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@EntityListeners(AuditingEntityListener.class)
 public class Image {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name="image_id")
-    private Long id; // 이미지 아이디
+    private Long id;
 
-    @Column(nullable = false)
-    private String image_url; // 이미지 URL
-
-    @Lob
-    private String description; // 이미지 부가 설명
+    @Column(nullable = false, name="image_url")
+    private String imageUrl;
 
     @CreatedDate
     @Column(nullable = false, updatable = false)
-    private LocalDateTime create_date; // 게시 날짜
+    private LocalDateTime createDate;
 
     @LastModifiedDate
-    private LocalDateTime update_date; // 수정 날짜
+    @Column(name="udpate_date")
+    private LocalDateTime updateDate;
 
     @ManyToOne
     @JoinColumn(name = "post_id", nullable = true)
@@ -42,9 +42,10 @@ public class Image {
     @JoinColumn(name="member_id", nullable = false)
     private Member member;
 
-    public Image(String image_url, Member member, LocalDateTime create_date) {
-        this.image_url = image_url;
+    public Image(String image_url, Member member, LocalDateTime createDate, LocalDateTime updateDate) {
+        this.imageUrl = image_url;
         this.member = member;
-        this.create_date = create_date;
+        this.createDate = createDate;
+        this.updateDate = updateDate;
     }
 }
