@@ -32,7 +32,7 @@ public class SignupRequestDto {
 
     @NotBlank(message = "비밀번호는 필수 입력 항목입니다.")
     @Size(min = 8, max = 16, message = "비밀번호는 8자 이상, 16자 이하이어야 합니다.")
-    @Pattern(regexp = "^(?=.*[a-zA-Z])(?=.*\\d).+$", message = "비밀번호는 반드시 숫자와 문자를 포함해야 합니다.")
+    @Pattern(regexp = "^(?=.*[a-zA-Z가-힣])(?=.*\\d)(?=.*[!@#$%^&*(),.?\":{}|<>]).+$", message = "비밀번호는 반드시 문자(알파벳 또는 한글), 숫자 및 특수 문자를 포함해야 합니다.")
     private String password;
 
     @NotBlank(message = "비밀번호 확인은 필수 입력 값입니다.")
