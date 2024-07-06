@@ -1,9 +1,13 @@
 package com.solucitation.midpoint_backend.domain.community_board.controller;
 
+import com.solucitation.midpoint_backend.domain.community_board.dto.PostDetailDto;
 import com.solucitation.midpoint_backend.domain.community_board.dto.PostResponseDto;
+import com.solucitation.midpoint_backend.domain.community_board.entity.Image;
 import com.solucitation.midpoint_backend.domain.community_board.entity.Post;
+import com.solucitation.midpoint_backend.domain.community_board.entity.PostHashtag;
 import com.solucitation.midpoint_backend.domain.community_board.exception.ErrorResponse;
 
+import com.solucitation.midpoint_backend.domain.community_board.exception.ResourceNotFoundException;
 import com.solucitation.midpoint_backend.domain.community_board.service.MemberService;
 import com.solucitation.midpoint_backend.domain.community_board.service.PostService;
 import com.solucitation.midpoint_backend.domain.community_board.exception.UserNotFoundException;
@@ -17,6 +21,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @RestController
@@ -41,6 +46,44 @@ public class PostController {
                 .map(PostResponseDto::new)
                 .collect(Collectors.toList());
         return ResponseEntity.ok(dtos);
+    }
+
+    @Transactional
+    @GetMapping("/posts/{postId}")
+    public ResponseEntity<PostDetailDto> getPost(@PathVariable Long postId) {
+        try {
+            Optional<Post> postOptional = postRepository.findById(postId);
+            if (postOptional.isPresent()) {
+                Post post =postOptional.get();
+
+                List<String> images = post.getImages().stream()
+                        .map(Image::getImageUrl)
+                        .toList();
+                List<Long> hashtags = post.getPostHashtags().stream()
+                        .map(postHashtag -> postHashtag.getHashtag().getId())
+                        .toList();
+
+                int likeCnt = 0; // 좋아요 계산 로직 추가 예정
+
+                PostDetailDto dto = new PostDetailDto(
+                        post.getMember().getNickname(),
+                        post.getTitle(),
+                        post.getContent(),
+                        post.getCreateDate(),
+                        hashtags,
+                        images,
+                        likeCnt
+                );
+                return ResponseEntity.ok(dto);
+            }
+            else {
+                throw new ResourceNotFoundException("Post not found with id " + postId);
+            }
+        } catch (ResourceNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        }
     }
 
 //    @PostMapping("/posts")
