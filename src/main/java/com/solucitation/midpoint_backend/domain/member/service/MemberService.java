@@ -43,13 +43,36 @@ public class MemberService {
     }
 
     /**
+     * 닉네임이 이미 사용 중인지 확인합니다.
+     *
+     * @param nickname 확인할 닉네임
+     * @return 닉네임이 이미 사용 중이면 true, 아니면 false
+     */
+    public boolean isNicknameAlreadyInUse(String nickname) {
+        return memberRepository.findByNickname(nickname).isPresent();
+    }
+
+    /**
      * 새로운 회원을 등록합니다.
      *
      * @param signupRequestDto 회원가입 요청 DTO
      */
     @Transactional
     public void signUpMember(SignupRequestDto signupRequestDto) {
+        // 이메일이 이미 사용 중인지 확인
+        if (isEmailAlreadyInUse(signupRequestDto.getEmail())) {
+            throw new IllegalArgumentException("이미 사용중인 이메일입니다.");
+        }
 
+        // 닉네임이 이미 사용 중인지 확인
+        if (isNicknameAlreadyInUse(signupRequestDto.getNickname())) {
+            throw new IllegalArgumentException("이미 사용중인 닉네임입니다.");
+        }
+
+        // 비밀번호와 비밀번호 확인이 일치하는지 확인
+        if (!signupRequestDto.getPassword().equals(signupRequestDto.getConfirmPassword())) {
+            throw new IllegalArgumentException("비밀번호와 비밀번호 확인이 일치하지 않습니다.");
+        }
         // 비밀번호 암호화 및 새로운 회원 생성
         String encodedPassword = passwordEncoder.encode(signupRequestDto.getPassword());
         Member newMember = Member.builder()
