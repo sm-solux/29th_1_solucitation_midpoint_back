@@ -1,5 +1,7 @@
 package com.solucitation.midpoint_backend.domain.member.api;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.solucitation.midpoint_backend.domain.member.dto.SignupRequestDto;
 import com.solucitation.midpoint_backend.domain.member.dto.ValidationErrorResponse;
 import com.solucitation.midpoint_backend.domain.member.exception.EmailAlreadyInUseException;
@@ -11,9 +13,11 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Collections;
 import java.util.List;
@@ -25,16 +29,25 @@ import java.util.stream.Collectors;
 @RequestMapping("/api/auth")
 public class MemberController {
     private final MemberService memberService;
+    private final ObjectMapper objectMapper;
 
     /**
      * 새로운 회원을 등록합니다.
      *
-     * @param signupRequestDto 회원가입 요청 DTO
+     * @param signupRequestDtoJson 회원가입 요청 DTO
      * @return 성공 시 200 OK와 성공 메시지를 반환, 실패 시 400 Bad Request와 오류 메시지를 반환
      */
-    @PostMapping("/signup")
-    public ResponseEntity<?> signUpMember(@Valid @RequestBody SignupRequestDto signupRequestDto) {
-        memberService.signUpMember(signupRequestDto);
+
+    @PostMapping(value = "/signup", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<?> signUpMember(
+            @RequestPart(value = "signupRequestDto") String signupRequestDtoJson,
+            @RequestPart(value = "profileImage", required = false) MultipartFile profileImage) throws JsonProcessingException {
+        SignupRequestDto signupRequestDto = objectMapper.readValue(signupRequestDtoJson, SignupRequestDto.class);
+        return validateAndSignUp(signupRequestDto, profileImage);
+    }
+
+    private ResponseEntity<?> validateAndSignUp(@Valid SignupRequestDto signupRequestDto, MultipartFile profileImage) {
+        memberService.signUpMember(signupRequestDto, profileImage);
         return ResponseEntity.ok(Collections.singletonMap("message", "회원가입에 성공하였습니다!"));
     }
 

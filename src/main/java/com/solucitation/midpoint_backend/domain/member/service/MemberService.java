@@ -1,6 +1,9 @@
 package com.solucitation.midpoint_backend.domain.member.service;
 
+import com.solucitation.midpoint_backend.domain.community_board.entity.Image;
+import com.solucitation.midpoint_backend.domain.community_board.repository.ImageRepository;
 import com.solucitation.midpoint_backend.domain.email.service.EmailServiceV2;
+import com.solucitation.midpoint_backend.domain.file.service.S3Service;
 import com.solucitation.midpoint_backend.domain.member.dto.SignupRequestDto;
 import com.solucitation.midpoint_backend.domain.member.entity.Member;
 import com.solucitation.midpoint_backend.domain.member.exception.EmailAlreadyInUseException;
@@ -13,6 +16,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
+import java.time.LocalDateTime;
 
 /**
  * 회원 관리를 위한 서비스 클래스.
@@ -24,6 +31,8 @@ public class MemberService {
     private final MemberRepository memberRepository;
     private final PasswordEncoder passwordEncoder;
     private final EmailServiceV2 emailServiceV2;
+    private final S3Service s3Service;
+    private final ImageRepository imageRepository;
 
     /**
      * 이메일이 이미 사용 중인지 확인합니다.
@@ -64,7 +73,7 @@ public class MemberService {
      * @param signupRequestDto 회원가입 요청 DTO
      */
     @Transactional
-    public void signUpMember(SignupRequestDto signupRequestDto) {
+    public void signUpMember(SignupRequestDto signupRequestDto, MultipartFile profileImage) {
         // 닉네임이 이미 사용 중인지 확인
         if (isNicknameAlreadyInUse(signupRequestDto.getNickname())) {
             throw new NicknameAlreadyInUseException("이미 사용중인 닉네임입니다.");
@@ -96,5 +105,21 @@ public class MemberService {
 
         // 회원 저장
         memberRepository.save(newMember);
+
+        // 프로필 이미지 업로드 및 저장
+        if (profileImage != null && !profileImage.isEmpty()) {
+            try {
+                String profileImageUrl = s3Service.upload("profile-images", profileImage.getOriginalFilename(), profileImage);
+                Image image = Image.builder()
+                        .imageUrl(profileImageUrl)
+                        .member(newMember)
+                        .build();
+                imageRepository.save(image);
+            } catch (IOException e) {
+                log.error("프로필 이미지 업로드 실패: {}", e.getMessage());
+                // 이미지 업로드 실패 알림
+                throw new RuntimeException("프로필 이미지 업로드에 실패했습니다.");
+            }
+        }
     }
 }
