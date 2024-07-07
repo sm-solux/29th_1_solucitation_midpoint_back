@@ -9,7 +9,9 @@ import com.solucitation.midpoint_backend.domain.member.exception.EmailNotVerifie
 import com.solucitation.midpoint_backend.domain.member.exception.NicknameAlreadyInUseException;
 import com.solucitation.midpoint_backend.domain.member.exception.PasswordMismatchException;
 import com.solucitation.midpoint_backend.domain.member.service.MemberService;
+import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Valid;
+import jakarta.validation.Validator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -21,6 +23,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -30,6 +33,7 @@ import java.util.stream.Collectors;
 public class MemberController {
     private final MemberService memberService;
     private final ObjectMapper objectMapper;
+    private final Validator validator;
 
     /**
      * 새로운 회원을 등록합니다.
@@ -43,6 +47,17 @@ public class MemberController {
             @RequestPart(value = "signupRequestDto") String signupRequestDtoJson,
             @RequestPart(value = "profileImage", required = false) MultipartFile profileImage) throws JsonProcessingException {
         SignupRequestDto signupRequestDto = objectMapper.readValue(signupRequestDtoJson, SignupRequestDto.class);
+        log.info("signupRequestDto = " + signupRequestDto);
+
+        // Validate the DTO manually
+        Set<ConstraintViolation<SignupRequestDto>> violations = validator.validate(signupRequestDto);
+        if (!violations.isEmpty()) {
+            List<ValidationErrorResponse.FieldError> fieldErrors = violations.stream()
+                    .map(violation -> new ValidationErrorResponse.FieldError(violation.getPropertyPath().toString(), violation.getMessage()))
+                    .collect(Collectors.toList());
+            ValidationErrorResponse errorResponse = new ValidationErrorResponse(fieldErrors);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+        }
         return validateAndSignUp(signupRequestDto, profileImage);
     }
 
