@@ -65,11 +65,6 @@ public class MemberService {
      */
     @Transactional
     public void signUpMember(SignupRequestDto signupRequestDto) {
-        // 이메일 인증 여부 확인
-        if (!emailServiceV2.isEmailVerified(signupRequestDto.getEmail())) {
-            throw new EmailNotVerifiedException("이메일 인증을 먼저 시도해주세요.");
-        }
-
         // 닉네임이 이미 사용 중인지 확인
         if (isNicknameAlreadyInUse(signupRequestDto.getNickname())) {
             throw new NicknameAlreadyInUseException("이미 사용중인 닉네임입니다.");
@@ -84,6 +79,12 @@ public class MemberService {
         if (!signupRequestDto.getPassword().equals(signupRequestDto.getConfirmPassword())) {
             throw new PasswordMismatchException("비밀번호와 비밀번호 확인이 일치하지 않습니다.");
         }
+
+        // 이메일 인증 여부 확인
+        if (!emailServiceV2.isEmailVerified(signupRequestDto.getEmail())) {
+            throw new EmailNotVerifiedException("이메일 인증을 먼저 시도해주세요.");
+        }
+
         // 비밀번호 암호화 및 새로운 회원 생성
         String encodedPassword = passwordEncoder.encode(signupRequestDto.getPassword());
         Member newMember = Member.builder()
