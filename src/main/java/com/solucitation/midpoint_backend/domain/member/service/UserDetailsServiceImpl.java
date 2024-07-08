@@ -21,14 +21,14 @@ import java.util.Set;
 @Service
 @RequiredArgsConstructor
 public class UserDetailsServiceImpl implements UserDetailsService {
-    private MemberRepository memberRepository;
+    private final MemberRepository memberRepository;
 
     @Override
-    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-        Member member = memberRepository.findByEmail(email)
+    public UserDetails loadUserByUsername(String identifier) throws UsernameNotFoundException {
+        Member member = memberRepository.findByEmailOrNickname(identifier, identifier)
                 .orElseThrow(() -> {
-                    log.error("Invalid email: " + email);
-                    return new UsernameNotFoundException("Invalid email: " + email);
+                    log.error("Invalid email or nickname: " + identifier);
+                    return new UsernameNotFoundException("Invalid email or nickname: " + identifier);
                 });
 
         Set<GrantedAuthority> grantedAuthorities = new HashSet<>();
