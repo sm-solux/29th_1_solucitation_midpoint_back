@@ -3,7 +3,8 @@ package com.solucitation.midpoint_backend.domain.community_board.entity;
 import com.solucitation.midpoint_backend.domain.member.entity.Member;
 import jakarta.persistence.*;
 import lombok.*;
-import org.springframework.data.annotation.CreatedDate;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 import org.springframework.data.annotation.LastModifiedDate;
 
 import java.time.LocalDateTime;
@@ -27,11 +28,18 @@ public class Likes {
     @JoinColumn(name="member_id", nullable = false)
     private Member member;
 
-    private int liked = 0;
+    private Boolean isLike = true;
 
-    @CreatedDate
+    @CreationTimestamp
     private LocalDateTime create_date;
 
-    @LastModifiedDate
+    @UpdateTimestamp
     private LocalDateTime update_date;
+
+    public Likes(Member member, boolean b, LocalDateTime time, LocalDateTime time1) {
+        this.member = member;
+        this.isLike = b;
+        this.create_date = time;
+        this.update_date = time1;
+    }
 }
