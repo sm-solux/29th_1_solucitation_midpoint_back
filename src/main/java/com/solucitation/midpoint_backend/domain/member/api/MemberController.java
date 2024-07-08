@@ -2,7 +2,9 @@ package com.solucitation.midpoint_backend.domain.member.api;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.solucitation.midpoint_backend.domain.member.dto.LoginRequestDto;
 import com.solucitation.midpoint_backend.domain.member.dto.SignupRequestDto;
+import com.solucitation.midpoint_backend.domain.member.dto.TokenResponseDto;
 import com.solucitation.midpoint_backend.domain.member.dto.ValidationErrorResponse;
 import com.solucitation.midpoint_backend.domain.member.exception.EmailAlreadyInUseException;
 import com.solucitation.midpoint_backend.domain.member.exception.EmailNotVerifiedException;
@@ -14,6 +16,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.Validator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.http.auth.InvalidCredentialsException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -64,6 +67,26 @@ public class MemberController {
     private ResponseEntity<?> validateAndSignUp(@Valid SignupRequestDto signupRequestDto, MultipartFile profileImage) {
         memberService.signUpMember(signupRequestDto, profileImage);
         return ResponseEntity.ok(Collections.singletonMap("message", "회원가입에 성공하였습니다!"));
+    }
+
+
+    /**
+     * 회원 로그인 처리
+     *
+     * @param loginRequestDto 로그인 요청 DTO
+     * @return 성공 시 JWT 액세스 토큰과 리프레시 토큰을 반환, 실패 시 400 Bad Request와 오류 메시지를 반환
+     */
+    @PostMapping("/login")
+    public ResponseEntity<?> loginMember(@Valid @RequestBody LoginRequestDto loginRequestDto) {
+        try {
+            TokenResponseDto tokenResponse = memberService.loginMember(loginRequestDto);
+            return ResponseEntity.ok(tokenResponse);
+        } catch (InvalidCredentialsException e) {
+            ValidationErrorResponse errorResponse = new ValidationErrorResponse(
+                    Collections.singletonList(new ValidationErrorResponse.FieldError("login", e.getMessage()))
+            );
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+        }
     }
 
     /**
