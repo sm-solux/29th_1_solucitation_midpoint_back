@@ -29,7 +29,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.util.ArrayList;
+import java.util.Optional;
 
 /**
  * 회원 관리를 위한 서비스 클래스.
@@ -45,6 +45,7 @@ public class MemberService {
     private final ImageRepository imageRepository;
     private final JwtTokenProvider jwtTokenProvider;
     private final AuthenticationManager authenticationManager;
+
 
     /**
      * 이메일이 이미 사용 중인지 확인합니다.
@@ -145,8 +146,10 @@ public class MemberService {
     @Transactional
     public TokenResponseDto loginMember(LoginRequestDto loginRequestDto) throws InvalidCredentialsException {
         // Member 정보 확인 및 비밀번호 검증
-        Member member = memberRepository.findByEmailOrNickname(loginRequestDto.getIdentifier(), loginRequestDto.getIdentifier())
+        Optional<Member> foundMember = memberRepository.findByEmailOrNickname(loginRequestDto.getIdentifier(), loginRequestDto.getIdentifier());
+        foundMember
                 .orElseThrow(() -> new InvalidCredentialsException("이메일/닉네임 정보가 일치하지 않습니다."));
+        Member member = foundMember.get();
 
         if (!passwordEncoder.matches(loginRequestDto.getPassword(), member.getPwd())) {
             throw new InvalidCredentialsException("비밀번호 정보가 일치하지 않습니다.");
@@ -156,7 +159,7 @@ public class MemberService {
             // 사용자 인증
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(
-                            loginRequestDto.getIdentifier(),
+                            member.getEmail(), // 인증을 이메일로 통일
                             loginRequestDto.getPassword()
                     )
             );
