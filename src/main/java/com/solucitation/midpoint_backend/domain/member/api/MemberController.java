@@ -89,6 +89,17 @@ public class MemberController {
         }
     }
 
+    // 토큰 재발급 api
+    @PostMapping("/refresh-token")
+    public ResponseEntity<?> refreshAccessToken(@RequestBody String refreshToken) {
+        try {
+            String newAccessToken = memberService.refreshAccessToken(refreshToken);
+            return ResponseEntity.ok(Collections.singletonMap("accessToken", newAccessToken));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Collections.singletonMap("error", e.getMessage()));
+        }
+    }
+
     /**
      * 회원가입 중 발생한 사용자 정의 예외를 처리합니다.
      *

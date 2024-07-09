@@ -29,6 +29,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.Optional;
 
 /**
@@ -185,6 +186,21 @@ public class MemberService {
             log.error("로그인 도중 예상치 못한 오류 발생: {}", e.getMessage());
             throw new BaseException("로그인 중 예상치 못한 오류가 발생했습니다.");
         }
+    }
+
+    @Transactional
+    public String refreshAccessToken(String refreshToken) {
+        if (!jwtTokenProvider.validateToken(refreshToken)) {
+            throw new IllegalArgumentException("유효하지 않은 Refresh Token입니다.");
+        }
+
+        String email = jwtTokenProvider.getClaimsFromToken(refreshToken).getSubject();
+        Member member = memberRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("해당 이메일의 회원이 존재하지 않습니다."));
+
+        // 새로운 Access Token 생성
+        Authentication authentication = new UsernamePasswordAuthenticationToken(member.getEmail(), null, Collections.emptyList());
+        return jwtTokenProvider.createAccessToken(authentication);
     }
 
     @Transactional(readOnly = true)

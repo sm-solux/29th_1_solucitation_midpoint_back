@@ -1,6 +1,7 @@
 package com.solucitation.midpoint_backend.global.auth;
 
 import com.solucitation.midpoint_backend.global.exception.BaseException;
+import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -34,13 +35,17 @@ public class JwtFilter extends OncePerRequestFilter {
                 Authentication auth = jwtTokenProvider.getAuthentication(token);
                 SecurityContextHolder.getContext().setAuthentication(auth); // SecurityContext에 인증 정보 저장
             }
+        } catch (ExpiredJwtException e){
+            // 토큰이 만료된 경우
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.getWriter().write("Token expired");
+            return;
         } catch (RedisConnectionFailureException e) {
             SecurityContextHolder.clearContext();
             throw new BaseException("REDIS_ERROR");
         } catch (Exception e) {
             throw new BaseException("INVALID_JWT");
         }
-
         filterChain.doFilter(request, response);
     }
 }
