@@ -186,4 +186,10 @@ public class MemberService {
             throw new BaseException("로그인 중 예상치 못한 오류가 발생했습니다.");
         }
     }
+
+    @Transactional(readOnly = true)
+    public Member getMemberByEmail(String email) {
+        return memberRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("해당 이메일의 회원이 존재하지 않습니다."));
+    }
 }
