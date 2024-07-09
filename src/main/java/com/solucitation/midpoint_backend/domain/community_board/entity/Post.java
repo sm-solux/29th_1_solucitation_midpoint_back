@@ -15,7 +15,7 @@ import static jakarta.persistence.FetchType.*;
 
 @Entity
 @Getter
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder
 @Table(name="post")

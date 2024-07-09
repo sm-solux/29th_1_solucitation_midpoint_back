@@ -12,7 +12,7 @@ import static jakarta.persistence.FetchType.*;
 @Getter
 @Table(name="hashtag")
 @AllArgsConstructor
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Builder
 public class Hashtag {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)

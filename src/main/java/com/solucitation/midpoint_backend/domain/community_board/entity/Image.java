@@ -13,7 +13,7 @@ import static jakarta.persistence.FetchType.LAZY;
 
 @Entity
 @Getter @Setter
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder
 @EntityListeners(AuditingEntityListener.class)
@@ -27,7 +27,7 @@ public class Image {
     private String imageUrl;
 
     @CreationTimestamp
-    @Column(nullable = false, updatable = false)
+    @Column(nullable = false, name="create_date", updatable = false)
     private LocalDateTime createDate;
 
     @UpdateTimestamp
@@ -41,9 +41,6 @@ public class Image {
     @ManyToOne(fetch = LAZY)
     @JoinColumn(name="member_id", nullable = false)
     private Member member;
-
-    @Column(nullable = false)
-    private Boolean isLike = true;
 
     public Image(String image_url, Member member, LocalDateTime createDate, LocalDateTime updateDate) {
         this.imageUrl = image_url;

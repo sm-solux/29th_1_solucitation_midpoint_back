@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 @Entity
 @Getter
 @Table(name="likes")
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder
 public class Likes {
@@ -35,11 +35,4 @@ public class Likes {
 
     @UpdateTimestamp
     private LocalDateTime update_date;
-
-    public Likes(Member member, boolean b, LocalDateTime time, LocalDateTime time1) {
-        this.member = member;
-        this.isLike = b;
-        this.create_date = time;
-        this.update_date = time1;
-    }
 }
