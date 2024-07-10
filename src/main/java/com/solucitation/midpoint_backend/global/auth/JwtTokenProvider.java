@@ -34,7 +34,7 @@ public class JwtTokenProvider {
     private String secretKey;
     private Key key;
 
-    private long accessExpirationTime = 1000 * 60; // 1분
+    private long accessExpirationTime = 1000 * 60 * 60 * 24; // 1일
     private long refreshExpirationTime = 1000 * 60 * 60 * 24 * 7; // 7일
 
     @Autowired
@@ -121,6 +121,18 @@ public class JwtTokenProvider {
         } catch (JwtException e) {
             log.error("Invalid JWT token", e);
             throw new BaseException("INVALID_JWT");
+        }
+    }
+
+    // Redis에서 토큰을 삭제(Refresh Token을 무효화하여 로그아웃 처리)
+    public void invalidateRefreshToken(String refreshToken) {
+        try {
+            Claims claims = getClaimsFromToken(refreshToken);
+            String username = claims.getSubject();
+            tokenRedisTemplate.delete(username);
+        } catch (Exception e) {
+            log.error("토큰 무효화 중 오류 발생: {}", e.getMessage());
+            throw new BaseException("LOGOUT_ERROR");
         }
     }
 }
