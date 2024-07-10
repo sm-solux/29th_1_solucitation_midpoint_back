@@ -34,7 +34,7 @@ public class JwtTokenProvider {
     private String secretKey;
     private Key key;
 
-    private long accessExpirationTime = 1000 * 60; // 1분
+    private long accessExpirationTime = 1000 * 60 * 60 * 24; // 1일
     private long refreshExpirationTime = 1000 * 60 * 60 * 24 * 7; // 7일
 
     @Autowired
