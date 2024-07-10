@@ -1,5 +1,6 @@
 package com.solucitation.midpoint_backend.global.exception;
 
+import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -16,6 +17,13 @@ import java.io.IOException;
 public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
     @Override
     public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException authException) throws IOException, ServletException {
-        response.sendError(HttpServletResponse.SC_UNAUTHORIZED);
+        Throwable cause = authException.getCause();
+        response.setContentType("application/json");
+        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        if (cause instanceof ExpiredJwtException) { // 만료된 토큰
+            response.getWriter().write("{\"error\": \"access_token_expired\", \"message\": \"The access token has expired\"}");
+        } else { // 유효하지 않은 토큰
+            response.getWriter().write("{\"error\": \"invalid_token\", \"message\": \"The access token is invalid\"}");
+        }
     }
 }
