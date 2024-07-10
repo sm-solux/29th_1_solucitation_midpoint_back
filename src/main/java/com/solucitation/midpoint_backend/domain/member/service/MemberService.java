@@ -189,18 +189,25 @@ public class MemberService {
     }
 
     @Transactional
-    public String refreshAccessToken(String refreshToken) {
+    public TokenResponseDto refreshAccessToken(String refreshToken) {
         if (!jwtTokenProvider.validateToken(refreshToken)) {
             throw new IllegalArgumentException("유효하지 않은 Refresh Token입니다.");
         }
-
+        // TODO 현재 로그아웃된 사용자의 토큰이 아닌지 검증
         String email = jwtTokenProvider.getClaimsFromToken(refreshToken).getSubject();
         Member member = memberRepository.findByEmail(email)
                 .orElseThrow(() -> new IllegalArgumentException("해당 이메일의 회원이 존재하지 않습니다."));
 
         // 새로운 Access Token 생성
         Authentication authentication = new UsernamePasswordAuthenticationToken(member.getEmail(), null, Collections.emptyList());
-        return jwtTokenProvider.createAccessToken(authentication);
+        String newAccessToken = jwtTokenProvider.createAccessToken(authentication);
+        String newRefreshToken = jwtTokenProvider.createRefreshToken(authentication);
+
+        return TokenResponseDto.builder()
+                .grantType("Bearer")
+                .accessToken(newAccessToken)
+                .refreshToken(newRefreshToken)
+                .build();
     }
 
     @Transactional(readOnly = true)

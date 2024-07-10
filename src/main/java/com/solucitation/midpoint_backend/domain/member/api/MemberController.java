@@ -11,6 +11,7 @@ import com.solucitation.midpoint_backend.domain.member.exception.EmailNotVerifie
 import com.solucitation.midpoint_backend.domain.member.exception.NicknameAlreadyInUseException;
 import com.solucitation.midpoint_backend.domain.member.exception.PasswordMismatchException;
 import com.solucitation.midpoint_backend.domain.member.service.MemberService;
+import com.solucitation.midpoint_backend.global.auth.JwtTokenProvider;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Valid;
 import jakarta.validation.Validator;
@@ -37,6 +38,7 @@ public class MemberController {
     private final MemberService memberService;
     private final ObjectMapper objectMapper;
     private final Validator validator;
+    private final JwtTokenProvider jwtTokenProvider;
 
     /**
      * 새로운 회원을 등록합니다.
@@ -91,10 +93,11 @@ public class MemberController {
 
     // 토큰 재발급 api
     @PostMapping("/refresh-token")
-    public ResponseEntity<?> refreshAccessToken(@RequestBody String refreshToken) {
+    public ResponseEntity<?> refreshAccessToken(@RequestHeader("Authorization") String refreshTokenHeader) {
         try {
-            String newAccessToken = memberService.refreshAccessToken(refreshToken);
-            return ResponseEntity.ok(Collections.singletonMap("accessToken", newAccessToken));
+            String refreshToken = jwtTokenProvider.resolveToken(refreshTokenHeader); // Bearer를 제외한 refreshToken만 추출
+            TokenResponseDto tokenResponse = memberService.refreshAccessToken(refreshToken);
+            return ResponseEntity.ok(tokenResponse);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Collections.singletonMap("error", e.getMessage()));
         }
