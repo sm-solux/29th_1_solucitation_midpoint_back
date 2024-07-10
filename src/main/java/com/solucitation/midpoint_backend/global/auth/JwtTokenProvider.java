@@ -34,8 +34,8 @@ public class JwtTokenProvider {
     private String secretKey;
     private Key key;
 
-    private long accessExpirationTime =  1000 * 60 * 60 * 24;
-    private long refreshExpirationTime = 1000 * 60 * 60 * 24 * 7;
+    private long accessExpirationTime = 1000 * 60; // 1분
+    private long refreshExpirationTime = 1000 * 60 * 60 * 24 * 7; // 7일
 
     @Autowired
     public JwtTokenProvider(UserDetailsServiceImpl userDetailsService,
@@ -85,7 +85,7 @@ public class JwtTokenProvider {
         return refreshToken;
     }
 
-    private Claims getClaimsFromToken(String token) {
+    public Claims getClaimsFromToken(String token) {
         return Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token).getBody();
     }
 
@@ -96,10 +96,17 @@ public class JwtTokenProvider {
         return new UsernamePasswordAuthenticationToken(userDetails, "", userDetails.getAuthorities());
     }
 
-    public String resolveToken(HttpServletRequest httpServletRequest) {
+    // 메소드 오버로딩
+    public String resolveToken(HttpServletRequest httpServletRequest) { // HttpServletRequest를 인자로 받는 메소드
         String bearerToken = httpServletRequest.getHeader("Authorization");
         if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
             return bearerToken.substring(7);
+        }
+        return null;
+    }
+    public String resolveToken(String token) { // String을 인자로 받는 메소드
+        if (token != null && token.startsWith("Bearer ")) {
+            return token.substring(7);
         }
         return null;
     }
@@ -110,7 +117,7 @@ public class JwtTokenProvider {
             return true;
         } catch (ExpiredJwtException e) {
             log.error("JWT token is expired", e);
-            throw new BaseException("EXPIRED_JWT");
+            throw e; // 예외를 던지도록 수정
         } catch (JwtException e) {
             log.error("Invalid JWT token", e);
             throw new BaseException("INVALID_JWT");

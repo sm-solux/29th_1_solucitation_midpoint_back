@@ -1,5 +1,6 @@
 package com.solucitation.midpoint_backend.global.config;
 
+import com.solucitation.midpoint_backend.global.auth.JwtFilter;
 import com.solucitation.midpoint_backend.global.auth.JwtTokenProvider;
 import com.solucitation.midpoint_backend.global.exception.JwtAccessDeniedHandler;
 import com.solucitation.midpoint_backend.global.exception.JwtAuthenticationEntryPoint;
@@ -15,6 +16,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 /**
  * Spring Security 설정 클래스 - JWT를 사용한 보안 설정 구성
@@ -79,10 +81,8 @@ public class SecurityConfig {
                         .authenticationEntryPoint(jwtAuthenticationEntryPoint) // 인증 진입점 설정
                 );
 
-        // JWT 보안 설정 추가
-        JwtSecurityConfig jwtSecurityConfig = new JwtSecurityConfig(jwtTokenProvider);
-        jwtSecurityConfig.init(http); // JWT 보안 설정 초기화
-        jwtSecurityConfig.configure(http); // JWT 보안 설정 구성
+        // JWT 필터 추가
+        http.addFilterBefore(new JwtFilter(jwtTokenProvider), UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
