@@ -117,7 +117,7 @@ public class JwtTokenProvider {
             return true;
         } catch (ExpiredJwtException e) {
             log.error("JWT token is expired", e);
-            throw new BaseException("EXPIRED_JWT");
+            throw e; // 예외를 던지도록 수정
         } catch (JwtException e) {
             log.error("Invalid JWT token", e);
             throw new BaseException("INVALID_JWT");
