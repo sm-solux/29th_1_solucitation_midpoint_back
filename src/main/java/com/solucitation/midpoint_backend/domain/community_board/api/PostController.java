@@ -90,37 +90,37 @@ public class PostController {
         }
     }
 
-    @GetMapping("/search")
-    public ResponseEntity<?> searchByQuery(Authentication authentication, @RequestParam("query") String query) {
-        try {
-            Member member = null;
-            String memberName = authentication.getName();
-            Optional<Member> memberOptional = memberService.getMemberByName(memberName);
-
-            member = memberOptional.orElse(null);
-
-            List<PostResponseDto> postResponseDtos = postService.getPostByQuery(member,query);
-            return ResponseEntity.ok(postResponseDtos);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("게시글 검색 중 오류 발생: " + e.getMessage());
-        }
-    }
-
-    @GetMapping("/search")
-    public ResponseEntity<?> searchByPurpose(Authentication authentication, @RequestParam("purpose") List<Long> purposes ) {
-        try {
-            Member member = null;
-            String memberName = authentication.getName();
-            Optional<Member> memberOptional = memberService.getMemberByName(memberName);
-
-            member = memberOptional.orElse(null);
-
-            List<PostResponseDto> postResponseDtos = postService.getPostByPurpose(member, purposes);
-            return ResponseEntity.ok(postResponseDtos);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("게시글 검색 중 오류 발생: " + e.getMessage());
-        }
-    }
+//    @GetMapping("/search")
+//    public ResponseEntity<?> searchByQuery(Authentication authentication, @RequestParam("query") String query) {
+//        try {
+//            Member member = null;
+//            String memberName = authentication.getName();
+//            Optional<Member> memberOptional = memberService.getMemberByName(memberName);
+//
+//            member = memberOptional.orElse(null);
+//
+//            List<PostResponseDto> postResponseDtos = postService.getPostByQuery(member,query);
+//            return ResponseEntity.ok(postResponseDtos);
+//        } catch (Exception e) {
+//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+//                    .body("게시글 검색 중 오류 발생: " + e.getMessage());
+//        }
+//    }
+//
+//    @GetMapping("/search")
+//    public ResponseEntity<?> searchByPurpose(Authentication authentication, @RequestParam("purpose") List<Long> purposes ) {
+//        try {
+//            Member member = null;
+//            String memberName = authentication.getName();
+//            Optional<Member> memberOptional = memberService.getMemberByName(memberName);
+//
+//            member = memberOptional.orElse(null);
+//
+//            List<PostResponseDto> postResponseDtos = postService.getPostByPurpose(member, purposes);
+//            return ResponseEntity.ok(postResponseDtos);
+//        } catch (Exception e) {
+//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+//                    .body("게시글 검색 중 오류 발생: " + e.getMessage());
+//        }
+//    }
 }

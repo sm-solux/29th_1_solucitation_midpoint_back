@@ -5,11 +5,12 @@ import com.solucitation.midpoint_backend.domain.community_board.entity.PostHasht
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
-@Getter
+@Getter @Setter
 @AllArgsConstructor
 @NoArgsConstructor
 public class PostResponseDto {
@@ -17,12 +18,12 @@ public class PostResponseDto {
     private String firstImageUrl;
     private String title;
     private List<Long> hashtags;
-    private int like;
+    private Boolean likes;
 
     public PostResponseDto(Post post) {
         this.postId = post.getId();
         this.title = post.getTitle();
-        this.like = 0;
+        this.likes = false;
 
         if (!post.getImages().isEmpty()) {
             this.firstImageUrl = post.getImages().get(0).getImageUrl();

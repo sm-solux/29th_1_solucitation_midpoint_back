@@ -12,6 +12,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityConfiguration;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -31,10 +32,10 @@ public class SecurityConfig {
     /**
      * SecurityConfig 생성자 - 필수 구성 요소 주입
      *
-     * @param jwtTokenProvider JWT 토큰 제공자
-     * @param tokenRedisTemplate 접근 토큰을 저장하는 Redis 템플릿 선언
+     * @param jwtTokenProvider            JWT 토큰 제공자
+     * @param tokenRedisTemplate          접근 토큰을 저장하는 Redis 템플릿 선언
      * @param jwtAuthenticationEntryPoint JWT 인증 진입점
-     * @param jwtAccessDeniedHandler JWT 접근 거부 처리기
+     * @param jwtAccessDeniedHandler      JWT 접근 거부 처리기
      */
     public SecurityConfig(
             JwtTokenProvider jwtTokenProvider,
@@ -73,7 +74,7 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable()) // CSRF 비활성화
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // Stateless 세션 설정
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/", "/api/auth/**").permitAll() // 인증 없이 접근 허용
+                        .requestMatchers("/", "/api/auth/**", "/api/posts/**").permitAll() // 인증 없이 접근 허용
                         .anyRequest().authenticated() // 나머지 요청은 인증 필요
                 )
                 .exceptionHandling(exception -> exception
