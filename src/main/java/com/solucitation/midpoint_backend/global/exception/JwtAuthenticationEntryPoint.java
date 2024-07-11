@@ -18,12 +18,12 @@ public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
     @Override
     public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException authException) throws IOException, ServletException {
         Throwable cause = authException.getCause();
-        response.setContentType("application/json");
+        response.setContentType("application/json;charset=UTF-8");
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         if (cause instanceof ExpiredJwtException) { // 만료된 토큰
-            response.getWriter().write("{\"error\": \"access_token_expired\", \"message\": \"The access token has expired\"}");
+            response.getWriter().write("{\"error\": \"access_token_expired\", \"message\": \"Access Token이 만료되었습니다.\"}");
         } else { // 유효하지 않은 토큰
-            response.getWriter().write("{\"error\": \"invalid_token\", \"message\": \"The access token is invalid\"}");
+            response.getWriter().write("{\"error\": \"invalid_token\", \"message\": \"유효하지 않은 Access Token입니다.\"}");
         }
     }
 }
