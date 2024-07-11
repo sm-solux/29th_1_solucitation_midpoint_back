@@ -129,10 +129,19 @@ public class JwtTokenProvider {
         try {
             Claims claims = getClaimsFromToken(refreshToken);
             String username = claims.getSubject();
-            tokenRedisTemplate.delete(username);
+            deleteRefreshToken(username);
         } catch (Exception e) {
             log.error("토큰 무효화 중 오류 발생: {}", e.getMessage());
             throw new BaseException("LOGOUT_ERROR");
+        }
+    }
+
+    public void deleteRefreshToken(String username) {
+        try {
+            tokenRedisTemplate.delete(username);
+        } catch (Exception e){
+            log.error("Redis에서 토큰 삭제 중 오류 발생: {}", e.getMessage());
+            throw new BaseException("DELETE_REDIS");
         }
     }
 }
