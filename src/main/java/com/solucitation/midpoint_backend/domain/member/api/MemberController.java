@@ -121,6 +121,7 @@ public class MemberController {
         log.info("refreshToken is..." + refreshToken);
         jwtTokenProvider.invalidateRefreshToken(refreshToken); // Redis에서 토큰을 삭제(Refresh Token을 무효화하여 로그아웃 처리)
         SecurityContextHolder.clearContext(); // SecurityContextHolder에서 인증 정보 삭제
+        jwtTokenProvider.addToBlacklist(refreshToken); // refreshToken을 블랙리스트에 추가
         return ResponseEntity.ok(Collections.singletonMap("message", "로그아웃에 성공하였습니다."));
     }
 

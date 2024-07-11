@@ -124,7 +124,7 @@ public class JwtTokenProvider {
         }
     }
 
-    // Redis에서 토큰을 삭제(Refresh Token을 무효화하여 로그아웃 처리)
+    // Refresh Token을 무효화하여 로그아웃 처리
     public void invalidateRefreshToken(String refreshToken) {
         try {
             Claims claims = getClaimsFromToken(refreshToken);
@@ -136,6 +136,7 @@ public class JwtTokenProvider {
         }
     }
 
+    // Redis에서 토큰 삭제
     public void deleteRefreshToken(String username) {
         try {
             tokenRedisTemplate.delete(username);
@@ -143,5 +144,18 @@ public class JwtTokenProvider {
             log.error("Redis에서 토큰 삭제 중 오류 발생: {}", e.getMessage());
             throw new BaseException("DELETE_REDIS");
         }
+    }
+
+    // 블랙리스트에 refreshToken을 추가하고 만료 시간 설정
+    public void addToBlacklist(String refreshToken) {
+        long expiration = getClaimsFromToken(refreshToken).getExpiration().getTime();
+        long currentTime = System.currentTimeMillis();
+        long ttl = expiration - currentTime;
+
+        tokenRedisTemplate.opsForValue().set(refreshToken, "invalid", ttl, TimeUnit.MILLISECONDS);
+    }
+    // 블랙리스트 확인하기
+    public boolean isInBlacklist(String refreshToken) {
+        return Boolean.TRUE.equals(tokenRedisTemplate.hasKey(refreshToken));
     }
 }
