@@ -190,6 +190,10 @@ public class MemberService {
 
     @Transactional
     public TokenResponseDto refreshAccessToken(String refreshToken) {
+        if (jwtTokenProvider.isInBlacklist(refreshToken)) {
+            throw new IllegalArgumentException("로그아웃된 Refresh Token입니다.");
+        }
+
         if (!jwtTokenProvider.validateToken(refreshToken)) {
             throw new IllegalArgumentException("유효하지 않은 Refresh Token입니다.");
         }

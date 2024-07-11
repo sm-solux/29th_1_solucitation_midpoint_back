@@ -25,6 +25,8 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @EnableWebSecurity
 public class SecurityConfig {
     private final JwtTokenProvider jwtTokenProvider;
+    private final RedisTemplate<String, String> tokenRedisTemplate;
+
     private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
     private final JwtAccessDeniedHandler jwtAccessDeniedHandler;
 
@@ -41,6 +43,7 @@ public class SecurityConfig {
             @Qualifier("tokenRedisTemplate") RedisTemplate<String, String> tokenRedisTemplate,
             JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint,
             JwtAccessDeniedHandler jwtAccessDeniedHandler) {
+        this.tokenRedisTemplate = tokenRedisTemplate;
         this.jwtTokenProvider = jwtTokenProvider;
         this.jwtAuthenticationEntryPoint = jwtAuthenticationEntryPoint;
         this.jwtAccessDeniedHandler = jwtAccessDeniedHandler;
@@ -82,7 +85,7 @@ public class SecurityConfig {
                 );
 
         // JWT 필터 추가
-        http.addFilterBefore(new JwtFilter(jwtTokenProvider), UsernamePasswordAuthenticationFilter.class);
+        http.addFilterBefore(new JwtFilter(jwtTokenProvider, tokenRedisTemplate), UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
