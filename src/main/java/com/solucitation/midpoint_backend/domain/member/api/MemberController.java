@@ -28,6 +28,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -105,7 +106,10 @@ public class MemberController {
 
             // 블랙리스트에 등록된 토큰인지 확인
             if (jwtTokenProvider.isInBlacklist(refreshToken)) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Collections.singletonMap("error", "블랙리스트에 등록된 토큰입니다. 다시 로그인해 주세요."));
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of(
+                        "error", "invalid_token",
+                        "message", "블랙리스트에 등록된 토큰입니다. 다시 로그인해 주세요."
+                ));
             }
 
             TokenResponseDto tokenResponse = memberService.refreshAccessToken(refreshToken); // Refresh Token을 검증한 뒤 새로운 Access Token과 Refresh Token을 발급
