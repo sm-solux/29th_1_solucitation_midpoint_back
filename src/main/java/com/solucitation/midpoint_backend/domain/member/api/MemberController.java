@@ -101,7 +101,13 @@ public class MemberController {
     @PostMapping("/refresh-token")
     public ResponseEntity<?> refreshAccessToken(@RequestHeader("Authorization") String refreshTokenHeader) {
         try {
-            String refreshToken = jwtTokenProvider.resolveToken(refreshTokenHeader); // Authorization 헤더에서 Bearer 토큰을 제외한 Refresh Token만 추출
+            String refreshToken = jwtTokenProvider.resolveToken(refreshTokenHeader);
+
+            // 블랙리스트에 등록된 토큰인지 확인
+            if (jwtTokenProvider.isInBlacklist(refreshToken)) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Collections.singletonMap("error", "블랙리스트에 등록된 토큰입니다. 다시 로그인해 주세요."));
+            }
+
             TokenResponseDto tokenResponse = memberService.refreshAccessToken(refreshToken); // Refresh Token을 검증한 뒤 새로운 Access Token과 Refresh Token을 발급
             return ResponseEntity.ok(tokenResponse);
         } catch (Exception e) { // 만료되거나 유효하지 않은 Refresh Token일 경우 401 Unauthorized 응답 반환
@@ -117,10 +123,11 @@ public class MemberController {
      */
     @PostMapping("/logout")
     public ResponseEntity<?> logoutMember(@RequestHeader("Authorization") String refreshTokenHeader) {
-        String refreshToken = jwtTokenProvider.resolveToken(refreshTokenHeader);
-        log.info("refreshToken is..." + refreshToken);
+        String refreshToken = jwtTokenProvider.resolveToken(refreshTokenHeader); // Authorization 헤더에서 Bearer 토큰을 제외한 Refresh Token만 추출
+
         jwtTokenProvider.invalidateRefreshToken(refreshToken); // Redis에서 토큰을 삭제(Refresh Token을 무효화하여 로그아웃 처리)
         SecurityContextHolder.clearContext(); // SecurityContextHolder에서 인증 정보 삭제
+
         jwtTokenProvider.addToBlacklist(refreshToken); // refreshToken을 블랙리스트에 추가
         return ResponseEntity.ok(Collections.singletonMap("message", "로그아웃에 성공하였습니다."));
     }

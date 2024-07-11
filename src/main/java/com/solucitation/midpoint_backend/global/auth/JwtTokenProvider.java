@@ -16,6 +16,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpServletRequest;
+
 import java.security.Key;
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
@@ -104,6 +105,7 @@ public class JwtTokenProvider {
         }
         return null;
     }
+
     public String resolveToken(String token) { // String을 인자로 받는 메소드
         if (token != null && token.startsWith("Bearer ")) {
             return token.substring(7);
@@ -129,7 +131,7 @@ public class JwtTokenProvider {
         try {
             Claims claims = getClaimsFromToken(refreshToken);
             String username = claims.getSubject();
-            deleteRefreshToken(username);
+            deleteRefreshToken(username, refreshToken);
         } catch (Exception e) {
             log.error("토큰 무효화 중 오류 발생: {}", e.getMessage());
             throw new BaseException("LOGOUT_ERROR");
@@ -137,10 +139,16 @@ public class JwtTokenProvider {
     }
 
     // Redis에서 토큰 삭제
-    public void deleteRefreshToken(String username) {
+    public void deleteRefreshToken(String username, String refreshToken) { // username과 refreshToken가 모두 일치하는 값 제거
         try {
-            tokenRedisTemplate.delete(username);
-        } catch (Exception e){
+            String storedToken = tokenRedisTemplate.opsForValue().get(username);
+            if (refreshToken.equals(storedToken)) {
+                tokenRedisTemplate.delete(username);
+                log.info("Redis에서 토큰 삭제 완료: {}", username);
+            } else {
+                log.info("저장된 토큰과 일치하지 않음: {}", username);
+            }
+        } catch (Exception e) {
             log.error("Redis에서 토큰 삭제 중 오류 발생: {}", e.getMessage());
             throw new BaseException("DELETE_REDIS");
         }
@@ -154,6 +162,7 @@ public class JwtTokenProvider {
 
         tokenRedisTemplate.opsForValue().set(refreshToken, "invalid", ttl, TimeUnit.MILLISECONDS);
     }
+
     // 블랙리스트 확인하기
     public boolean isInBlacklist(String refreshToken) {
         return Boolean.TRUE.equals(tokenRedisTemplate.hasKey(refreshToken));
