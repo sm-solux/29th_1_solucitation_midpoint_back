@@ -198,6 +198,9 @@ public class MemberService {
         Member member = memberRepository.findByEmail(email)
                 .orElseThrow(() -> new IllegalArgumentException("해당 이메일의 회원이 존재하지 않습니다."));
 
+        // 기존 Refresh Token 삭제
+        jwtTokenProvider.deleteRefreshToken(email);
+
         // 새로운 Access Token 생성
         Authentication authentication = new UsernamePasswordAuthenticationToken(member.getEmail(), null, Collections.emptyList());
         String newAccessToken = jwtTokenProvider.createAccessToken(authentication);
