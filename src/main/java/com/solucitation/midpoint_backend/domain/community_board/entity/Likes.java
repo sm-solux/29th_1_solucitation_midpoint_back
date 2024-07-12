@@ -35,4 +35,14 @@ public class Likes {
 
     @UpdateTimestamp
     private LocalDateTime update_date;
+
+    public Likes(Post post, Member member) {
+        LocalDateTime time = LocalDateTime.now();
+        this.post = post;
+        this.member = member;
+        this.isLike = true;
+
+        this.create_date = time;
+        this.update_date = time;
+    }
 }
