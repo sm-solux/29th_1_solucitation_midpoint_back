@@ -77,4 +77,23 @@ public class PostService {
                 })
                 .collect(Collectors.toList());
     }
+
+    @Transactional
+    public Boolean changeLikes(String memberEmail,  Long postId) {
+        boolean existingLike = likesRepository.isMemberLikesPostByEmail(postId, memberEmail);
+
+        if (existingLike) {
+            likesRepository.deleteByMemberEmailAndPostId(memberEmail, postId);
+            return false;
+        } else {
+            Member member = memberService.getMemberByEmail(memberEmail);
+            Optional<Post> post = postRepository.findById(postId);
+            if (member != null && post.isPresent()) {
+                Likes likes = new Likes(post.get(), member);
+                likesRepository.save(likes);
+                return true;
+            }
+        }
+        throw new IllegalArgumentException("좋아요 상태를 변경하는 중 오류가 발생하였습니다.");
+    }
 }
