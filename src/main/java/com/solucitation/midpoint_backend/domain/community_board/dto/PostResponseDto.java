@@ -30,7 +30,8 @@ public class PostResponseDto {
         }
 
         this.hashtags = post.getPostHashtags().stream()
-                .map(PostHashtag::getId)
+                .map(postHashtag -> postHashtag.getHashtag().getId())
                 .collect(Collectors.toList());
+
     }
 }
