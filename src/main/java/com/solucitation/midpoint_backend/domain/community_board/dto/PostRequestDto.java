@@ -22,13 +22,6 @@ public class PostRequestDto {
     private String content;
 
     private List<Long> postHashtag;
-    private List<String> images;
-
-    public void validateImages() {
-        if (images == null || images.isEmpty() || images.size() > 3) {
-            throw new IllegalArgumentException("이미지는 최소 1개 이상 첨부해야 하며, 최대 3개까지 첨부 가능합니다.");
-        }
-    }
 
     public void validatePostHashtags() {
         if (postHashtag == null || postHashtag.size() != 2 || postHashtag.get(0).equals(postHashtag.get(1))) {
