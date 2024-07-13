@@ -110,10 +110,10 @@ public class EmailController {
         }
     }
 
-    private ResponseEntity<Map<String, String>> sendEmailCode(String pwResetRequestDto) {
+    private ResponseEntity<Map<String, String>> sendEmailCode(String email) {
         // 인증 이메일 발송
         EmailMessage emailMessage = EmailMessage.builder()
-                .to(pwResetRequestDto)
+                .to(email)
                 .subject("[midpoint] 이메일 인증을 위한 인증 코드 발송")
                 .build();
         String code = emailService.sendVerificationMail(emailMessage, "verify");

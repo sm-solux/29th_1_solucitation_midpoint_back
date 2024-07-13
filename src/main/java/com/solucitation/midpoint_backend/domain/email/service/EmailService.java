@@ -33,6 +33,8 @@ public class EmailService {
     public String sendVerificationMail(EmailMessage emailMessage, String type) {
         String code = generateVerificationCode();
         LocalDateTime now = LocalDateTime.now();
+
+        // 새로운 인증 코드를 추가하며 기존 인증 코드를 무효화
         verificationCodes.put(emailMessage.getTo(), new VerificationCode(code, now.plusMinutes(EXPIRATION_TIME_MINUTES)));
 
         MimeMessage mimeMessage = javaMailSender.createMimeMessage();
