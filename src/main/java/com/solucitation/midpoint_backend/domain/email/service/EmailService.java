@@ -19,7 +19,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class EmailServiceV2 {
+public class EmailService {
 
     private final JavaMailSender javaMailSender;
     private final SpringTemplateEngine templateEngine;
@@ -44,10 +44,10 @@ public class EmailServiceV2 {
             mimeMessageHelper.setText(setContext(code, type), true); // 메일 본문: setText(setContext(인증코드, html파일명), HTML 여부)
             javaMailSender.send(mimeMessage);
 
-            log.info("Verification email sent successfully to {}", emailMessage.getTo());
+            log.info("인증코드가 성공적으로 전송되었습니다. 이메일: {}", emailMessage.getTo());
         } catch (MessagingException e) {
-            log.error("Failed to send verification email to {}", emailMessage.getTo(), e);
-            throw new RuntimeException("Failed to send verification email", e);
+            log.error("인증코드 전송 실패했습니다. 이메일: {}", emailMessage.getTo(), e);
+            throw new RuntimeException("인증코드 전송 실패했습니다.", e);
         }
         return code;
     }
