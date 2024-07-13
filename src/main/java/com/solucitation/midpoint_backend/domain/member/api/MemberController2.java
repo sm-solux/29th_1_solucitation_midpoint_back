@@ -23,11 +23,11 @@ import java.util.stream.Collectors;
 @Slf4j
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/profile")
+@RequestMapping("/api/member")
 public class MemberController2 {
     private final MemberService memberService;
-    private final JwtTokenProvider jwtTokenProvider;
     private final Validator validator;
+    private final JwtTokenProvider jwtTokenProvider;
 
     /**
      * 회원 프로필 정보를 가져옵니다.
@@ -35,13 +35,12 @@ public class MemberController2 {
      * @param authentication 인증 정보
      * @return 회원의 이름을 포함한 응답
      */
-    @GetMapping
+    @GetMapping("/profile")
     public ResponseEntity<?> getMemberInfo(Authentication authentication) {
         String email = authentication.getName();
         Member member = memberService.getMemberByEmail(email);
         return ResponseEntity.ok(Map.of("message", member.getName()));
     }
-
     /**
      * 비밀번호를 재설정합니다.
      *
