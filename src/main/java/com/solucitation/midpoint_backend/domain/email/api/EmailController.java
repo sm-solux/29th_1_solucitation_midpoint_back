@@ -6,13 +6,18 @@ import com.solucitation.midpoint_backend.domain.email.dto.VerificationCodeReques
 import com.solucitation.midpoint_backend.domain.email.dto.VerificationEmailRequestDto;
 import com.solucitation.midpoint_backend.domain.email.service.EmailService;
 import com.solucitation.midpoint_backend.domain.member.service.MemberService;
+import com.solucitation.midpoint_backend.global.auth.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.Collections;
 
 @Slf4j
 @RestController
@@ -21,6 +26,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class EmailController {
     private final EmailService emailService;
     private final MemberService memberService;
+    private final JwtTokenProvider jwtTokenProvider;
 
     // [회원가입] 유효한 이메일인지 판단하기 위해 인증코드 발송하는 api
     @PostMapping("/signup/verify-email")
@@ -72,12 +78,18 @@ public class EmailController {
         boolean isValid = emailService.verifyCode(verificationCodeRequestDto.getEmail(), verificationCodeRequestDto.getCode());
 
         if (isValid) {
-            // TODO JWT 토큰 만든 후 리턴하기
-            return ResponseEntity.ok("jwtToken");
+            // 사용자 인증
+            Authentication authentication = new UsernamePasswordAuthenticationToken(
+                    verificationCodeRequestDto.getEmail(), null, Collections.emptyList()
+            );
+
+            // JWT 토큰 생성
+            String accessToken = jwtTokenProvider.createAccessToken(authentication);
+
+            // Bearer 접두사 추가하여 리턴
+            return ResponseEntity.ok("Bearer " + accessToken);
         } else {
             return ResponseEntity.badRequest().body("유효하지 않거나 만료된 인증번호입니다.");
         }
     }
-    // TODO db의 member테이블의 member_pw 필드를 임시비밀번호로 update 필요
-    // TODO 이때, 암호화 필수, 임시비밀번호 타이머 구현 (넉넉하게 10분)
 }

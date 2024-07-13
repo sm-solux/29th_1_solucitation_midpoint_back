@@ -167,4 +167,12 @@ public class JwtTokenProvider {
     public boolean isInBlacklist(String refreshToken) {
         return Boolean.TRUE.equals(tokenRedisTemplate.hasKey(refreshToken));
     }
+    public String extractEmailFromToken(String token) {
+        try {
+            return getClaimsFromToken(token.replace("Bearer ", "")).getSubject();
+        } catch (Exception e) {
+            log.error("토큰에서 이메일 추출 중 오류 발생: {}", e.getMessage());
+            return null;
+        }
+    }
 }
