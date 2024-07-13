@@ -41,7 +41,7 @@ public class EmailController {
                 .build();
         String code = emailService.sendVerificationMail(emailMessage, "verify");
 //        return ResponseEntity.ok(code);
-        return ResponseEntity.ok("이메일 인증을 위한 인증 코드가 이메일로 발송되었습니다.");
+        return ResponseEntity.ok("[회원가입] 인증 코드가 이메일로 발송되었습니다. 회원가입 창으로 돌아가 4분 이내에 입력해주세요.");
     }
 
     // [회원가입] 사용자가 입력한 이메일 인증 코드를 검증하는 api
@@ -69,7 +69,7 @@ public class EmailController {
                 .build();
         String code = emailService.sendVerificationMail(emailMessage, "reset-pw");
 //        return ResponseEntity.ok(code);
-        return ResponseEntity.ok("비밀번호 재설정을 위한 인증 코드가 이메일로 발송되었습니다.");
+        return ResponseEntity.ok("[비밀번호 찾기] 인증 코드가 이메일로 발송되었습니다. 비밀번호 찾기 창으로 돌아가 4분 이내에 입력해주세요.");
     }
 
     // [비밀번호 찾기] 사용자가 입력한 이메일 인증 코드를 검증하는 api

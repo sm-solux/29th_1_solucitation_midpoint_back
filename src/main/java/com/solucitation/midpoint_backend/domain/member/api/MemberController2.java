@@ -26,15 +26,15 @@ public class MemberController2 {
     }
 
     @PostMapping("/reset-pw")
-    public ResponseEntity<String> resetPassword(@RequestHeader("Authorization") String token, @RequestBody @Valid ResetPwRequestDto request) {
+    public ResponseEntity<String> resetPassword(@RequestHeader("Authorization") String token, @RequestBody @Valid ResetPwRequestDto resetPwRequestDto) {
         String email = jwtTokenProvider.extractEmailFromToken(token);
-        if (email == null || !email.equals(request.getEmail())) {
+        if (email == null || !email.equals(resetPwRequestDto.getEmail())) {
             return ResponseEntity.status(401).body("비밀번호를 재설정할 수 있는 권한이 없습니다.");
         }
-        if (!request.getNewPassword().equals(request.getNewPasswordConfirm())) {
+        if (!resetPwRequestDto.getNewPassword().equals(resetPwRequestDto.getNewPasswordConfirm())) {
             return ResponseEntity.badRequest().body("새 비밀번호와 새 비밀번호 확인이 일치하지 않습니다.");
         }
-        memberService.resetPassword(request.getEmail(), request.getNewPassword());
-        return ResponseEntity.ok("Password reset successful.");
+        memberService.resetPassword(resetPwRequestDto.getEmail(), resetPwRequestDto.getNewPassword());
+        return ResponseEntity.ok("비밀번호 재설정이 성공적으로 완료되었습니다.");
     }
 }
