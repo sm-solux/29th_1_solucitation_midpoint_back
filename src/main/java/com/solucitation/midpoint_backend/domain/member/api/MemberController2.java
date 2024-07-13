@@ -7,14 +7,12 @@ import com.solucitation.midpoint_backend.domain.member.service.MemberService;
 import com.solucitation.midpoint_backend.global.auth.JwtTokenProvider;
 import jakarta.validation.Valid;
 import jakarta.validation.ConstraintViolation;
-import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Validator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -31,6 +29,12 @@ public class MemberController2 {
     private final JwtTokenProvider jwtTokenProvider;
     private final Validator validator;
 
+    /**
+     * 회원 프로필 정보를 가져옵니다.
+     *
+     * @param authentication 인증 정보
+     * @return 회원의 이름을 포함한 응답
+     */
     @GetMapping
     public ResponseEntity<?> getMemberInfo(Authentication authentication) {
         String email = authentication.getName();
@@ -38,6 +42,13 @@ public class MemberController2 {
         return ResponseEntity.ok(Map.of("message", member.getName()));
     }
 
+    /**
+     * 비밀번호를 재설정합니다.
+     *
+     * @param token 인증 토큰
+     * @param resetPwRequestDto 비밀번호 재설정 요청 DTO
+     * @return 비밀번호 재설정 성공 메시지 또는 오류 메시지
+     */
     @PostMapping("/reset-pw")
     public ResponseEntity<?> resetPassword(@RequestHeader("Authorization") String token, @RequestBody @Valid ResetPwRequestDto resetPwRequestDto) {
         Set<ConstraintViolation<ResetPwRequestDto>> violations = validator.validate(resetPwRequestDto);
@@ -58,30 +69,5 @@ public class MemberController2 {
         }
         memberService.resetPassword(resetPwRequestDto.getEmail(), resetPwRequestDto.getNewPassword());
         return ResponseEntity.ok(Map.of("message", "비밀번호 재설정이 성공적으로 완료되었습니다."));
-    }
-
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ValidationErrorResponse> handleValidationExceptions(MethodArgumentNotValidException e) {
-        List<ValidationErrorResponse.FieldError> errors = e.getBindingResult()
-                .getFieldErrors()
-                .stream()
-                .map(error -> new ValidationErrorResponse.FieldError(error.getField(), error.getDefaultMessage()))
-                .collect(Collectors.toList());
-
-        ValidationErrorResponse errorResponse = new ValidationErrorResponse(errors);
-        log.error("검증 실패: {}", errors);
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
-    }
-
-    @ExceptionHandler(ConstraintViolationException.class)
-    public ResponseEntity<ValidationErrorResponse> handleConstraintViolationException(ConstraintViolationException e) {
-        List<ValidationErrorResponse.FieldError> errors = e.getConstraintViolations()
-                .stream()
-                .map(violation -> new ValidationErrorResponse.FieldError(violation.getPropertyPath().toString(), violation.getMessage()))
-                .collect(Collectors.toList());
-
-        ValidationErrorResponse errorResponse = new ValidationErrorResponse(errors);
-        log.error("검증 실패: {}", errors);
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
     }
 }
