@@ -245,6 +245,7 @@ public class MemberService {
         memberRepository.save(updatedMember);
     }
 
+
     @Transactional
     public void verifyPassword(String email, PasswordVerifyRequestDto passwordVerifyRequestDto) {
         Member member = memberRepository.findByEmail(email)

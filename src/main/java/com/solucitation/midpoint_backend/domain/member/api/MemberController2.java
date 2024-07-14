@@ -1,5 +1,6 @@
 package com.solucitation.midpoint_backend.domain.member.api;
 
+import com.solucitation.midpoint_backend.domain.member.dto.AccessTokenResponseDto;
 import com.solucitation.midpoint_backend.domain.member.dto.PasswordVerifyRequestDto;
 import com.solucitation.midpoint_backend.domain.member.dto.ResetPwRequestDto;
 import com.solucitation.midpoint_backend.domain.member.dto.ValidationErrorResponse;
@@ -43,6 +44,7 @@ public class MemberController2 {
         Member member = memberService.getMemberByEmail(email);
         return ResponseEntity.ok(Map.of("message", member.getName()));
     }
+
     /**
      * 비밀번호를 재설정합니다.
      *
@@ -72,7 +74,7 @@ public class MemberController2 {
         return ResponseEntity.ok(Map.of("message", "비밀번호 재설정이 성공적으로 완료되었습니다."));
     }
 
-    @PostMapping("/verify-password")
+    @PostMapping("/verify-pw")
     public ResponseEntity<?> verifyPassword(@RequestBody @Valid PasswordVerifyRequestDto passwordVerifyRequestDto, Authentication authentication) {
         Set<ConstraintViolation<PasswordVerifyRequestDto>> violations = validator.validate(passwordVerifyRequestDto);
         if (!violations.isEmpty()) {
@@ -86,7 +88,12 @@ public class MemberController2 {
         String email = authentication.getName();
         try {
             memberService.verifyPassword(email, passwordVerifyRequestDto);
-            return ResponseEntity.ok(Map.of("message", "비밀번호 확인이 성공적으로 완료되었습니다."));
+            String accessToken = jwtTokenProvider.createAccessToken(authentication);
+            AccessTokenResponseDto tokenResponse = AccessTokenResponseDto.builder()
+                    .grantType("Bearer")
+                    .accessToken(accessToken)
+                    .build();
+            return ResponseEntity.ok(tokenResponse);
         } catch (PasswordMismatchException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", "password_mismatch", "message", e.getMessage()));
         }
