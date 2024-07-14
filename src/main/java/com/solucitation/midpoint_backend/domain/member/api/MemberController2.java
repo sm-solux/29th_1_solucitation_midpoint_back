@@ -1,8 +1,10 @@
 package com.solucitation.midpoint_backend.domain.member.api;
 
+import com.solucitation.midpoint_backend.domain.member.dto.PasswordVerifyRequestDto;
 import com.solucitation.midpoint_backend.domain.member.dto.ResetPwRequestDto;
 import com.solucitation.midpoint_backend.domain.member.dto.ValidationErrorResponse;
 import com.solucitation.midpoint_backend.domain.member.entity.Member;
+import com.solucitation.midpoint_backend.domain.member.exception.PasswordMismatchException;
 import com.solucitation.midpoint_backend.domain.member.service.MemberService;
 import com.solucitation.midpoint_backend.global.auth.JwtTokenProvider;
 import jakarta.validation.Valid;
@@ -68,5 +70,25 @@ public class MemberController2 {
         }
         memberService.resetPassword(resetPwRequestDto.getEmail(), resetPwRequestDto.getNewPassword());
         return ResponseEntity.ok(Map.of("message", "비밀번호 재설정이 성공적으로 완료되었습니다."));
+    }
+
+    @PostMapping("/verify-password")
+    public ResponseEntity<?> verifyPassword(@RequestBody @Valid PasswordVerifyRequestDto passwordVerifyRequestDto, Authentication authentication) {
+        Set<ConstraintViolation<PasswordVerifyRequestDto>> violations = validator.validate(passwordVerifyRequestDto);
+        if (!violations.isEmpty()) {
+            List<ValidationErrorResponse.FieldError> fieldErrors = violations.stream()
+                    .map(violation -> new ValidationErrorResponse.FieldError(violation.getPropertyPath().toString(), violation.getMessage()))
+                    .collect(Collectors.toList());
+            ValidationErrorResponse errorResponse = new ValidationErrorResponse(fieldErrors);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+        }
+
+        String email = authentication.getName();
+        try {
+            memberService.verifyPassword(email, passwordVerifyRequestDto);
+            return ResponseEntity.ok(Map.of("message", "비밀번호 확인이 성공적으로 완료되었습니다."));
+        } catch (PasswordMismatchException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", "password_mismatch", "message", e.getMessage()));
+        }
     }
 }

@@ -5,6 +5,7 @@ import com.solucitation.midpoint_backend.domain.community_board.repository.Image
 import com.solucitation.midpoint_backend.domain.email.service.EmailService;
 import com.solucitation.midpoint_backend.domain.file.service.S3Service;
 import com.solucitation.midpoint_backend.domain.member.dto.LoginRequestDto;
+import com.solucitation.midpoint_backend.domain.member.dto.PasswordVerifyRequestDto;
 import com.solucitation.midpoint_backend.domain.member.dto.SignupRequestDto;
 import com.solucitation.midpoint_backend.domain.member.dto.TokenResponseDto;
 import com.solucitation.midpoint_backend.domain.member.entity.Member;
@@ -242,5 +243,16 @@ public class MemberService {
 
         // 변경된 비밀번호 저장
         memberRepository.save(updatedMember);
+    }
+
+    @Transactional
+    public void verifyPassword(String email, PasswordVerifyRequestDto passwordVerifyRequestDto) {
+        Member member = memberRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("해당 이메일의 회원이 존재하지 않습니다."));
+
+        // 현재 비밀번호 확인
+        if (!passwordEncoder.matches(passwordVerifyRequestDto.getPassword(), member.getPwd())) {
+            throw new PasswordMismatchException("비밀번호가 일치하지 않습니다.");
+        }
     }
 }
