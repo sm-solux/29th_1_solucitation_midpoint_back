@@ -31,4 +31,11 @@ public class Member {
     @NotNull
     @Column(name = "member_nickname", nullable = false, unique = true, length = 100)
     private String nickname;
+
+    public Member(String password, String name, String email, String nickname) {
+        this.email= email;
+        this.name = name;
+        this.pwd = password;
+        this.nickname = nickname;
+    }
 }

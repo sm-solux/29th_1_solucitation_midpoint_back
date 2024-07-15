@@ -1,12 +1,11 @@
 package com.solucitation.midpoint_backend.domain.community_board.entity;
+
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import com.solucitation.midpoint_backend.domain.member.entity.Member;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedDate;
-import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
 
@@ -14,7 +13,7 @@ import static jakarta.persistence.FetchType.LAZY;
 
 @Entity
 @Getter @Setter
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder
 @EntityListeners(AuditingEntityListener.class)
@@ -28,16 +27,16 @@ public class Image {
     private String imageUrl;
 
     @CreationTimestamp
-    @Column(nullable = false, updatable = false)
+    @Column(nullable = false, name="create_date", updatable = false)
     private LocalDateTime createDate;
 
     @UpdateTimestamp
     @Column(name="udpate_date")
     private LocalDateTime updateDate;
 
-//    @ManyToOne
-//    @JoinColumn(name = "post_id", nullable = true)
-//    private Post post;
+    @ManyToOne
+    @JoinColumn(name = "post_id", nullable = true)
+    private Post post;
 
     @ManyToOne(fetch = LAZY)
     @JoinColumn(name="member_id", nullable = false)
