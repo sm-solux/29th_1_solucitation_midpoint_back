@@ -12,36 +12,44 @@ import org.thymeleaf.context.Context;
 import org.thymeleaf.spring6.SpringTemplateEngine;
 
 import java.security.SecureRandom;
+import java.time.LocalDateTime;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class EmailServiceV1 {
+public class EmailService {
 
     private final JavaMailSender javaMailSender;
     private final SpringTemplateEngine templateEngine;
     private final SecureRandom secureRandom = new SecureRandom();
-    private final ConcurrentHashMap<String, String> verificationCodes = new ConcurrentHashMap<>();
+    private final Map<String, VerificationCode> verificationCodes = new ConcurrentHashMap<>();
+    private final Map<String, Boolean> verifiedEmails = new ConcurrentHashMap<>();
+
+    private static final int EXPIRATION_TIME_MINUTES = 4; // 인증코드는 4분의 유효시간을 갖는다.
 
     // 인증코드 이메일 발송
     public String sendVerificationMail(EmailMessage emailMessage, String type) {
         String code = generateVerificationCode();
-        verificationCodes.put(emailMessage.getTo(), code);
+        LocalDateTime now = LocalDateTime.now();
+
+        // 새로운 인증 코드를 추가하며 기존 인증 코드를 무효화
+        verificationCodes.put(emailMessage.getTo(), new VerificationCode(code, now.plusMinutes(EXPIRATION_TIME_MINUTES)));
 
         MimeMessage mimeMessage = javaMailSender.createMimeMessage();
 
         try {
             MimeMessageHelper mimeMessageHelper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
-            mimeMessageHelper.setTo(emailMessage.getTo());
-            mimeMessageHelper.setSubject(emailMessage.getSubject());
-            mimeMessageHelper.setText(setContext(code, type), true);
+            mimeMessageHelper.setTo(emailMessage.getTo()); // 받는 사람
+            mimeMessageHelper.setSubject(emailMessage.getSubject()); // 메일 제목
+            mimeMessageHelper.setText(setContext(code, type), true); // 메일 본문: setText(setContext(인증코드, html파일명), HTML 여부)
             javaMailSender.send(mimeMessage);
 
-            log.info("Verification email sent successfully to {}", emailMessage.getTo());
+            log.info("인증코드가 성공적으로 전송되었습니다. 이메일: {}", emailMessage.getTo());
         } catch (MessagingException e) {
-            log.error("Failed to send verification email to {}", emailMessage.getTo(), e);
-            throw new RuntimeException("Failed to send verification email", e);
+            log.error("인증코드 전송 실패했습니다. 이메일: {}", emailMessage.getTo(), e);
+            throw new RuntimeException("인증코드 전송 실패했습니다.", e);
         }
         return code;
     }
@@ -58,6 +66,7 @@ public class EmailServiceV1 {
     }
 
     // 메일 형식 생성
+    // thymeleaf를 통해 html 적용
     public String setContext(String code, String type) {
         Context context = new Context();
         context.setVariable("code", code);
@@ -66,7 +75,22 @@ public class EmailServiceV1 {
 
     // 인증코드 검증
     public boolean verifyCode(String email, String code) {
-        String storedCode = verificationCodes.get(email);
-        return storedCode != null && storedCode.equals(code);
+        VerificationCode verificationCode = verificationCodes.get(email);
+
+        if (verificationCode == null || verificationCode.expiresAt().isBefore(LocalDateTime.now())) {
+            return false;
+        }
+        boolean isValid = verificationCode.code().equals(code);
+        if (isValid) {
+            verifiedEmails.put(email, true);
+        }
+        return isValid;
     }
+
+    // 이메일이 인증되었는지 확인
+    public boolean isEmailVerified(String email) {
+        return verifiedEmails.getOrDefault(email, false);
+    }
+
+    private record VerificationCode(String code, LocalDateTime expiresAt) {}
 }
