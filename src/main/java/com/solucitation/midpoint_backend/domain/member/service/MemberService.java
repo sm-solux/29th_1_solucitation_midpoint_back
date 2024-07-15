@@ -4,10 +4,7 @@ import com.solucitation.midpoint_backend.domain.community_board.entity.Image;
 import com.solucitation.midpoint_backend.domain.community_board.repository.ImageRepository;
 import com.solucitation.midpoint_backend.domain.email.service.EmailService;
 import com.solucitation.midpoint_backend.domain.file.service.S3Service;
-import com.solucitation.midpoint_backend.domain.member.dto.LoginRequestDto;
-import com.solucitation.midpoint_backend.domain.member.dto.PasswordVerifyRequestDto;
-import com.solucitation.midpoint_backend.domain.member.dto.SignupRequestDto;
-import com.solucitation.midpoint_backend.domain.member.dto.TokenResponseDto;
+import com.solucitation.midpoint_backend.domain.member.dto.*;
 import com.solucitation.midpoint_backend.domain.member.entity.Member;
 import com.solucitation.midpoint_backend.domain.member.exception.EmailAlreadyInUseException;
 import com.solucitation.midpoint_backend.domain.member.exception.EmailNotVerifiedException;
@@ -255,5 +252,21 @@ public class MemberService {
         if (!passwordEncoder.matches(passwordVerifyRequestDto.getPassword(), member.getPwd())) {
             throw new PasswordMismatchException("비밀번호가 일치하지 않습니다.");
         }
+    }
+
+    @Transactional(readOnly = true)
+    public MemberProfileResponseDto getMemberProfile(String email) {
+        Member member = memberRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("해당 이메일의 회원이 존재하지 않습니다."));
+        String profileImageUrl = imageRepository.findByMemberId(member.getId())
+                .map(Image::getImageUrl)
+                .orElse(null);
+
+        return new MemberProfileResponseDto(
+                member.getName(),
+                member.getNickname(),
+                member.getEmail(),
+                profileImageUrl
+        );
     }
 }

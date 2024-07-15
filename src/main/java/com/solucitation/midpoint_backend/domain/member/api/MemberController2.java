@@ -1,9 +1,6 @@
 package com.solucitation.midpoint_backend.domain.member.api;
 
-import com.solucitation.midpoint_backend.domain.member.dto.AccessTokenResponseDto;
-import com.solucitation.midpoint_backend.domain.member.dto.PasswordVerifyRequestDto;
-import com.solucitation.midpoint_backend.domain.member.dto.ResetPwRequestDto;
-import com.solucitation.midpoint_backend.domain.member.dto.ValidationErrorResponse;
+import com.solucitation.midpoint_backend.domain.member.dto.*;
 import com.solucitation.midpoint_backend.domain.member.entity.Member;
 import com.solucitation.midpoint_backend.domain.member.exception.PasswordMismatchException;
 import com.solucitation.midpoint_backend.domain.member.service.MemberService;
@@ -41,8 +38,8 @@ public class MemberController2 {
     @GetMapping("/profile")
     public ResponseEntity<?> getMemberInfo(Authentication authentication) {
         String email = authentication.getName();
-        Member member = memberService.getMemberByEmail(email);
-        return ResponseEntity.ok(Map.of("message", member.getName()));
+        MemberProfileResponseDto memberProfile = memberService.getMemberProfile(email);
+        return ResponseEntity.ok(memberProfile);
     }
 
     /**
@@ -74,6 +71,13 @@ public class MemberController2 {
         return ResponseEntity.ok(Map.of("message", "비밀번호 재설정이 성공적으로 완료되었습니다."));
     }
 
+    /**
+     * 비밀번호를 확인합니다.
+     *
+     * @param passwordVerifyRequestDto 비밀번호 확인 요청 DTO
+     * @param authentication 인증 정보
+     * @return 비밀번호가 일치하면 새로운 액세스 토큰을 반환, 일치하지 않으면 오류 메시지 반환
+     */
     @PostMapping("/verify-pw")
     public ResponseEntity<?> verifyPassword(@RequestBody @Valid PasswordVerifyRequestDto passwordVerifyRequestDto, Authentication authentication) {
         Set<ConstraintViolation<PasswordVerifyRequestDto>> violations = validator.validate(passwordVerifyRequestDto);
