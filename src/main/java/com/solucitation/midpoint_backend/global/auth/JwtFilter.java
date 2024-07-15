@@ -33,7 +33,7 @@ public class JwtFilter extends OncePerRequestFilter {
     ) throws ServletException, IOException {
         String token = jwtTokenProvider.resolveToken(request); // JWT 추출
         try {
-            if (token != null && jwtTokenProvider.validateToken(token)) { // 토큰 검증
+            if (token != null && jwtTokenProvider.validateToken(token)) { // 토큰 유효성 검증
                 Authentication auth = jwtTokenProvider.getAuthentication(token);
                 SecurityContextHolder.getContext().setAuthentication(auth); // SecurityContext에 인증 정보 저장
             }
@@ -42,9 +42,9 @@ public class JwtFilter extends OncePerRequestFilter {
             // 토큰이 만료된 경우
             log.error("Expired JWT token", e);
             SecurityContextHolder.clearContext(); // 인증 정보 삭제
-            response.setContentType("application/json");
+            response.setContentType("application/json;charset=UTF-8");
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            response.getWriter().write("{\"error\": \"access_token_expired\", \"message\": \"The access token has expired\"}");
+            response.getWriter().write("{\"error\": \"access_token_expired\", \"message\": \"Access Token이 만료되었습니다.\"}");
             return;
         }
         catch (RedisConnectionFailureException e) {
