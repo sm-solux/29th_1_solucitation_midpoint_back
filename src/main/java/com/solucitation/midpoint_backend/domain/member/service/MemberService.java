@@ -190,13 +190,20 @@ public class MemberService {
 
     @Transactional
     public TokenResponseDto refreshAccessToken(String refreshToken) {
+        if (jwtTokenProvider.isInBlacklist(refreshToken)) {
+            throw new IllegalArgumentException("로그아웃된 Refresh Token입니다.");
+        }
+
         if (!jwtTokenProvider.validateToken(refreshToken)) {
             throw new IllegalArgumentException("유효하지 않은 Refresh Token입니다.");
         }
-        // TODO 현재 로그아웃된 사용자의 토큰이 아닌지 검증
+
         String email = jwtTokenProvider.getClaimsFromToken(refreshToken).getSubject();
         Member member = memberRepository.findByEmail(email)
                 .orElseThrow(() -> new IllegalArgumentException("해당 이메일의 회원이 존재하지 않습니다."));
+
+        // 기존 Refresh Token 삭제
+        jwtTokenProvider.deleteRefreshToken(email, refreshToken);
 
         // 새로운 Access Token 생성
         Authentication authentication = new UsernamePasswordAuthenticationToken(member.getEmail(), null, Collections.emptyList());

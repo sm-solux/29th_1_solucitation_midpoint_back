@@ -4,10 +4,8 @@ import com.solucitation.midpoint_backend.global.auth.JwtFilter;
 import com.solucitation.midpoint_backend.global.auth.JwtTokenProvider;
 import com.solucitation.midpoint_backend.global.exception.JwtAccessDeniedHandler;
 import com.solucitation.midpoint_backend.global.exception.JwtAuthenticationEntryPoint;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -32,13 +30,11 @@ public class SecurityConfig {
      * SecurityConfig 생성자 - 필수 구성 요소 주입
      *
      * @param jwtTokenProvider JWT 토큰 제공자
-     * @param tokenRedisTemplate 접근 토큰을 저장하는 Redis 템플릿 선언
      * @param jwtAuthenticationEntryPoint JWT 인증 진입점
      * @param jwtAccessDeniedHandler JWT 접근 거부 처리기
      */
     public SecurityConfig(
             JwtTokenProvider jwtTokenProvider,
-            @Qualifier("tokenRedisTemplate") RedisTemplate<String, String> tokenRedisTemplate,
             JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint,
             JwtAccessDeniedHandler jwtAccessDeniedHandler) {
         this.jwtTokenProvider = jwtTokenProvider;
