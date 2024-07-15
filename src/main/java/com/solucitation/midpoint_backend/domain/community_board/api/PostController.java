@@ -1,5 +1,7 @@
 package com.solucitation.midpoint_backend.domain.community_board.api;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.solucitation.midpoint_backend.domain.community_board.dto.PostDetailDto;
 import com.solucitation.midpoint_backend.domain.community_board.dto.PostRequestDto;
 import com.solucitation.midpoint_backend.domain.community_board.dto.PostResponseDto;
@@ -8,22 +10,25 @@ import com.solucitation.midpoint_backend.domain.community_board.entity.Post;
 import com.solucitation.midpoint_backend.domain.community_board.repository.PostRepository;
 import com.solucitation.midpoint_backend.domain.community_board.service.PostService;
 
+import com.solucitation.midpoint_backend.domain.member.dto.ValidationErrorResponse;
 import com.solucitation.midpoint_backend.domain.member.entity.Member;
-import com.solucitation.midpoint_backend.domain.member.repository.MemberRepository;
 import com.solucitation.midpoint_backend.domain.member.service.MemberService;
 import jakarta.persistence.EntityNotFoundException;
-import jakarta.validation.Valid;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.Validator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Slf4j
 @RestController
@@ -33,8 +38,9 @@ public class PostController {
 
     private final PostService postService;
     private final MemberService memberService;
-    private final MemberRepository memberRepository;
+    private final ObjectMapper objectMapper;
     private final PostRepository postRepository;
+    private final Validator validator;
 
     /**
      * 모든 게시글을 요약된 형태로 생성일 최신순부터 가져옵니다.
@@ -123,4 +129,63 @@ public class PostController {
                     .body("좋아요 상태를 변경하는 중 오류가 발생하였습니다." + e.getMessage());
         }
     }
+
+    /**
+     *
+     * @param authentication 인증정보
+     * @param postRequestDtoJson 게시글 본문 내용
+     * @param postImages 게시글 본문 이미지
+     * @return 게시글 등록을 성공하면 201 CREATED를 반환합니다.
+     *         로그인을 하지 않고 시도 시 401 Unauthorized 에러를 반환합니다.
+     *         서로 다른 2개의 해시태그를 선택하지 않았을 시 400 BAD REQUEST 에러를 반환합니다.
+     *         이미지를 업로드하지 않았거나 4장 이상 업로드 시도 시 400 BAD REQUEST 에러를 반환합니다.
+     *         사용자를 찾을 수 없을 때는 404 Not Found 에러를 반환합니다.
+     *         기타 이유로 업로드 실패 시 500 Internal Server Error를 반환합니다.
+     */
+    @PostMapping(value = "",  consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<?> createPost(Authentication authentication,
+                                        @RequestPart("postDto") String postRequestDtoJson,
+                                        @RequestPart(value = "postImages", required = false) List<MultipartFile> postImages) throws JsonProcessingException {
+        try {
+            PostRequestDto postRequestDto =  objectMapper.readValue(postRequestDtoJson, PostRequestDto.class);
+            if (authentication == null || !authentication.isAuthenticated()) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body("해당 서비스를 이용하기 위해서는 로그인이 필요합니다.");
+            }
+
+            String memberEmail = authentication.getName();
+            Member member = memberService.getMemberByEmail(memberEmail);
+            if (member == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("사용자를 찾을 수 없습니다.");
+            }
+
+            Set<ConstraintViolation<PostRequestDto>> violations = validator.validate(postRequestDto);
+            if (!violations.isEmpty()) {
+                List<ValidationErrorResponse.FieldError> fieldErrors = violations.stream()
+                        .map(violation -> new ValidationErrorResponse.FieldError(violation.getPropertyPath().toString(), violation.getMessage()))
+                        .collect(Collectors.toList());
+                ValidationErrorResponse errorResponse = new ValidationErrorResponse(fieldErrors);
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+            }
+
+
+            if (postImages == null || postImages.isEmpty()) { // 이미지가 없는 경우
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("이미지를 최소 1장 이상 업로드해야 합니다.");
+            }
+
+            if (postImages.size() > 3) { // 이미지가 있으면 최대 3장까지만 허용
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("이미지는 최대 3장까지 업로드 가능합니다.");
+            }
+
+            postService.createPost(postRequestDto, member, postImages);
+            return ResponseEntity.status(HttpStatus.CREATED).body("게시글을 성공적으로 등록하였습니다.");
+
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("게시글 등록 과정에서 오류가 발생하였습니다. " + e.getMessage());
+        }
+    }
+
 }

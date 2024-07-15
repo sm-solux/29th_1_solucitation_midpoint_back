@@ -11,8 +11,6 @@ import com.solucitation.midpoint_backend.domain.member.service.MemberService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.antlr.v4.runtime.misc.LogManager;
-import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -21,7 +19,6 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -95,5 +92,68 @@ public class PostService {
             }
         }
         throw new IllegalArgumentException("좋아요 상태를 변경하는 중 오류가 발생하였습니다.");
+    }
+
+    @Transactional
+    public void createPost(PostRequestDto postRequestDto, Member member, List<MultipartFile> postImages) {
+        postRequestDto.validatePostHashtags();
+
+        LocalDateTime time = LocalDateTime.now();
+        List<PostHashtag> postHashtags = new ArrayList<>();
+        List<Image> images = new ArrayList<>();
+
+        Post post = Post.builder()
+                .member(member)
+                .title(postRequestDto.getTitle())
+                .content(postRequestDto.getContent())
+                .createDate(time)
+                .updateDate(time)
+                .postHashtags(postHashtags)
+                .images(images)
+                .build();
+
+        postRepository.save(post);
+
+        postHashtags = addHashtags(post, postRequestDto.getPostHashtag());
+        images = addImages(post, member, postImages);
+
+        try {
+            log.info("게시글 등록 성공");
+        } catch (Exception e) {
+            throw new RuntimeException("게시글 등록 실패");
+        }
+    }
+
+    @Transactional
+    public List<Image> addImages(Post post, Member member,  List<MultipartFile> postImages) {
+        List<Image> images = new ArrayList<>();
+        if (!postImages.isEmpty()) {
+            try {
+                for (MultipartFile postImage : postImages) {
+                    String postImageUrl = s3Service.upload("post-images", postImage.getOriginalFilename(), postImage);
+                    Image image = Image.builder()
+                            .imageUrl(postImageUrl).member(member).post(post).build();
+                    imageRepository.save(image);
+                    images.add(image);
+                }
+            } catch (IOException e){
+                log.error("게시글 이미지 업로드 실패: {}", e.getMessage());
+                throw new RuntimeException("게시글 이미지 업로드에 실패하였습니다.");
+            }
+        }
+        return images;
+    }
+
+    @Transactional
+    public List<PostHashtag> addHashtags(Post post, List<Long> hashtags) {
+        List<PostHashtag> postHashtags = new ArrayList<>();
+        for (Long tagId : hashtags) {
+            Hashtag hashtag = hashtagRepository.findById(tagId)
+                    .orElseThrow(() -> new IllegalArgumentException("해당 해시태그는 존재하지 않습니다."));
+            PostHashtag postHashtag = new PostHashtag(post, hashtag);
+            postHashtagsRepository.save(postHashtag);
+            postHashtags.add(postHashtag);
+        }
+        return postHashtags;
     }
 }
