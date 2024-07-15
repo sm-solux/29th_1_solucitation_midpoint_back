@@ -2,9 +2,10 @@ package com.solucitation.midpoint_backend.domain.member.service;
 
 import com.solucitation.midpoint_backend.domain.community_board.entity.Image;
 import com.solucitation.midpoint_backend.domain.community_board.repository.ImageRepository;
-import com.solucitation.midpoint_backend.domain.email.service.EmailServiceV2;
+import com.solucitation.midpoint_backend.domain.email.service.EmailService;
 import com.solucitation.midpoint_backend.domain.file.service.S3Service;
 import com.solucitation.midpoint_backend.domain.member.dto.LoginRequestDto;
+import com.solucitation.midpoint_backend.domain.member.dto.PasswordVerifyRequestDto;
 import com.solucitation.midpoint_backend.domain.member.dto.SignupRequestDto;
 import com.solucitation.midpoint_backend.domain.member.dto.TokenResponseDto;
 import com.solucitation.midpoint_backend.domain.member.entity.Member;
@@ -41,7 +42,7 @@ import java.util.Optional;
 public class MemberService {
     private final MemberRepository memberRepository;
     private final PasswordEncoder passwordEncoder;
-    private final EmailServiceV2 emailServiceV2;
+    private final EmailService emailService;
     private final S3Service s3Service;
     private final ImageRepository imageRepository;
     private final JwtTokenProvider jwtTokenProvider;
@@ -104,7 +105,7 @@ public class MemberService {
         }
 
         // 이메일 인증 여부 확인
-        if (!emailServiceV2.isEmailVerified(signupRequestDto.getEmail())) {
+        if (!emailService.isEmailVerified(signupRequestDto.getEmail())) {
             throw new EmailNotVerifiedException("이메일 인증을 먼저 시도해주세요.");
         }
 
@@ -221,5 +222,38 @@ public class MemberService {
     public Member getMemberByEmail(String email) {
         return memberRepository.findByEmail(email)
                 .orElseThrow(() -> new IllegalArgumentException("해당 이메일의 회원이 존재하지 않습니다."));
+    }
+
+    @Transactional
+    public void resetPassword(String email, String newPassword) {
+        Member member = memberRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("해당 이메일의 회원이 존재하지 않습니다."));
+
+        // 비밀번호 암호화
+        String encodedPassword = passwordEncoder.encode(newPassword);
+
+        // 변경된 비밀번호로 새로운 Member 객체 생성
+        Member updatedMember = Member.builder()
+                .id(member.getId())
+                .name(member.getName())
+                .email(member.getEmail())
+                .nickname(member.getNickname())
+                .pwd(encodedPassword)
+                .build();
+
+        // 변경된 비밀번호 저장
+        memberRepository.save(updatedMember);
+    }
+
+
+    @Transactional
+    public void verifyPassword(String email, PasswordVerifyRequestDto passwordVerifyRequestDto) {
+        Member member = memberRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("해당 이메일의 회원이 존재하지 않습니다."));
+
+        // 현재 비밀번호 확인
+        if (!passwordEncoder.matches(passwordVerifyRequestDto.getPassword(), member.getPwd())) {
+            throw new PasswordMismatchException("비밀번호가 일치하지 않습니다.");
+        }
     }
 }
