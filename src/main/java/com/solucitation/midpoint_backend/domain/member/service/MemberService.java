@@ -28,6 +28,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.Collections;
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 /**
@@ -219,6 +220,11 @@ public class MemberService {
     public Member getMemberByEmail(String email) {
         return memberRepository.findByEmail(email)
                 .orElseThrow(() -> new IllegalArgumentException("해당 이메일의 회원이 존재하지 않습니다."));
+
+    }
+
+    public Optional<Member> getMemberByName(String name) {
+        return memberRepository.findByName(name);
     }
 
     @Transactional
