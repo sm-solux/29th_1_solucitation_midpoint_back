@@ -46,15 +46,15 @@ public class MemberController {
         SignupRequestDto signupRequestDto = objectMapper.readValue(signupRequestDtoJson, SignupRequestDto.class);
         log.info("signupRequestDto = " + signupRequestDto);
 
-        // Validate the DTO manually
-        Set<ConstraintViolation<SignupRequestDto>> violations = validator.validate(signupRequestDto);
-        if (!violations.isEmpty()) {
-            List<ValidationErrorResponse.FieldError> fieldErrors = violations.stream()
-                    .map(violation -> new ValidationErrorResponse.FieldError(violation.getPropertyPath().toString(), violation.getMessage()))
-                    .collect(Collectors.toList());
-            ValidationErrorResponse errorResponse = new ValidationErrorResponse(fieldErrors);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
-        }
+//        // 회원가입 요청 dto를 수동으로 검증 처리
+//        Set<ConstraintViolation<SignupRequestDto>> violations = validator.validate(signupRequestDto);
+//        if (!violations.isEmpty()) {
+//            List<ValidationErrorResponse.FieldError> fieldErrors = violations.stream()
+//                    .map(violation -> new ValidationErrorResponse.FieldError(violation.getPropertyPath().toString(), violation.getMessage()))
+//                    .collect(Collectors.toList());
+//            ValidationErrorResponse errorResponse = new ValidationErrorResponse(fieldErrors);
+//            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+//        }
         return validateAndSignUp(signupRequestDto, profileImage);
     }
 
