@@ -125,6 +125,16 @@ public class JwtTokenProvider {
             throw new BaseException("INVALID_JWT");
         }
     }
+    // 비밀번호 확인시 발급되는 토큰
+    public boolean validateTokenByPwConfirm(String token, String expectedPurpose) {
+        try {
+            Claims claims = Jwts.parser().setSigningKey(secretKey).parseClaimsJws(token).getBody();
+            String purpose = claims.get("purpose", String.class);
+            return expectedPurpose.equals(purpose) && !claims.getExpiration().before(new Date());
+        } catch (Exception e) {
+            return false;
+        }
+    }
 
     // Refresh Token을 무효화하여 로그아웃 처리
     public void invalidateRefreshToken(String refreshToken) {
@@ -174,5 +184,18 @@ public class JwtTokenProvider {
             log.error("토큰에서 이메일 추출 중 오류 발생: {}", e.getMessage());
             return null;
         }
+    }
+
+    public String createShortLivedTokenWithPurpose(Authentication authentication, String purpose) {
+        Date now = new Date();
+        Date validity = new Date(now.getTime() + 600_000); // 매우 짧은 만료 시간인 10분을 가짐
+
+        return Jwts.builder()
+                .setSubject(authentication.getName())
+                .claim("purpose", purpose)
+                .setIssuedAt(now)
+                .setExpiration(validity)
+                .signWith(SignatureAlgorithm.HS256, secretKey)
+                .compact();
     }
 }

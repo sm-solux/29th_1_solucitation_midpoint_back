@@ -75,6 +75,9 @@ public class MemberController2 {
      */
     @DeleteMapping("/delete")
     public ResponseEntity<?> deleteMember(Authentication authentication, @RequestHeader("Authorization") String token) {
+        if (!jwtTokenProvider.validateTokenByPwConfirm(token, "delete")) {
+            return ResponseEntity.status(401).body(Map.of("error", "unauthorized", "message", "회원 탈퇴 권한이 없습니다."));
+        }
         String request_email = jwtTokenProvider.extractEmailFromToken(token);
         String current_email = authentication.getName();
         if (request_email == null || !request_email.equals(current_email)) { // 로그인한 사용자랑 탈퇴를 요청한 사용자랑 일치하는지 확인
@@ -93,6 +96,9 @@ public class MemberController2 {
      */
     @PostMapping("/reset-pw")
     public ResponseEntity<?> resetPassword(@RequestHeader("Authorization") String token, @RequestBody @Valid ResetPwRequestDto resetPwRequestDto) {
+        if (!jwtTokenProvider.validateTokenByPwConfirm(token, "reset-password")) {
+            return ResponseEntity.status(401).body(Map.of("error", "unauthorized", "message", "비밀번호 재설정 권한이 없습니다."));
+        }
         String email = jwtTokenProvider.extractEmailFromToken(token);
         if (email == null || !email.equals(resetPwRequestDto.getEmail())) {
             return ResponseEntity.status(401).body(Map.of("error", "unauthorized", "message", "비밀번호를 재설정할 수 있는 권한이 없습니다."));
@@ -116,12 +122,13 @@ public class MemberController2 {
         String email = authentication.getName();
         try {
             memberService.verifyPassword(email, passwordVerifyRequestDto);
-            String accessToken = jwtTokenProvider.createAccessToken(authentication);
-            AccessTokenResponseDto tokenResponse = AccessTokenResponseDto.builder()
-                    .grantType("Bearer")
-                    .accessToken(accessToken)
-                    .build();
-            return ResponseEntity.ok(tokenResponse);
+            String tokenForDelete = jwtTokenProvider.createShortLivedTokenWithPurpose(authentication, "delete");
+            String tokenForResetPassword = jwtTokenProvider.createShortLivedTokenWithPurpose(authentication, "reset-password");
+
+            return ResponseEntity.ok(Map.of(
+                    "tokenForDelete", tokenForDelete,
+                    "tokenForResetPassword", tokenForResetPassword
+            ));
         } catch (PasswordMismatchException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", "password_mismatch", "message", e.getMessage()));
         }
