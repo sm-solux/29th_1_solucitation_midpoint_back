@@ -23,4 +23,12 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     // Post 엔티티와 각 게시글에 연결된 images와 postHashtags를 함께 가져옵니다.
     @Query("SELECT p FROM Post p ORDER BY p.createDate desc ")
     List<Post> findAllPostWithImagesAndPostHashtags();
+
+    // 해시태그 리스트 원소 중 하나 이상을 포함하는 게시글을 게시일 내림차순으로 모두 가져옵니다.
+    @Query("SELECT DISTINCT p FROM Post p " +
+            "JOIN p.postHashtags ph " +
+            "JOIN ph.hashtag h " +
+            "WHERE h.id IN :purpose " +
+            "ORDER BY p.createDate DESC")
+    List<Post> findAllPostByPurpose(@Param("purpose") List<Long> purpose);
 }

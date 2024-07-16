@@ -156,4 +156,26 @@ public class PostService {
         }
         return postHashtags;
     }
+
+    @Transactional(readOnly = true)
+    public List<PostResponseDto> getPostByPurpose(Member member, List<Long> purposes) {
+        if (purposes.isEmpty()) {
+            throw new IllegalArgumentException("최소 하나 이상의 해시태그를 선택해야 합니다.");
+        }
+        for (Long tagId : purposes) { // 해시태그 유효성 검사
+            Hashtag hashtag = hashtagRepository.findById(tagId)
+                    .orElseThrow(() -> new IllegalArgumentException("해당 해시태그는 존재하지 않습니다."));
+        }
+        List<Post> posts = postRepository.findAllPostByPurpose(purposes);
+
+        return posts.stream()
+                .map(post -> {
+                    PostResponseDto postDto = new PostResponseDto(post);
+                    if (member != null) {
+                        postDto.setLikes(likesRepository.isMemberLikesPostByEmail(post.getId(), member.getEmail()));
+                    }
+                    return postDto;
+                })
+                .collect(Collectors.toList());
+    }
 }
