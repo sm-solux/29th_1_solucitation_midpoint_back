@@ -275,7 +275,7 @@ public class MemberService {
                 profileImageUrl
         );
     }
-
+    @Transactional
     public void updateMember(String currentEmail, ProfileUpdateRequestDto profileUpdateRequestDto, MultipartFile profileImage) {
         Member member = memberRepository.findByEmail(currentEmail)
                 .orElseThrow(() -> new IllegalArgumentException("해당 이메일의 회원이 존재하지 않습니다."));
@@ -304,5 +304,23 @@ public class MemberService {
                 throw new RuntimeException("프로필 이미지 업로드에 실패했습니다.");
             }
         }
+    }
+
+    /**
+     * 회원 탈퇴를 처리합니다.
+     *
+     * @param email 탈퇴할 회원의 이메일
+     */
+    @Transactional
+    public void deleteMember(String email) {
+        Member member = memberRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("해당 이메일의 회원이 존재하지 않습니다."));
+        // 관련 이미지 삭제
+        imageRepository.findByMemberId(member.getId()).ifPresent(image -> {
+            s3Service.delete(image.getImageUrl()); // S3 삭제
+            imageRepository.delete(image); // Image 엔티티 삭제
+        });
+        // TODO member 관련 데이터 삭제 로직 추가 (자동 삭제가 안 되어 있는 경우)
+        memberRepository.delete(member);
     }
 }

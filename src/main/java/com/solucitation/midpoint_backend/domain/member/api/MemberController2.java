@@ -66,6 +66,23 @@ public class MemberController2 {
         return ResponseEntity.ok(Map.of("message", "프로필 수정이 성공적으로 완료되었습니다."));
     }
 
+    /**
+     * 회원 탈퇴를 처리합니다.
+     *
+     * @param authentication 인증 정보
+     * @param token          인증 토큰
+     * @return 회원 탈퇴 성공 메시지 또는 오류 메시지
+     */
+    @DeleteMapping("/delete")
+    public ResponseEntity<?> deleteMember(Authentication authentication, @RequestHeader("Authorization") String token) {
+        String request_email = jwtTokenProvider.extractEmailFromToken(token);
+        String current_email = authentication.getName();
+        if (request_email == null || !request_email.equals(current_email)) { // 로그인한 사용자랑 탈퇴를 요청한 사용자랑 일치하는지 확인
+            return ResponseEntity.status(401).body(Map.of("error", "unauthorized", "message", "회원을 탈퇴할 수 있는 권한이 없습니다."));
+        }
+        memberService.deleteMember(current_email);
+        return ResponseEntity.ok(Map.of("message", "회원 탈퇴가 성공적으로 완료되었습니다."));
+    }
 
     /**
      * 비밀번호를 재설정합니다.
@@ -76,8 +93,6 @@ public class MemberController2 {
      */
     @PostMapping("/reset-pw")
     public ResponseEntity<?> resetPassword(@RequestHeader("Authorization") String token, @RequestBody @Valid ResetPwRequestDto resetPwRequestDto) {
-        Set<ConstraintViolation<ResetPwRequestDto>> violations = validator.validate(resetPwRequestDto);
-
         String email = jwtTokenProvider.extractEmailFromToken(token);
         if (email == null || !email.equals(resetPwRequestDto.getEmail())) {
             return ResponseEntity.status(401).body(Map.of("error", "unauthorized", "message", "비밀번호를 재설정할 수 있는 권한이 없습니다."));
@@ -98,8 +113,6 @@ public class MemberController2 {
      */
     @PostMapping("/verify-pw")
     public ResponseEntity<?> verifyPassword(@RequestBody @Valid PasswordVerifyRequestDto passwordVerifyRequestDto, Authentication authentication) {
-        Set<ConstraintViolation<PasswordVerifyRequestDto>> violations = validator.validate(passwordVerifyRequestDto);
-
         String email = authentication.getName();
         try {
             memberService.verifyPassword(email, passwordVerifyRequestDto);
