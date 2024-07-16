@@ -168,8 +168,7 @@ public class PostController {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
             }
 
-
-            if (postImages == null || postImages.isEmpty()) { // 이미지가 없는 경우
+            if (postImages == null || postImages.isEmpty()) { // 이미지 필드 자체가 없는 경우
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("이미지를 최소 1장 이상 업로드해야 합니다.");
             }
 
@@ -180,12 +179,10 @@ public class PostController {
             postService.createPost(postRequestDto, member, postImages);
             return ResponseEntity.status(HttpStatus.CREATED).body("게시글을 성공적으로 등록하였습니다.");
 
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("게시글 등록 과정에서 오류가 발생하였습니다. " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("게시글 등록 중 오류가 발생하였습니다.");
         }
     }
-
 }
