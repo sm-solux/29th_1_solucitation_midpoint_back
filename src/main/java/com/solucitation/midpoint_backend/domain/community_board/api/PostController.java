@@ -5,9 +5,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.solucitation.midpoint_backend.domain.community_board.dto.PostDetailDto;
 import com.solucitation.midpoint_backend.domain.community_board.dto.PostRequestDto;
 import com.solucitation.midpoint_backend.domain.community_board.dto.PostResponseDto;
-
-import com.solucitation.midpoint_backend.domain.community_board.entity.Post;
-import com.solucitation.midpoint_backend.domain.community_board.repository.PostRepository;
 import com.solucitation.midpoint_backend.domain.community_board.service.PostService;
 
 import com.solucitation.midpoint_backend.domain.member.dto.ValidationErrorResponse;
@@ -26,7 +23,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -39,7 +35,6 @@ public class PostController {
     private final PostService postService;
     private final MemberService memberService;
     private final ObjectMapper objectMapper;
-    private final PostRepository postRepository;
     private final Validator validator;
 
     /**
@@ -104,12 +99,7 @@ public class PostController {
                         .body("해당 서비스를 이용하기 위해서는 로그인이 필요합니다.");
             }
 
-            Optional<Post> post = postRepository.findById(postId);
-            if (post.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body("게시글을 찾을 수 없습니다.");
-            }
-
+            postService.getPostById(postId); // 게시글 존재 여부 확인
             String memberEmail = authentication.getName();
             Member member = memberService.getMemberByEmail(memberEmail);
 
@@ -124,7 +114,9 @@ public class PostController {
             } else {
                 return ResponseEntity.status(HttpStatus.OK).body("좋아요를 취소하였습니다!");
             }
-        }  catch (Exception e) {
+        } catch (EntityNotFoundException e) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("해당 게시글이 존재하지 않습니다.");
+        } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("좋아요 상태를 변경하는 중 오류가 발생하였습니다." + e.getMessage());
         }
