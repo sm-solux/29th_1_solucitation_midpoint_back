@@ -5,10 +5,10 @@ import jakarta.validation.constraints.Size;
 import java.util.List;
 
 public class CoordinateRequest {
-    @Size(min = 2, max = 20, message = "장소의 갯수가 2에서 20 사이여야 합니다.")
+    @Size(min = 2, max = 20, message = "장소의 개수가 2에서 20 사이여야 합니다.")
     private List<Double> latitudes;
 
-    @Size(min = 2, max = 20, message = "장소의 갯수가 2에서 20 사이여야 합니다")
+    @Size(min = 2, max = 20, message = "장소의 개수가 2에서 20 사이여야 합니다.")
     private List<Double> longitudes;
 
     public CoordinateRequest() {
