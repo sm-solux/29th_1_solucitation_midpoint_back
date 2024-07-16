@@ -41,8 +41,12 @@ public class MemberController {
      */
     @PostMapping(value = "/signup", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> signUpMember(
-            @RequestPart(value = "signupRequestDto") String signupRequestDtoJson,
+            @RequestPart(value = "signupRequestDto", required = false) String signupRequestDtoJson,
             @RequestPart(value = "profileImage", required = false) MultipartFile profileImage) throws JsonProcessingException {
+        if (signupRequestDtoJson == null) {
+            return ResponseEntity.badRequest().body(Map.of("error", "signup_empty_dto", "message", "회원가입 요청 dto가 비었습니다."));
+        }
+
         SignupRequestDto signupRequestDto = objectMapper.readValue(signupRequestDtoJson, SignupRequestDto.class);
         log.info("signupRequestDto = " + signupRequestDto);
 

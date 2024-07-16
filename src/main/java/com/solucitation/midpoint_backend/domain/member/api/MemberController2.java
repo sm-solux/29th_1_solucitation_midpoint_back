@@ -47,12 +47,15 @@ public class MemberController2 {
         return ResponseEntity.ok(memberProfile);
     }
 
-    @PatchMapping("/profile")
+    @PatchMapping(value = "/profile", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> updateProfile(
             Authentication authentication,
-            @RequestPart(value = "profileUpdateRequestDto") String profileUpdateRequestDtoJson,
+            @RequestPart(value = "profileUpdateRequestDto", required = false) String profileUpdateRequestDtoJson,
             @RequestPart(value = "profileImage", required = false) MultipartFile profileImage
     ) throws JsonProcessingException {
+        if (profileUpdateRequestDtoJson == null) {
+            return ResponseEntity.badRequest().body(Map.of("error", "profile_update_empty_dto", "message", "프로필 수정 요청 dto가 비었습니다."));
+        }
         ProfileUpdateRequestDto profileUpdateRequestDto = objectMapper.readValue(profileUpdateRequestDtoJson, ProfileUpdateRequestDto.class);
         String email = authentication.getName();
         return validateAndUpdate(email, profileUpdateRequestDto, profileImage);
@@ -67,7 +70,7 @@ public class MemberController2 {
     /**
      * 비밀번호를 재설정합니다.
      *
-     * @param token 인증 토큰
+     * @param token             인증 토큰
      * @param resetPwRequestDto 비밀번호 재설정 요청 DTO
      * @return 비밀번호 재설정 성공 메시지 또는 오류 메시지
      */
@@ -90,7 +93,7 @@ public class MemberController2 {
      * 비밀번호를 확인합니다.
      *
      * @param passwordVerifyRequestDto 비밀번호 확인 요청 DTO
-     * @param authentication 인증 정보
+     * @param authentication           인증 정보
      * @return 비밀번호가 일치하면 새로운 액세스 토큰을 반환, 일치하지 않으면 오류 메시지 반환
      */
     @PostMapping("/verify-pw")
