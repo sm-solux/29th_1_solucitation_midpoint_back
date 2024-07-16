@@ -74,13 +74,6 @@ public class MemberController2 {
     @PostMapping("/reset-pw")
     public ResponseEntity<?> resetPassword(@RequestHeader("Authorization") String token, @RequestBody @Valid ResetPwRequestDto resetPwRequestDto) {
         Set<ConstraintViolation<ResetPwRequestDto>> violations = validator.validate(resetPwRequestDto);
-        if (!violations.isEmpty()) {
-            List<ValidationErrorResponse.FieldError> fieldErrors = violations.stream()
-                    .map(violation -> new ValidationErrorResponse.FieldError(violation.getPropertyPath().toString(), violation.getMessage()))
-                    .collect(Collectors.toList());
-            ValidationErrorResponse errorResponse = new ValidationErrorResponse(fieldErrors);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
-        }
 
         String email = jwtTokenProvider.extractEmailFromToken(token);
         if (email == null || !email.equals(resetPwRequestDto.getEmail())) {
@@ -103,13 +96,6 @@ public class MemberController2 {
     @PostMapping("/verify-pw")
     public ResponseEntity<?> verifyPassword(@RequestBody @Valid PasswordVerifyRequestDto passwordVerifyRequestDto, Authentication authentication) {
         Set<ConstraintViolation<PasswordVerifyRequestDto>> violations = validator.validate(passwordVerifyRequestDto);
-        if (!violations.isEmpty()) {
-            List<ValidationErrorResponse.FieldError> fieldErrors = violations.stream()
-                    .map(violation -> new ValidationErrorResponse.FieldError(violation.getPropertyPath().toString(), violation.getMessage()))
-                    .collect(Collectors.toList());
-            ValidationErrorResponse errorResponse = new ValidationErrorResponse(fieldErrors);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
-        }
 
         String email = authentication.getName();
         try {
