@@ -275,4 +275,47 @@ public class MemberService {
                 profileImageUrl
         );
     }
+
+    public void updateMember(String currentEmail, ProfileUpdateRequestDto profileUpdateRequestDto, MultipartFile profileImage) {
+        Member member = memberRepository.findByEmail(currentEmail)
+                .orElseThrow(() -> new IllegalArgumentException("해당 이메일의 회원이 존재하지 않습니다."));
+        // 닉네임이 이미 사용 중인지 확인
+        if (isNicknameAlreadyInUse(profileUpdateRequestDto.getNickname())) {
+            throw new NicknameAlreadyInUseException("이미 사용중인 닉네임입니다.");
+        }
+
+        // 이메일이 이미 사용 중인지 확인
+        if (isEmailAlreadyInUse(profileUpdateRequestDto.getEmail())) {
+            throw new EmailAlreadyInUseException("이미 사용중인 이메일입니다.");
+        }
+        // 이메일 인증 여부 확인
+        if (!emailService.isEmailVerified(profileUpdateRequestDto.getEmail())) {
+            throw new EmailNotVerifiedException("이메일 인증을 먼저 시도해주세요.");
+        }
+
+        // 회원 정보 업데이트
+        Member updatedMember = Member.builder()
+                .id(member.getId())
+                .name(profileUpdateRequestDto.getName())
+                .nickname(profileUpdateRequestDto.getNickname())
+                .email(profileUpdateRequestDto.getEmail())
+                .pwd(member.getPwd())
+                .build();
+        memberRepository.save(updatedMember);
+
+        // 이미지 업데이트
+        if (profileImage != null && !profileImage.isEmpty()) {
+            try {
+                String profileImageUrl = s3Service.upload("profile-images", profileImage.getOriginalFilename(), profileImage);
+                Image image = imageRepository.findByMemberId(member.getId())
+                        .orElseGet(() -> Image.builder().member(updatedMember).build());
+                image.setImageUrl(profileImageUrl);
+                imageRepository.save(image);
+            } catch (IOException e) {
+                log.error("프로필 이미지 업로드 실패: {}", e.getMessage());
+                // 이미지 업로드 실패 알림
+                throw new RuntimeException("프로필 이미지 업로드에 실패했습니다.");
+            }
+        }
+    }
 }

@@ -1,5 +1,7 @@
 package com.solucitation.midpoint_backend.domain.member.api;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.solucitation.midpoint_backend.domain.member.dto.*;
 import com.solucitation.midpoint_backend.domain.member.entity.Member;
 import com.solucitation.midpoint_backend.domain.member.exception.PasswordMismatchException;
@@ -11,9 +13,11 @@ import jakarta.validation.Validator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.Map;
@@ -28,6 +32,7 @@ public class MemberController2 {
     private final MemberService memberService;
     private final Validator validator;
     private final JwtTokenProvider jwtTokenProvider;
+    private final ObjectMapper objectMapper;
 
     /**
      * 회원 프로필 정보를 가져옵니다.
@@ -41,6 +46,23 @@ public class MemberController2 {
         MemberProfileResponseDto memberProfile = memberService.getMemberProfile(email);
         return ResponseEntity.ok(memberProfile);
     }
+
+    @PatchMapping("/profile")
+    public ResponseEntity<?> updateProfile(
+            Authentication authentication,
+            @RequestPart(value = "profileUpdateRequestDto") String profileUpdateRequestDtoJson,
+            @RequestPart(value = "profileImage", required = false) MultipartFile profileImage
+    ) throws JsonProcessingException {
+        ProfileUpdateRequestDto profileUpdateRequestDto = objectMapper.readValue(profileUpdateRequestDtoJson, ProfileUpdateRequestDto.class);
+        String email = authentication.getName();
+        return validateAndUpdate(email, profileUpdateRequestDto, profileImage);
+    }
+
+    private ResponseEntity<?> validateAndUpdate(String email, @Valid ProfileUpdateRequestDto profileUpdateRequestDto, MultipartFile profileImage) {
+        memberService.updateMember(email, profileUpdateRequestDto, profileImage);
+        return ResponseEntity.ok(Map.of("message", "프로필 수정이 성공적으로 완료되었습니다."));
+    }
+
 
     /**
      * 비밀번호를 재설정합니다.
