@@ -1,5 +1,6 @@
 package com.solucitation.midpoint_backend.domain.logic;
 
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -10,7 +11,7 @@ import java.util.List;
 public class MidpointController {
 
     @PostMapping("/midpoint/api/logic")
-    public Coordinate calculateMidpoint(@RequestBody CoordinateRequest request) {
+    public Coordinate calculateMidpoint(@RequestBody @Valid CoordinateRequest request) {
         List<Double> latitudes = request.getLatitudes();
         List<Double> longitudes = request.getLongitudes();
 
