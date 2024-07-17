@@ -31,4 +31,11 @@ public interface PostRepository extends JpaRepository<Post, Long> {
             "WHERE h.id IN :purpose " +
             "ORDER BY p.createDate DESC")
     List<Post> findAllPostByPurpose(@Param("purpose") List<Long> purpose);
+
+    // 제목이나 본문에서 검색어가 등장하는 게시글을 게시일 내림차순으로 모두 가져옵니다.
+    @Query("SELECT DISTINCT p FROM Post p " +
+            "WHERE LOWER(p.title) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
+            "      LOWER(p.content) LIKE LOWER(CONCAT('%', :query, '%')) " +
+            "ORDER BY p.createDate DESC")
+    List<Post> findAllPostByQuery(@Param("query") String query);
 }

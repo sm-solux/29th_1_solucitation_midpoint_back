@@ -20,7 +20,7 @@ import java.util.Optional;
 @Slf4j
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/search")
+@RequestMapping("/api/posts/search")
 public class SearhController {
     private final PostService postService;
     private final MemberService memberService;
@@ -35,7 +35,7 @@ public class SearhController {
      *          해시태그 관련 오류가 발생할 경우 400 BAD REQUEST 와 함께 에러 메시지를 반환합니다.
      *          기타 사유로 오류가 발생할 경우 500 INTERNAL_SERVER_ERROR 와 에러 메시지를 반환합니다.
      */
-    @GetMapping
+    @GetMapping("/purpose")
     public ResponseEntity<?> searchByPurpose(Authentication authentication, @RequestParam("purpose") List<Long> purposes) {
         try {
             Member member = null;
@@ -53,5 +53,34 @@ public class SearhController {
                     .body("게시글 검색 중 오류가 발생하였습니다. " + e.getMessage());
         }
     }
-}
 
+    /**
+     * 게시글을 검색어로 검색합니다.
+     * 검색어가 문장 형태일 경우 공백으로 파싱 후 각각의 단어에 대해 OR 조건으로 검색한 결과를 반환합니다.
+     *
+     * @param authentication 인증 정보
+     * @param query 검색어
+     * @return
+     *          검색 성공 시 200 ok와 게시글 목록을 반환합니다.
+     *          검색어를 입력하지 않거나 공백으로만 구성된 경우 400 BAD REQUEST 와 함께 에러 메시지를 반환합니다.
+     *          기타 사유로 오류가 발생할 경우 500 INTERNAL_SERVER_ERROR 와 에러 메시지를 반환합니다.
+     */
+    @GetMapping("/query")
+    public ResponseEntity<?> searchByQuery(Authentication authentication, @RequestParam("query") String query) {
+        try {
+            Member member = null;
+
+            if (!(authentication == null || !authentication.isAuthenticated())) {
+                String memberEmail = authentication.getName();
+                member = memberService.getMemberByEmail(memberEmail);
+            }
+            List<PostResponseDto> postResponseDto = postService.getPostByQuery(member, query);
+            return ResponseEntity.ok(postResponseDto);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("게시글 검색 중 오류가 발생하였습니다. " + e.getMessage());
+        }
+    }
+}
