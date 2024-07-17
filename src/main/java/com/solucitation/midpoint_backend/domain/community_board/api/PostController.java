@@ -177,4 +177,35 @@ public class PostController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("게시글 등록 중 오류가 발생하였습니다.");
         }
     }
+
+    /**
+     * 내가 작성한 모든 게시글을 요약된 형태로 생성일 최신순부터 가져옵니다.
+     *
+     * @param authentication 인증 정보
+     * @return  성공 시 200 OK와 함께 게시글 목록을 반환합니다.
+     *          사용자를 찾을 수 없을 때는 404 Not Found 에러를 반환합니다.
+     *          기타 이유로 조회 실패 시 500 Internal Server Error를 반환합니다.
+     */
+    @GetMapping("/mine")
+    public ResponseEntity<?> getMyAllPosts(Authentication authentication) {
+        try {
+            if (authentication == null || !authentication.isAuthenticated()) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body("해당 서비스를 이용하기 위해서는 로그인이 필요합니다.");
+            }
+
+            String memberEmail = authentication.getName();
+            Member member = memberService.getMemberByEmail(memberEmail);
+            if (member == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("사용자를 찾을 수 없습니다.");
+            }
+
+            List<PostResponseDto> postResponseDto = postService.getMyAllPosts(member);
+            return ResponseEntity.ok(postResponseDto);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("게시글 조회 중 오류가 발생하였습니다. " + e.getMessage());
+        }
+    }
+
 }

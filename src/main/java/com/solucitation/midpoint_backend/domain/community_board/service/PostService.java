@@ -161,4 +161,18 @@ public class PostService {
         }
         return postHashtags;
     }
+
+    @Transactional(readOnly = true)
+    public List<PostResponseDto> getMyAllPosts(Member member) {
+        List<Post> posts = postRepository.findByMemberIdOrderByCreateDateDesc(member.getId());
+        return posts.stream()
+                .map(post -> {
+                    PostResponseDto postDto = new PostResponseDto(post);
+                    if (member != null) {
+                        postDto.setLikes(likesRepository.isMemberLikesPostByEmail(post.getId(), member.getEmail()));
+                    }
+                    return postDto;
+                })
+                .collect(Collectors.toList());
+    }
 }

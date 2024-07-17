@@ -1,5 +1,6 @@
 package com.solucitation.midpoint_backend.domain.community_board.repository;
 
+import com.solucitation.midpoint_backend.domain.community_board.dto.PostResponseDto;
 import com.solucitation.midpoint_backend.domain.community_board.entity.Post;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -23,4 +24,7 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     // Post 엔티티와 각 게시글에 연결된 images와 postHashtags를 함께 가져옵니다.
     @Query("SELECT p FROM Post p ORDER BY p.createDate desc ")
     List<Post> findAllPostWithImagesAndPostHashtags();
+
+    // 특정한 작성자가 작성한 게시글을 모두 가져옵니다.
+    List<Post> findByMemberIdOrderByCreateDateDesc(Long memberId);
 }
