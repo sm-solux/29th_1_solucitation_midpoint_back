@@ -2,6 +2,7 @@ package com.solucitation.midpoint_backend.domain.member.api;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.solucitation.midpoint_backend.domain.file.service.S3Service;
 import com.solucitation.midpoint_backend.domain.member.dto.*;
 import com.solucitation.midpoint_backend.domain.member.service.MemberService;
 import com.solucitation.midpoint_backend.global.auth.JwtTokenProvider;
@@ -27,7 +28,7 @@ import java.util.Map;
 public class MemberController {
     private final MemberService memberService;
     private final ObjectMapper objectMapper;
-    private final Validator validator;
+    private final S3Service s3Service;
     private final JwtTokenProvider jwtTokenProvider;
 
     /**
@@ -138,7 +139,9 @@ public class MemberController {
             return ResponseEntity.status(401).body(Map.of("error", "unauthorized", "message", "회원 탈퇴 권한이 없습니다."));
         }
         String email = jwtTokenProvider.extractEmailFromToken(deleteToken);
-        memberService.deleteMember(email);
+        String profileImgUrl = memberService.deleteMember(email); // 이미지와 멤버 엔티티 삭제
+        log.info("profileImgUrl는 by test? " + profileImgUrl);
+        s3Service.delete(profileImgUrl); // 이미지 S3에서 삭제
         return ResponseEntity.ok(Map.of("message", "회원 탈퇴가 성공적으로 완료되었습니다."));
     }
 

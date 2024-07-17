@@ -29,6 +29,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.util.Collections;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -312,15 +313,24 @@ public class MemberService {
      * @param email 탈퇴할 회원의 이메일
      */
     @Transactional
-    public void deleteMember(String email) {
+    public String deleteMember(String email) {
         Member member = memberRepository.findByEmail(email)
                 .orElseThrow(() -> new IllegalArgumentException("해당 이메일의 회원이 존재하지 않습니다."));
+
         // 관련 이미지 삭제
-        imageRepository.findByMemberId(member.getId()).ifPresent(image -> {
-            s3Service.delete(image.getImageUrl()); // S3 삭제
-            imageRepository.delete(image); // Image 엔티티 삭제
-        });
+        Optional<Image> image = imageRepository.findByMemberId(member.getId());
+        String imageUrl = null;
+
+        if (image.isPresent()) {
+            Image presentImage = image.get();
+            imageUrl = presentImage.getImageUrl();
+            s3Service.delete(imageUrl); // S3 삭제
+            imageRepository.delete(presentImage); // Image 엔티티 삭제
+        }
+
         // TODO member 관련 데이터 삭제 로직 추가 (자동 삭제가 안 되어 있는 경우)
         memberRepository.delete(member);
+
+        return imageUrl;
     }
 }
