@@ -123,7 +123,7 @@ public class MemberService {
         // 프로필 이미지 업로드 및 저장
         if (profileImage != null && !profileImage.isEmpty()) {
             try {
-                String profileImageUrl = s3Service.upload("profile-images", profileImage.getOriginalFilename(), profileImage);
+                String profileImageUrl = getS3UploadUrl(profileImage);
                 Image image = Image.builder()
                         .imageUrl(profileImageUrl)
                         .member(newMember)
@@ -135,6 +135,10 @@ public class MemberService {
                 throw new RuntimeException("프로필 이미지 업로드에 실패했습니다.");
             }
         }
+    }
+
+    private String getS3UploadUrl(MultipartFile profileImage) throws IOException {
+        return s3Service.upload("profile-images", profileImage.getOriginalFilename(), profileImage);
     }
 
     /**
@@ -344,7 +348,7 @@ public class MemberService {
         // 프로필 이미지가 없는 경우
         if (profileImage != null && !profileImage.isEmpty()) {
             // 새로운 이미지 S3에 업로드
-            return s3Service.upload("profile-images", profileImage.getOriginalFilename(), profileImage);
+            return getS3UploadUrl(profileImage);
         } else {
             return null;
         }
