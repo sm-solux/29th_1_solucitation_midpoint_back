@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.solucitation.midpoint_backend.domain.member.dto.*;
 import com.solucitation.midpoint_backend.domain.member.service.MemberService;
 import com.solucitation.midpoint_backend.global.auth.JwtTokenProvider;
-import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Valid;
 import jakarta.validation.Validator;
 import lombok.RequiredArgsConstructor;
@@ -20,8 +19,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 @Slf4j
 @RestController
@@ -127,5 +124,42 @@ public class MemberController {
 
         jwtTokenProvider.addToBlacklist(refreshToken); // refreshToken을 블랙리스트에 추가
         return ResponseEntity.ok(Map.of("message", "로그아웃에 성공하였습니다."));
+    }
+    /**
+     * 회원 탈퇴를 처리합니다.
+     *
+     * @param token          비밀번호 확인했고, 탈퇴하겠다는 인증 토큰
+     * @return 회원 탈퇴 성공 메시지 또는 오류 메시지
+     */
+    @DeleteMapping("/delete")
+    public ResponseEntity<?> deleteMember(@RequestHeader("X-Delete-Token") String token) {
+        String deleteToken = jwtTokenProvider.resolveToken(token);
+        if (!jwtTokenProvider.validateTokenByPwConfirm(deleteToken, "delete")) {
+            return ResponseEntity.status(401).body(Map.of("error", "unauthorized", "message", "회원 탈퇴 권한이 없습니다."));
+        }
+        String email = jwtTokenProvider.extractEmailFromToken(deleteToken);
+        memberService.deleteMember(email);
+        return ResponseEntity.ok(Map.of("message", "회원 탈퇴가 성공적으로 완료되었습니다."));
+    }
+
+    /**
+     * 비밀번호를 재설정합니다.
+     *
+     * @param token             비밀번호 확인했고, 비밀번호 재설정하겠다는 인증 토큰
+     * @param resetPwRequestDto 비밀번호 재설정 요청 DTO
+     * @return 비밀번호 재설정 성공 메시지 또는 오류 메시지
+     */
+    @PostMapping("/reset-pw")
+    public ResponseEntity<?> resetPassword(@RequestHeader("X-Reset-Password-Token") String token, @RequestBody @Valid ResetPwRequestDto resetPwRequestDto) {
+        String resetToken = jwtTokenProvider.resolveToken(token);
+        if (!jwtTokenProvider.validateTokenByPwConfirm(resetToken, "reset-password")) {
+            return ResponseEntity.status(401).body(Map.of("error", "unauthorized", "message", "비밀번호를 재설정할 수 있는 권한이 없습니다.")); // 토큰이 만료된 경우도 포함
+        }
+        if (!resetPwRequestDto.getNewPassword().equals(resetPwRequestDto.getNewPasswordConfirm())) {
+            return ResponseEntity.badRequest().body(Map.of("error", "password_mismatch", "message", "새 비밀번호와 새 비밀번호 확인이 일치하지 않습니다."));
+        }
+        String email = jwtTokenProvider.extractEmailFromToken(resetToken);
+        memberService.resetPassword(email, resetPwRequestDto.getNewPassword());
+        return ResponseEntity.ok(Map.of("message", "비밀번호 재설정이 성공적으로 완료되었습니다."));
     }
 }
