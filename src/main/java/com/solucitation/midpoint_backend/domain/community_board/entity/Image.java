@@ -17,6 +17,7 @@ import static jakarta.persistence.FetchType.LAZY;
 @AllArgsConstructor
 @Builder
 @EntityListeners(AuditingEntityListener.class)
+@Table(uniqueConstraints = @UniqueConstraint(columnNames = "member_id"))
 public class Image {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -39,7 +40,7 @@ public class Image {
     private Post post;
 
     @ManyToOne(fetch = LAZY)
-    @JoinColumn(name="member_id", nullable = false)
+    @JoinColumn(name="member_id", nullable = true)
     private Member member;
 
     public Image(String image_url, Member member, LocalDateTime createDate, LocalDateTime updateDate) {
