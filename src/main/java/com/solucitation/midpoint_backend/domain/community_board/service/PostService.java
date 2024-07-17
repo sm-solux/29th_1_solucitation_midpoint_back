@@ -165,10 +165,10 @@ public class PostService {
 
     public void deletePost(Member member, Long postId) throws AccessDeniedException {
         Optional<Post> post = postRepository.findById(postId); // 해당 멤버가 게시글 작성자인지 확인힙니다.
-        if (post.isPresent() && post.get().getId().equals(member.getId())) {
+        if (post.isPresent() && post.get().getMember().getId().equals(member.getId())) {
             postRepository.deleteById(postId);
         }
         else
-            throw new AccessDeniedException("해당 게시글을 삭제할 권한이 없습니다.");
+            throw new AccessDeniedException("해당 게시글을 삭제할 권한이 없습니다. 본인이 작성한 글만 삭제할 수 있습니다.");
     }
 }
