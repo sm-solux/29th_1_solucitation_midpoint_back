@@ -2,6 +2,7 @@ package com.solucitation.midpoint_backend.domain.member.api;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.solucitation.midpoint_backend.domain.file.service.S3Service;
 import com.solucitation.midpoint_backend.domain.member.dto.*;
 import com.solucitation.midpoint_backend.domain.member.exception.PasswordMismatchException;
 import com.solucitation.midpoint_backend.domain.member.service.MemberService;
@@ -17,6 +18,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.Map;
 
 @Slf4j
@@ -25,7 +27,7 @@ import java.util.Map;
 @RequestMapping("/api/member")
 public class MemberController2 {
     private final MemberService memberService;
-    private final Validator validator;
+    private final S3Service s3Service;
     private final JwtTokenProvider jwtTokenProvider;
     private final ObjectMapper objectMapper;
 
@@ -53,11 +55,22 @@ public class MemberController2 {
         }
         ProfileUpdateRequestDto profileUpdateRequestDto = objectMapper.readValue(profileUpdateRequestDtoJson, ProfileUpdateRequestDto.class);
         String email = authentication.getName();
-        return validateAndUpdate(email, profileUpdateRequestDto, profileImage);
+
+        String profileImageUrl = null;
+        if (profileImage != null && !profileImage.isEmpty()) {
+            try {
+                profileImageUrl = s3Service.upload("profile-images", profileImage.getOriginalFilename(), profileImage);
+            } catch (IOException e) {
+                log.error("프로필 이미지 업로드 실패: {}", e.getMessage());
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "image_upload_failed", "message", "프로필 이미지 업로드에 실패했습니다."));
+            }
+        }
+
+        return validateAndUpdate(email, profileUpdateRequestDto, profileImageUrl);
     }
 
-    private ResponseEntity<?> validateAndUpdate(String email, @Valid ProfileUpdateRequestDto profileUpdateRequestDto, MultipartFile profileImage) {
-        memberService.updateMember(email, profileUpdateRequestDto, profileImage);
+    private ResponseEntity<?> validateAndUpdate(String email, @Valid ProfileUpdateRequestDto profileUpdateRequestDto, String profileImageUrl) {
+        memberService.updateMember(email, profileUpdateRequestDto, profileImageUrl);
         return ResponseEntity.ok(Map.of("message", "프로필 수정이 성공적으로 완료되었습니다."));
     }
 
@@ -91,5 +104,4 @@ public class MemberController2 {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", "password_mismatch", "message", e.getMessage()));
         }
     }
-
 }

@@ -277,7 +277,7 @@ public class MemberService {
         );
     }
     @Transactional
-    public void updateMember(String currentEmail, ProfileUpdateRequestDto profileUpdateRequestDto, MultipartFile profileImage) {
+    public void updateMember(String currentEmail, ProfileUpdateRequestDto profileUpdateRequestDto, String profileImageUrl) {
         Member member = memberRepository.findByEmail(currentEmail)
                 .orElseThrow(() -> new IllegalArgumentException("해당 이메일의 회원이 존재하지 않습니다."));
 
@@ -291,21 +291,15 @@ public class MemberService {
                 .build();
         memberRepository.save(updatedMember);
 
-        // 이미지 업데이트
-        if (profileImage != null && !profileImage.isEmpty()) {
-            try {
-                String profileImageUrl = s3Service.upload("profile-images", profileImage.getOriginalFilename(), profileImage);
-                Image image = imageRepository.findByMemberId(member.getId())
-                        .orElseGet(() -> Image.builder().member(updatedMember).build());
-                image.setImageUrl(profileImageUrl);
-                imageRepository.save(image);
-            } catch (IOException e) {
-                log.error("프로필 이미지 업로드 실패: {}", e.getMessage());
-                // 이미지 업로드 실패 알림
-                throw new RuntimeException("프로필 이미지 업로드에 실패했습니다.");
-            }
+        // 이미지 URL이 있는 경우 이미지 업데이트
+        if (profileImageUrl != null) {
+            Image image = imageRepository.findByMemberId(member.getId())
+                    .orElseGet(() -> Image.builder().member(updatedMember).build());
+            image.setImageUrl(profileImageUrl);
+            imageRepository.save(image);
         }
     }
+
 
     /**
      * 회원 탈퇴를 처리합니다.
