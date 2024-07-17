@@ -276,12 +276,32 @@ public class MemberService {
                 profileImageUrl
         );
     }
-    @Transactional
-    public void updateMember(String currentEmail, ProfileUpdateRequestDto profileUpdateRequestDto, String profileImageUrl) {
+
+    public void updateMember(String currentEmail, ProfileUpdateRequestDto profileUpdateRequestDto, MultipartFile profileImage) throws IOException {
         Member member = memberRepository.findByEmail(currentEmail)
                 .orElseThrow(() -> new IllegalArgumentException("해당 이메일의 회원이 존재하지 않습니다."));
 
         // 회원 정보 업데이트
+        updateMemberDetails(member, profileUpdateRequestDto);
+
+        String profileImageUrl = null;
+        // 새로운 이미지가 있는 경우 -> 기존 이미지 삭제 및 새로운 이미지 업로드
+        // 새로운 이미지가 없는 경우 -> 기존 이미지 삭제
+        profileImageUrl = handleImageUpdate(member, profileImage);
+
+        if (profileImageUrl != null) { // 새로운 이미지가 있는 경우 Image 객체에 업데이트
+            updateMemberImage(member, profileImageUrl);
+        }
+    }
+
+    /**
+     * member 업데이트
+     *
+     * @param member
+     * @param profileUpdateRequestDto
+     */
+    @Transactional
+    public void updateMemberDetails(Member member, ProfileUpdateRequestDto profileUpdateRequestDto) {
         Member updatedMember = Member.builder()
                 .id(member.getId())
                 .name(profileUpdateRequestDto.getName())
@@ -290,16 +310,45 @@ public class MemberService {
                 .pwd(member.getPwd())
                 .build();
         memberRepository.save(updatedMember);
-
-        // 이미지 URL이 있는 경우 이미지 업데이트
-        if (profileImageUrl != null) {
-            Image image = imageRepository.findByMemberId(member.getId())
-                    .orElseGet(() -> Image.builder().member(updatedMember).build());
-            image.setImageUrl(profileImageUrl);
-            imageRepository.save(image);
-        }
     }
 
+    /**
+     * 프로필 이미지 정보 업데이트
+     *
+     * @param member
+     * @param profileImageUrl
+     */
+    @Transactional
+    public void updateMemberImage(Member member, String profileImageUrl) {
+        Image image = imageRepository.findByMemberId(member.getId())
+                .orElseGet(() -> Image.builder().member(member).build());
+        image.setImageUrl(profileImageUrl);
+        imageRepository.save(image);
+    }
+
+    /**
+     * S3에서 기존 이미지 삭제 및 새로운 이미지 업로드
+     *
+     * @param member
+     * @param profileImage
+     * @return 새로운 이미지 url
+     * @throws IOException
+     */
+    private String handleImageUpdate(Member member, MultipartFile profileImage) throws IOException {
+        // 기존 이미지 S3에서 삭제 및 Image 엔티티 삭제
+        Optional<Image> existingImage = imageRepository.findByMemberId(member.getId());
+        existingImage.ifPresent(image -> {
+            s3Service.delete(image.getImageUrl());
+            imageRepository.delete(image);
+        });
+        // 프로필 이미지가 없는 경우
+        if (profileImage != null && !profileImage.isEmpty()) {
+            // 새로운 이미지 S3에 업로드
+            return s3Service.upload("profile-images", profileImage.getOriginalFilename(), profileImage);
+        } else {
+            return null;
+        }
+    }
 
     /**
      * 회원 탈퇴를 처리합니다.
