@@ -130,7 +130,12 @@ public class PostService {
         if (!postImages.isEmpty()) {
             try {
                 for (MultipartFile postImage : postImages) {
+                    if (postImage.isEmpty()) {
+                        log.error("게시글 이미지 업로드 실패");
+                        throw new RuntimeException("이미지가 존재하지 않습니다.");
+                    }
                     String postImageUrl = s3Service.upload("post-images", postImage.getOriginalFilename(), postImage);
+
                     Image image = Image.builder()
                             .imageUrl(postImageUrl).member(member).post(post).build();
                     imageRepository.save(image);
