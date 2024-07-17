@@ -125,13 +125,29 @@ public class JwtTokenProvider {
             throw new BaseException("INVALID_JWT");
         }
     }
-    // 비밀번호 확인시 발급되는 토큰
+    // 비밀번호 확인시 발급되는 토큰 검증
     public boolean validateTokenByPwConfirm(String token, String expectedPurpose) {
         try {
-            Claims claims = Jwts.parser().setSigningKey(secretKey).parseClaimsJws(token).getBody();
+            Claims claims = getClaimsFromToken(token);
+            log.info("Claims: {}", claims);
+
             String purpose = claims.get("purpose", String.class);
-            return expectedPurpose.equals(purpose) && !claims.getExpiration().before(new Date());
+            log.info("Token purpose: {}", purpose);
+
+            if (!expectedPurpose.equals(purpose)) {
+                log.error("Token purpose mismatch: expected={}, actual={}", expectedPurpose, purpose);
+                return false;
+            }
+
+            Date expiration = claims.getExpiration();
+            if (expiration.before(new Date())) {
+                log.error("Token has expired: expiration={}", expiration);
+                return false;
+            }
+
+            return true;
         } catch (Exception e) {
+            log.error("Token validation failed: {}", e.getMessage());
             return false;
         }
     }
@@ -187,15 +203,17 @@ public class JwtTokenProvider {
     }
 
     public String createShortLivedTokenWithPurpose(Authentication authentication, String purpose) {
+        Claims claims = Jwts.claims().setSubject(authentication.getName());
+        claims.put("purpose", purpose);
+
         Date now = new Date();
         Date validity = new Date(now.getTime() + 600_000); // 매우 짧은 만료 시간인 10분을 가짐
 
         return Jwts.builder()
-                .setSubject(authentication.getName())
-                .claim("purpose", purpose)
+                .setClaims(claims)
                 .setIssuedAt(now)
                 .setExpiration(validity)
-                .signWith(SignatureAlgorithm.HS256, secretKey)
+                .signWith(key)
                 .compact();
     }
 }
