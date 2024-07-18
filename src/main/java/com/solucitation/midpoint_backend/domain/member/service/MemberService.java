@@ -150,16 +150,21 @@ public class MemberService {
      */
     @Transactional
     public TokenResponseDto loginMember(LoginRequestDto loginRequestDto) throws InvalidCredentialsException {
+//        // Member 정보 확인 및 비밀번호 검증
+//        Optional<Member> foundMember = memberRepository.findByEmailOrNickname(loginRequestDto.getIdentifier(), loginRequestDto.getIdentifier());
+//        foundMember
+//                .orElseThrow(() -> new InvalidCredentialsException("이메일/닉네임 정보가 일치하지 않습니다."));
+//        Member member = foundMember.get();
+//
+//        if (!passwordEncoder.matches(loginRequestDto.getPassword(), member.getPwd())) {
+//            throw new InvalidCredentialsException("비밀번호 정보가 일치하지 않습니다.");
+//        }
         // Member 정보 확인 및 비밀번호 검증
         Optional<Member> foundMember = memberRepository.findByEmailOrNickname(loginRequestDto.getIdentifier(), loginRequestDto.getIdentifier());
-        foundMember
-                .orElseThrow(() -> new InvalidCredentialsException("이메일/닉네임 정보가 일치하지 않습니다."));
-        Member member = foundMember.get();
-
-        if (!passwordEncoder.matches(loginRequestDto.getPassword(), member.getPwd())) {
-            throw new InvalidCredentialsException("비밀번호 정보가 일치하지 않습니다.");
+        if (foundMember.isEmpty() || !passwordEncoder.matches(loginRequestDto.getPassword(), foundMember.get().getPwd())) {
+            throw new InvalidCredentialsException("아이디 또는 비밀번호가 일치하지 않습니다.");
         }
-
+        Member member = foundMember.get();
         try {
             // 사용자 인증
             Authentication authentication = authenticationManager.authenticate(
