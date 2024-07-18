@@ -285,7 +285,7 @@ public class MemberService {
     public MemberProfileResponseDto getMemberProfile(String email) {
         Member member = memberRepository.findByEmail(email)
                 .orElseThrow(() -> new IllegalArgumentException("해당 이메일의 회원이 존재하지 않습니다."));
-        String profileImageUrl = imageRepository.findByMemberId(member.getId())
+        String profileImageUrl = imageRepository.findByMemberIdAndPostIsNull(member.getId())
                 .map(Image::getImageUrl)
                 .orElse(null);
 
@@ -308,7 +308,7 @@ public class MemberService {
         boolean isDefaultImage = false;
 
         // 기존 이미지가 기본 이미지인지 확인
-        Optional<Image> existingImageOptional = imageRepository.findByMemberId(member.getId());
+        Optional<Image> existingImageOptional = imageRepository.findByMemberIdAndPostIsNull(member.getId());
         if (existingImageOptional.isPresent()) {
             String existingImageUrl = existingImageOptional.get().getImageUrl();
             String defaultImageUrl = String.format("https://%s.s3.%s.amazonaws.com/%s", bucket, "ap-northeast-2", "profile-images/default_image.png");
@@ -341,7 +341,7 @@ public class MemberService {
      * @param member
      */
     private void handleExistingImageDeletion(Member member) {
-        Optional<Image> existingImage = imageRepository.findByMemberId(member.getId());
+        Optional<Image> existingImage = imageRepository.findByMemberIdAndPostIsNull(member.getId());
         existingImage.ifPresent(image -> {
             s3Service.delete(image.getImageUrl());
             imageRepository.delete(image);
@@ -375,7 +375,7 @@ public class MemberService {
      */
     @Transactional
     public void updateMemberImage(Member member, String profileImageUrl) {
-        Image image = imageRepository.findByMemberId(member.getId())
+        Image image = imageRepository.findByMemberIdAndPostIsNull(member.getId())
                 .orElseGet(() -> Image.builder().member(member).build());
         image.setImageUrl(profileImageUrl);
         imageRepository.save(image);
@@ -392,7 +392,7 @@ public class MemberService {
                 .orElseThrow(() -> new IllegalArgumentException("해당 이메일의 회원이 존재하지 않습니다."));
 
         // 관련 이미지 삭제
-        Optional<Image> image = imageRepository.findByMemberId(member.getId());
+        Optional<Image> image = imageRepository.findByMemberIdAndPostIsNull(member.getId());
         String imageUrl = null;
 
         if (image.isPresent()) {

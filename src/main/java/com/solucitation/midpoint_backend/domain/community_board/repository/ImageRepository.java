@@ -8,5 +8,6 @@ import java.util.Optional;
 
 @Repository
 public interface ImageRepository extends JpaRepository<Image, Long> {
-    Optional<Image> findByMemberId(Long memberId);
+    Optional<Image> findByMemberIdAndPostIsNull(Long memberId); // 회원의 프로필 이미지를 찾는 경우
 }
+
