@@ -18,6 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -175,6 +176,45 @@ public class PostController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("게시글 등록 중 오류가 발생하였습니다.");
+        }
+    }
+
+    /**
+     * 본인이 작성한 글을 삭제합니다.
+     *
+     * @param postId 게시글 번호
+     * @param authentication 인증정보
+     * @return 삭제 성공 시 204 No content 를 반환합니다.
+     *         로그인을 하지 않고 시도 시 401 Unauthorized 에러를 반환합니다.
+     *         사용자나 게시글을 찾을 수 없을 때는 404 Not Found 에러를 반환합니다.
+     *         삭제하려는 글이 본인이 작성한 글이 아닐 경우 403 Forbidden 에러를 반환힙니다.
+     *         기타 이유로 게시글 삭제 실패 시 500 Internal Server Error를 반환합니다.
+     */
+    @DeleteMapping("/{postId}")
+    public ResponseEntity<?> deletePost(@PathVariable Long postId, Authentication authentication){
+        try {
+            if (authentication == null || !authentication.isAuthenticated()) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body("해당 서비스를 이용하기 위해서는 로그인이 필요합니다.");
+            }
+
+            postService.getPostById(postId); // 게시글 존재 여부 확인
+
+            String memberEmail = authentication.getName();
+            Member member = memberService.getMemberByEmail(memberEmail);
+            if (member == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("사용자를 찾을 수 없습니다.");
+            }
+
+            postService.deletePost(member, postId);
+            return ResponseEntity.status(HttpStatus.NO_CONTENT).body("게시글을 성공적으로 삭제하였습니다.");
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("해당 게시글이 존재하지 않습니다.");
+        } catch (AccessDeniedException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("게시글 삭제 중 오류가 발생하였습니다."+ e.getMessage());
         }
     }
 }
