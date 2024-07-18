@@ -1,13 +1,12 @@
 package com.solucitation.midpoint_backend.domain.member.api;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.solucitation.midpoint_backend.domain.file.service.S3Service;
 import com.solucitation.midpoint_backend.domain.member.dto.*;
 import com.solucitation.midpoint_backend.domain.member.exception.PasswordMismatchException;
 import com.solucitation.midpoint_backend.domain.member.service.MemberService;
 import com.solucitation.midpoint_backend.global.auth.JwtTokenProvider;
 import jakarta.validation.Valid;
-import jakarta.validation.Validator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -26,7 +25,7 @@ import java.util.Map;
 @RequestMapping("/api/member")
 public class MemberController2 {
     private final MemberService memberService;
-    private final Validator validator;
+    private final S3Service s3Service;
     private final JwtTokenProvider jwtTokenProvider;
     private final ObjectMapper objectMapper;
 
@@ -91,5 +90,61 @@ public class MemberController2 {
         } catch (PasswordMismatchException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", "password_mismatch", "message", e.getMessage()));
         }
+    }
+
+    /**
+     * 회원 탈퇴를 처리합니다.
+     *
+     * @param deleteToken    비밀번호 확인했고, 탈퇴하겠다는 인증 토큰
+     * @param authentication 인증 객체
+     * @return 회원 탈퇴 성공 메시지 또는 오류 메시지
+     */
+    @DeleteMapping("/delete")
+    public ResponseEntity<?> deleteMember(@RequestHeader("X-Delete-Token") String deleteToken, Authentication authentication) {
+        ResponseEntity<?> validationResponse = validateTokenAndEmail(deleteToken, "delete", authentication);
+        if (validationResponse != null) { // 에러 응답을 가진 경우
+            return validationResponse; // 에러 응답을 리턴
+        }
+        String tokenEmail = jwtTokenProvider.extractEmailFromToken(jwtTokenProvider.resolveToken(deleteToken));
+        String profileImgUrl = memberService.deleteMember(tokenEmail); // 프로필 이미지와 멤버 엔티티 삭제
+        log.info("profileImgUrl는 by test? " + profileImgUrl);
+        s3Service.delete(profileImgUrl); // 프로필 이미지 S3에서 삭제
+        return ResponseEntity.ok(Map.of("message", "회원 탈퇴가 성공적으로 완료되었습니다."));
+    }
+
+    /**
+     * 비밀번호를 재설정합니다.
+     *
+     * @param resetToken         비밀번호 확인했고, 비밀번호 재설정하겠다는 인증 토큰
+     * @param resetPwRequestDto 비밀번호 재설정 요청 DTO
+     * @param authentication    인증 객체
+     * @return 비밀번호 재설정 성공 메시지 또는 오류 메시지
+     */
+    @PostMapping("/reset-pw")
+    public ResponseEntity<?> resetPassword(@RequestHeader("X-Reset-Password-Token") String resetToken, @RequestBody @Valid ResetPwRequestDto resetPwRequestDto, Authentication authentication) {
+        ResponseEntity<?> validationResponse = validateTokenAndEmail(resetToken, "reset-password", authentication);
+        if (validationResponse != null) {
+            return validationResponse;
+        }
+        if (!resetPwRequestDto.getNewPassword().equals(resetPwRequestDto.getNewPasswordConfirm())) {
+            return ResponseEntity.badRequest().body(Map.of("error", "password_mismatch", "message", "새 비밀번호와 새 비밀번호 확인이 일치하지 않습니다."));
+        }
+        String tokenEmail = jwtTokenProvider.extractEmailFromToken(jwtTokenProvider.resolveToken(resetToken));
+        memberService.resetPassword(tokenEmail, resetPwRequestDto.getNewPassword());
+        return ResponseEntity.ok(Map.of("message", "비밀번호 재설정이 성공적으로 완료되었습니다."));
+    }
+
+    private ResponseEntity<?> validateTokenAndEmail(String BFtoken, String action, Authentication authentication) {
+        String token = jwtTokenProvider.resolveToken(BFtoken);
+        if (!jwtTokenProvider.validateTokenByPwConfirm(token, action)) {
+            return ResponseEntity.status(401).body(Map.of("error", "unauthorized", "message", "권한이 없습니다. action: " + action));
+        }
+        String tokenEmail = jwtTokenProvider.extractEmailFromToken(token); // 토큰으로부터 이메일 추출
+        String authEmail = authentication.getName(); // 인증 객체로부터 이메일 추출
+
+        if (!tokenEmail.equals(authEmail)) { // 토큰으로부터 추출한 이메일과 인증 객체로부터 추출한 이메일이 동일한지 비교
+            return ResponseEntity.status(403).body(Map.of("error", "forbidden", "message", "토큰의 이메일과 인증된 이메일이 일치하지 않습니다."));
+        }
+        return null;
     }
 }
