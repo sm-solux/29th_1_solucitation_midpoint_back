@@ -16,6 +16,7 @@ import com.solucitation.midpoint_backend.global.exception.BaseException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.auth.InvalidCredentialsException;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -47,6 +48,8 @@ public class MemberService {
     private final JwtTokenProvider jwtTokenProvider;
     private final AuthenticationManager authenticationManager;
 
+    @Value("${cloud.aws.s3.bucket}")
+    private String bucket;
 
     /**
      * 이메일이 이미 사용 중인지 확인합니다.
@@ -302,16 +305,30 @@ public class MemberService {
         updateMemberDetails(member, profileUpdateRequestDto);
 
         String profileImageUrl = null;
-        if (profileImage != null && !profileImage.isEmpty()) { // 넘어온 프로필 이미지가 아무것도 없지 않다면
-            if (profileUpdateRequestDto.getUseDefaultImage()) {
-                // 기본 이미지를 사용하는 경우, 기존 이미지 삭제 및 기본 이미지 URL 설정
+        boolean isDefaultImage = false;
+
+        // 기존 이미지가 기본 이미지인지 확인
+        Optional<Image> existingImageOptional = imageRepository.findByMemberId(member.getId());
+        if (existingImageOptional.isPresent()) {
+            String existingImageUrl = existingImageOptional.get().getImageUrl();
+            String defaultImageUrl = String.format("https://%s.s3.%s.amazonaws.com/%s", bucket, "ap-northeast-2", "profile-images/default_image.png");
+            isDefaultImage = existingImageUrl.equals(defaultImageUrl);
+        }
+
+        if (profileUpdateRequestDto.getUseDefaultImage()) {
+            if (!isDefaultImage) {
+                // 기존 이미지가 기본 이미지가 아닌 경우 삭제
                 handleExistingImageDeletion(member);
-                profileImageUrl = "https://midpoint-s3-bucket.s3.ap-northeast-2.amazonaws.com/profile-images/default_image.png"; // 기본 이미지 URL 설정
-            } else {
-                // 기본 이미지가 아닌 경우, 기존 이미지 삭제 및 새로운 이미지 업로드
-                handleExistingImageDeletion(member);
-                profileImageUrl = getS3UploadUrl(profileImage);
             }
+            // 기본 이미지 URL 설정
+            profileImageUrl = String.format("https://%s.s3.%s.amazonaws.com/%s", bucket, "ap-northeast-2", "profile-images/default_image.png");
+        } else if (profileImage != null && !profileImage.isEmpty()) {
+            if (!isDefaultImage) {
+                // 기존 이미지가 기본 이미지가 아닌 경우에만 삭제
+                handleExistingImageDeletion(member);
+            }
+            // 새로운 이미지 업로드
+            profileImageUrl = getS3UploadUrl(profileImage);
         }
         if (profileImageUrl != null) { // 기본 이미지 또는 새로운 이미지가 있는 경우 Image 객체에 업데이트
             updateMemberImage(member, profileImageUrl);
