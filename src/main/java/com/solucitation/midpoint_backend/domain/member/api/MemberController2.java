@@ -6,7 +6,9 @@ import com.solucitation.midpoint_backend.domain.member.dto.*;
 import com.solucitation.midpoint_backend.domain.member.exception.PasswordMismatchException;
 import com.solucitation.midpoint_backend.domain.member.service.MemberService;
 import com.solucitation.midpoint_backend.global.auth.JwtTokenProvider;
+import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Valid;
+import jakarta.validation.Validator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -17,7 +19,10 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Slf4j
 @RestController
@@ -28,6 +33,7 @@ public class MemberController2 {
     private final S3Service s3Service;
     private final JwtTokenProvider jwtTokenProvider;
     private final ObjectMapper objectMapper;
+    private final Validator validator;
 
     /**
      * 회원 프로필 정보를 가져옵니다.
@@ -52,6 +58,17 @@ public class MemberController2 {
             return ResponseEntity.badRequest().body(Map.of("error", "profile_update_empty_dto", "message", "프로필 수정 요청 dto가 비었습니다."));
         }
         ProfileUpdateRequestDto profileUpdateRequestDto = objectMapper.readValue(profileUpdateRequestDtoJson, ProfileUpdateRequestDto.class);
+        log.info("profileUpdateRequestDto = " + profileUpdateRequestDto);
+
+        Set<ConstraintViolation<ProfileUpdateRequestDto>> violations = validator.validate(profileUpdateRequestDto);
+        if (!violations.isEmpty()) {
+            List<ValidationErrorResponse.FieldError> fieldErrors = violations.stream()
+                    .map(violation -> new ValidationErrorResponse.FieldError(violation.getPropertyPath().toString(), violation.getMessage()))
+                    .collect(Collectors.toList());
+            ValidationErrorResponse errorResponse = new ValidationErrorResponse(fieldErrors);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+        }
+
         String email = authentication.getName();
         return validateAndUpdate(email, profileUpdateRequestDto, profileImage);
     }

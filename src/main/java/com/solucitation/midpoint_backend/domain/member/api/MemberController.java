@@ -5,7 +5,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.solucitation.midpoint_backend.domain.member.dto.*;
 import com.solucitation.midpoint_backend.domain.member.service.MemberService;
 import com.solucitation.midpoint_backend.global.auth.JwtTokenProvider;
+import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Valid;
+import jakarta.validation.Validator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.auth.InvalidCredentialsException;
@@ -18,6 +20,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Slf4j
 @RestController
@@ -27,6 +31,7 @@ public class MemberController {
     private final MemberService memberService;
     private final ObjectMapper objectMapper;
     private final JwtTokenProvider jwtTokenProvider;
+    private final Validator validator;
 
     /**
      * 새로운 회원을 등록합니다.
@@ -45,15 +50,15 @@ public class MemberController {
         SignupRequestDto signupRequestDto = objectMapper.readValue(signupRequestDtoJson, SignupRequestDto.class);
         log.info("signupRequestDto = " + signupRequestDto);
 
-//        // 회원가입 요청 dto를 수동으로 검증 처리
-//        Set<ConstraintViolation<SignupRequestDto>> violations = validator.validate(signupRequestDto);
-//        if (!violations.isEmpty()) {
-//            List<ValidationErrorResponse.FieldError> fieldErrors = violations.stream()
-//                    .map(violation -> new ValidationErrorResponse.FieldError(violation.getPropertyPath().toString(), violation.getMessage()))
-//                    .collect(Collectors.toList());
-//            ValidationErrorResponse errorResponse = new ValidationErrorResponse(fieldErrors);
-//            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
-//        }
+        // 회원가입 요청 dto를 수동으로 검증 처리
+        Set<ConstraintViolation<SignupRequestDto>> violations = validator.validate(signupRequestDto);
+        if (!violations.isEmpty()) {
+            List<ValidationErrorResponse.FieldError> fieldErrors = violations.stream()
+                    .map(violation -> new ValidationErrorResponse.FieldError(violation.getPropertyPath().toString(), violation.getMessage()))
+                    .collect(Collectors.toList());
+            ValidationErrorResponse errorResponse = new ValidationErrorResponse(fieldErrors);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+        }
         return validateAndSignUp(signupRequestDto, profileImage);
     }
 
