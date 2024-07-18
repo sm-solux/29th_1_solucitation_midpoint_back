@@ -137,7 +137,15 @@ public class MemberService {
         }
     }
 
+    /**
+     * S3에서 기존 이미지 삭제 및 새로운 이미지 업로드
+     *
+     * @param profileImage
+     * @return 새로운 이미지 url
+     * @throws IOException
+     */
     private String getS3UploadUrl(MultipartFile profileImage) throws IOException {
+        // 새로운 이미지 S3에 업로드 로직 구현
         return s3Service.upload("profile-images", profileImage.getOriginalFilename(), profileImage);
     }
 
@@ -294,14 +302,35 @@ public class MemberService {
         updateMemberDetails(member, profileUpdateRequestDto);
 
         String profileImageUrl = null;
-        // 새로운 이미지가 있는 경우 -> 기존 이미지 삭제 및 새로운 이미지 업로드
-        // 새로운 이미지가 없는 경우 -> 기존 이미지 삭제
-        profileImageUrl = handleImageUpdate(member, profileImage);
-
-        if (profileImageUrl != null) { // 새로운 이미지가 있는 경우 Image 객체에 업데이트
+        if (profileImage != null && !profileImage.isEmpty()) { // 넘어온 프로필 이미지가 아무것도 없지 않다면
+            if (profileUpdateRequestDto.getUseDefaultImage()) {
+                // 기본 이미지를 사용하는 경우, 기존 이미지 삭제 및 기본 이미지 URL 설정
+                handleExistingImageDeletion(member);
+                profileImageUrl = "https://midpoint-s3-bucket.s3.ap-northeast-2.amazonaws.com/profile-images/default_image.png"; // 기본 이미지 URL 설정
+            } else {
+                // 기본 이미지가 아닌 경우, 기존 이미지 삭제 및 새로운 이미지 업로드
+                handleExistingImageDeletion(member);
+                profileImageUrl = getS3UploadUrl(profileImage);
+            }
+        }
+        if (profileImageUrl != null) { // 기본 이미지 또는 새로운 이미지가 있는 경우 Image 객체에 업데이트
             updateMemberImage(member, profileImageUrl);
         }
     }
+
+    /**
+     * 기존 이미지 삭제
+     *
+     * @param member
+     */
+    private void handleExistingImageDeletion(Member member) {
+        Optional<Image> existingImage = imageRepository.findByMemberId(member.getId());
+        existingImage.ifPresent(image -> {
+            s3Service.delete(image.getImageUrl());
+            imageRepository.delete(image);
+        });
+    }
+
 
     /**
      * member 업데이트
@@ -333,30 +362,6 @@ public class MemberService {
                 .orElseGet(() -> Image.builder().member(member).build());
         image.setImageUrl(profileImageUrl);
         imageRepository.save(image);
-    }
-
-    /**
-     * S3에서 기존 이미지 삭제 및 새로운 이미지 업로드
-     *
-     * @param member
-     * @param profileImage
-     * @return 새로운 이미지 url
-     * @throws IOException
-     */
-    private String handleImageUpdate(Member member, MultipartFile profileImage) throws IOException {
-        // 기존 이미지 S3에서 삭제 및 Image 엔티티 삭제
-        Optional<Image> existingImage = imageRepository.findByMemberId(member.getId());
-        existingImage.ifPresent(image -> {
-            s3Service.delete(image.getImageUrl());
-            imageRepository.delete(image);
-        });
-        // 프로필 이미지가 없는 경우
-        if (profileImage != null && !profileImage.isEmpty()) {
-            // 새로운 이미지 S3에 업로드
-            return getS3UploadUrl(profileImage);
-        } else {
-            return null;
-        }
     }
 
     /**
