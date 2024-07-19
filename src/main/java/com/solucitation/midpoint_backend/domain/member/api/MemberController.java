@@ -112,4 +112,24 @@ public class MemberController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", e.getMessage()));
         }
     }
+    /**
+     * 비밀번호를 재설정합니다.
+     *
+     * @param resetToken        비밀번호 확인했고, 비밀번호 재설정하겠다는 인증 토큰
+     * @param resetPwRequestDto 비밀번호 재설정 요청 DTO
+     * @return 비밀번호 재설정 성공 메시지 또는 오류 메시지
+     */
+    @PostMapping("/reset-pw")
+    public ResponseEntity<?> resetPassword(@RequestHeader("X-Reset-Password-Token") String resetToken, @RequestBody @Valid ResetPwRequestDto resetPwRequestDto) {
+        String token = jwtTokenProvider.resolveToken(resetToken);
+        if (!jwtTokenProvider.validateTokenByPwConfirm(token, resetToken)) {
+            return ResponseEntity.status(401).body(Map.of("error", "unauthorized", "message", "비밀번호를 재설정할 권한이 없습니다"));
+        }
+        if (!resetPwRequestDto.getNewPassword().equals(resetPwRequestDto.getNewPasswordConfirm())) {
+            return ResponseEntity.badRequest().body(Map.of("error", "password_mismatch", "message", "새 비밀번호와 새 비밀번호 확인이 일치하지 않습니다."));
+        }
+        String tokenEmail = jwtTokenProvider.extractEmailFromToken(jwtTokenProvider.resolveToken(resetToken));
+        memberService.resetPassword(tokenEmail, resetPwRequestDto.getNewPassword());
+        return ResponseEntity.ok(Map.of("message", "비밀번호 재설정이 성공적으로 완료되었습니다."));
+    }
 }
