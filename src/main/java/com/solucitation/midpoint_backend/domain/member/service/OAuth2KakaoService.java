@@ -37,13 +37,6 @@ public class OAuth2KakaoService { // 인가 코드 -> 카카오 토큰을 요청
     private final WebClient webClient = WebClient.builder().build();
 
     public String getKakaoAccessToken(String code) {
-//        log.info("code는?"+code);
-//        log.info("client_id는?"+clientId);
-//        log.info("redirectUri는?"+redirectUri);
-
-//        String encodedRedirectUri = URLEncoder.encode(redirectUri, StandardCharsets.UTF_8);
-//        log.info("encodedRedirectUri는?"+encodedRedirectUri);
-
         String tokenUri = UriComponentsBuilder.fromHttpUrl("https://kauth.kakao.com/oauth/token")
                 .queryParam("grant_type", "authorization_code")
                 .queryParam("client_id", clientId)
@@ -88,6 +81,7 @@ public class OAuth2KakaoService { // 인가 코드 -> 카카오 토큰을 요청
                             .email(email)
                             .name((String) profile.get("nickname")) // 카카오 프로필의 닉네임을 name에 저장
                             .nickname(nickname) // 임의의 영어와 숫자의 7자리 조합
+                            .pwd("") // 빈 문자열로 비밀번호 설정
                             .build();
                 }
             }
@@ -107,7 +101,7 @@ public class OAuth2KakaoService { // 인가 코드 -> 카카오 토큰을 요청
         // 애플리케이션 내부에서 인증된 사용자임을 보장x
         List<SimpleGrantedAuthority> authorities = Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER")); // 기본 권한: ROLE_USER
         Authentication authentication = new UsernamePasswordAuthenticationToken( // 인증된 사용자 정보를 담는 객체를 생성 (이메일과 "ROLE_USER" 권한을 포함)
-                member.getEmail(), null, authorities);
+                member.getEmail(), "", authorities); // 빈 문자열로 비밀번호 설정
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
         // 인증된 사용자 정보를 SecurityContext에 저장
