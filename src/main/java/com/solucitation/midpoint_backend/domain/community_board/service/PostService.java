@@ -11,6 +11,7 @@ import com.solucitation.midpoint_backend.domain.member.service.MemberService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -174,5 +175,15 @@ public class PostService {
                     return postDto;
                 })
                 .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public void deletePost(Member member, Long postId) throws AccessDeniedException {
+        Optional<Post> post = postRepository.findById(postId); // 해당 멤버가 게시글 작성자인지 확인힙니다.
+        if (post.isPresent() && post.get().getMember().getId().equals(member.getId())) {
+            postRepository.deleteById(postId);
+        }
+        else
+            throw new AccessDeniedException("해당 게시글을 삭제할 권한이 없습니다. 본인이 작성한 글만 삭제할 수 있습니다.");
     }
 }
