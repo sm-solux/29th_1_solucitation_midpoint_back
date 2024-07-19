@@ -12,13 +12,16 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpServletRequest;
 
 import java.security.Key;
+import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -93,7 +96,15 @@ public class JwtTokenProvider {
     public Authentication getAuthentication(String token) {
         Claims claims = getClaimsFromToken(token);
         String userPrincipal = claims.getSubject();
+
+        // 자체 로그인 -> UserDetailsService를 사용하여 사용자 정보를 로드
         UserDetails userDetails = userDetailsService.loadUserByUsername(userPrincipal);
+
+        // 소셜 로그인(권한 정보가 없는 경우) -> 기본 권한 "ROLE_USER"을 추가하여 인증 객체 생성
+        if (userDetails.getAuthorities().isEmpty()) {
+            List<SimpleGrantedAuthority> authorities = Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER"));
+            return new UsernamePasswordAuthenticationToken(userDetails, "", authorities);
+        }
         return new UsernamePasswordAuthenticationToken(userDetails, "", userDetails.getAuthorities());
     }
 

@@ -15,7 +15,6 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.security.oauth2.client.web.OAuth2LoginAuthenticationFilter;
 
 /**
  * Spring Security 설정 클래스 - JWT를 사용한 보안 설정 구성

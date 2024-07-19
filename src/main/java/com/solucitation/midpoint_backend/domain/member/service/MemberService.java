@@ -177,7 +177,7 @@ public class MemberService {
         }
         Member member = foundMember.get();
         try {
-            // 사용자 인증
+            // 사용자의 자격 증명(이메일과 비밀번호)을 검증
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(
                             member.getEmail(), // 인증을 이메일로 통일
