@@ -292,6 +292,7 @@ public class MemberService {
         return new MemberProfileResponseDto(
                 member.getName(),
                 member.getNickname(),
+                member.getLoginId(),
                 member.getEmail(),
                 profileImageUrl
         );
