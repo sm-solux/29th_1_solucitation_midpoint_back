@@ -171,7 +171,7 @@ public class MemberService {
 //            throw new InvalidCredentialsException("비밀번호 정보가 일치하지 않습니다.");
 //        }
         // Member 정보 확인 및 비밀번호 검증
-        Optional<Member> foundMember = memberRepository.findByEmailOrNickname(loginRequestDto.getIdentifier(), loginRequestDto.getIdentifier());
+        Optional<Member> foundMember = memberRepository.findByEmailOrLoginId(loginRequestDto.getIdentifier(), loginRequestDto.getIdentifier());
         if (foundMember.isEmpty() || !passwordEncoder.matches(loginRequestDto.getPassword(), foundMember.get().getPwd())) {
             throw new InvalidCredentialsException("아이디 또는 비밀번호가 일치하지 않습니다.");
         }
@@ -201,7 +201,7 @@ public class MemberService {
 
         } catch (BadCredentialsException e) {
             log.error("유효하지 않은 사용자 정보: {}", e.getMessage());
-            throw new InvalidCredentialsException("유효하지 않은 이메일/닉네임 또는 비밀번호입니다.");
+            throw new InvalidCredentialsException("유효하지 않은 이메일/아이디 또는 비밀번호입니다.");
         } catch (Exception e) {
             log.error("로그인 도중 예상치 못한 오류 발생: {}", e.getMessage());
             throw new BaseException("로그인 중 예상치 못한 오류가 발생했습니다.");
