@@ -72,7 +72,12 @@ public class S3Service {
                 new PutObjectRequest(bucket, fileName, uploadFile)
                         .withCannedAcl(CannedAccessControlList.PublicRead) // PublicRead 권한으로 업로드
         );
-        return amazonS3.getUrl(bucket, fileName).toString();
+        log.info("Bucket: {}", bucket);
+        log.info("FileName: {}", fileName);
+        return generateS3Url(fileName);
+    }
+    private String generateS3Url(String fileName) {
+        return String.format("https://%s.s3.%s.amazonaws.com/%s", bucket, "ap-northeast-2", fileName);
     }
 
     /**
@@ -141,6 +146,7 @@ public class S3Service {
      * @return 파일 키
      */
     private String extractFileKey(String fileUrl) {
-        return fileUrl.substring(fileUrl.indexOf(bucket) + bucket.length() + 1);
+        String prefix = String.format("https://%s.s3.%s.amazonaws.com/", bucket, "ap-northeast-2");
+        return fileUrl.substring(prefix.length());
     }
 }
