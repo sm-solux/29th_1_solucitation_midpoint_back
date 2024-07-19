@@ -302,6 +302,11 @@ public class MemberService {
         Member member = memberRepository.findByEmail(currentEmail)
                 .orElseThrow(() -> new IllegalArgumentException("해당 이메일의 회원이 존재하지 않습니다."));
 
+        // 닉네임이 이미 사용 중인지 확인
+        if (isNicknameAlreadyInUse(profileUpdateRequestDto.getNickname())) {
+            throw new NicknameAlreadyInUseException("이미 사용중인 닉네임입니다.");
+        }
+
         // 회원 정보 업데이트
         updateMemberDetails(member, profileUpdateRequestDto);
 
@@ -361,6 +366,7 @@ public class MemberService {
         Member updatedMember = Member.builder()
                 .id(member.getId())
                 .name(profileUpdateRequestDto.getName())
+                .loginId(member.getLoginId())
                 .nickname(member.getNickname())
                 .email(member.getEmail())
                 .pwd(member.getPwd())

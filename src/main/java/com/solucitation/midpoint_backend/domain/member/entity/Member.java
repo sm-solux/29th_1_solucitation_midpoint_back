@@ -35,10 +35,11 @@ public class Member {
     @Column(name = "member_nickname", nullable = false, unique = true, length = 100)
     private String nickname;
 
-    public Member(String password, String name, String email, String nickname) {
+    public Member(String password, String name, String email, String nickname, String loginId) {
         this.email= email;
         this.name = name;
         this.pwd = password;
         this.nickname = nickname;
+        this.loginId = loginId;
     }
 }
