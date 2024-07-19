@@ -163,6 +163,21 @@ public class PostService {
         return postHashtags;
     }
 
+    @Transactional(readOnly = true)
+    public List<PostResponseDto> getMyAllPosts(Member member) {
+        List<Post> posts = postRepository.findByMemberIdOrderByCreateDateDesc(member.getId());
+        return posts.stream()
+                .map(post -> {
+                    PostResponseDto postDto = new PostResponseDto(post);
+                    if (member != null) {
+                        postDto.setLikes(likesRepository.isMemberLikesPostByEmail(post.getId(), member.getEmail()));
+                    }
+                    return postDto;
+                })
+                .collect(Collectors.toList());
+    }
+
+    @Transactional
     public void deletePost(Member member, Long postId) throws AccessDeniedException {
         Optional<Post> post = postRepository.findById(postId); // 해당 멤버가 게시글 작성자인지 확인힙니다.
         if (post.isPresent() && post.get().getMember().getId().equals(member.getId())) {
