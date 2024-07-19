@@ -38,4 +38,7 @@ public interface PostRepository extends JpaRepository<Post, Long> {
             "      LOWER(p.content) LIKE LOWER(CONCAT('%', :query, '%')) " +
             "ORDER BY p.createDate DESC")
     List<Post> findAllPostByQuery(@Param("query") String query);
+
+    // 특정한 작성자가 작성한 게시글을 모두 가져옵니다.
+    List<Post> findByMemberIdOrderByCreateDateDesc(Long memberId);
 }

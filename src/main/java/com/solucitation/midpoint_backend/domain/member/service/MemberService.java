@@ -4,10 +4,7 @@ import com.solucitation.midpoint_backend.domain.community_board.entity.Image;
 import com.solucitation.midpoint_backend.domain.community_board.repository.ImageRepository;
 import com.solucitation.midpoint_backend.domain.email.service.EmailService;
 import com.solucitation.midpoint_backend.domain.file.service.S3Service;
-import com.solucitation.midpoint_backend.domain.member.dto.LoginRequestDto;
-import com.solucitation.midpoint_backend.domain.member.dto.PasswordVerifyRequestDto;
-import com.solucitation.midpoint_backend.domain.member.dto.SignupRequestDto;
-import com.solucitation.midpoint_backend.domain.member.dto.TokenResponseDto;
+import com.solucitation.midpoint_backend.domain.member.dto.*;
 import com.solucitation.midpoint_backend.domain.member.entity.Member;
 import com.solucitation.midpoint_backend.domain.member.exception.EmailAlreadyInUseException;
 import com.solucitation.midpoint_backend.domain.member.exception.EmailNotVerifiedException;
@@ -19,6 +16,7 @@ import com.solucitation.midpoint_backend.global.exception.BaseException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.auth.InvalidCredentialsException;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -32,6 +30,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.util.Collections;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -49,6 +48,8 @@ public class MemberService {
     private final JwtTokenProvider jwtTokenProvider;
     private final AuthenticationManager authenticationManager;
 
+    @Value("${cloud.aws.s3.bucket}")
+    private String bucket;
 
     /**
      * 이메일이 이미 사용 중인지 확인합니다.
@@ -125,7 +126,7 @@ public class MemberService {
         // 프로필 이미지 업로드 및 저장
         if (profileImage != null && !profileImage.isEmpty()) {
             try {
-                String profileImageUrl = s3Service.upload("profile-images", profileImage.getOriginalFilename(), profileImage);
+                String profileImageUrl = getS3UploadUrl(profileImage);
                 Image image = Image.builder()
                         .imageUrl(profileImageUrl)
                         .member(newMember)
@@ -140,6 +141,18 @@ public class MemberService {
     }
 
     /**
+     * S3에서 기존 이미지 삭제 및 새로운 이미지 업로드
+     *
+     * @param profileImage
+     * @return 새로운 이미지 url
+     * @throws IOException
+     */
+    private String getS3UploadUrl(MultipartFile profileImage) throws IOException {
+        // 새로운 이미지 S3에 업로드 로직 구현
+        return s3Service.upload("profile-images", profileImage.getOriginalFilename(), profileImage);
+    }
+
+    /**
      * 회원 로그인 처리
      *
      * @param loginRequestDto 로그인 요청 DTO
@@ -148,16 +161,21 @@ public class MemberService {
      */
     @Transactional
     public TokenResponseDto loginMember(LoginRequestDto loginRequestDto) throws InvalidCredentialsException {
+//        // Member 정보 확인 및 비밀번호 검증
+//        Optional<Member> foundMember = memberRepository.findByEmailOrNickname(loginRequestDto.getIdentifier(), loginRequestDto.getIdentifier());
+//        foundMember
+//                .orElseThrow(() -> new InvalidCredentialsException("이메일/닉네임 정보가 일치하지 않습니다."));
+//        Member member = foundMember.get();
+//
+//        if (!passwordEncoder.matches(loginRequestDto.getPassword(), member.getPwd())) {
+//            throw new InvalidCredentialsException("비밀번호 정보가 일치하지 않습니다.");
+//        }
         // Member 정보 확인 및 비밀번호 검증
         Optional<Member> foundMember = memberRepository.findByEmailOrNickname(loginRequestDto.getIdentifier(), loginRequestDto.getIdentifier());
-        foundMember
-                .orElseThrow(() -> new InvalidCredentialsException("이메일/닉네임 정보가 일치하지 않습니다."));
-        Member member = foundMember.get();
-
-        if (!passwordEncoder.matches(loginRequestDto.getPassword(), member.getPwd())) {
-            throw new InvalidCredentialsException("비밀번호 정보가 일치하지 않습니다.");
+        if (foundMember.isEmpty() || !passwordEncoder.matches(loginRequestDto.getPassword(), foundMember.get().getPwd())) {
+            throw new InvalidCredentialsException("아이디 또는 비밀번호가 일치하지 않습니다.");
         }
-
+        Member member = foundMember.get();
         try {
             // 사용자 인증
             Authentication authentication = authenticationManager.authenticate(
@@ -261,5 +279,132 @@ public class MemberService {
         if (!passwordEncoder.matches(passwordVerifyRequestDto.getPassword(), member.getPwd())) {
             throw new PasswordMismatchException("비밀번호가 일치하지 않습니다.");
         }
+    }
+
+    @Transactional(readOnly = true)
+    public MemberProfileResponseDto getMemberProfile(String email) {
+        Member member = memberRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("해당 이메일의 회원이 존재하지 않습니다."));
+        String profileImageUrl = imageRepository.findByMemberIdAndPostIsNull(member.getId())
+                .map(Image::getImageUrl)
+                .orElse(null);
+
+        return new MemberProfileResponseDto(
+                member.getName(),
+                member.getNickname(),
+                member.getEmail(),
+                profileImageUrl
+        );
+    }
+
+    public void updateMember(String currentEmail, ProfileUpdateRequestDto profileUpdateRequestDto, MultipartFile profileImage) throws IOException {
+        Member member = memberRepository.findByEmail(currentEmail)
+                .orElseThrow(() -> new IllegalArgumentException("해당 이메일의 회원이 존재하지 않습니다."));
+
+        // 회원 정보 업데이트
+        updateMemberDetails(member, profileUpdateRequestDto);
+
+        String profileImageUrl = null;
+        boolean isDefaultImage = false;
+
+        // 기존 이미지가 기본 이미지인지 확인
+        Optional<Image> existingImageOptional = imageRepository.findByMemberIdAndPostIsNull(member.getId());
+        if (existingImageOptional.isPresent()) {
+            String existingImageUrl = existingImageOptional.get().getImageUrl();
+            String defaultImageUrl = String.format("https://%s.s3.%s.amazonaws.com/%s", bucket, "ap-northeast-2", "profile-images/default_image.png");
+            isDefaultImage = existingImageUrl.equals(defaultImageUrl);
+        }
+
+        if (profileUpdateRequestDto.getUseDefaultImage()) {
+            if (!isDefaultImage) {
+                // 기존 이미지가 기본 이미지가 아닌 경우 삭제
+                handleExistingImageDeletion(member);
+            }
+            // 기본 이미지 URL 설정
+            profileImageUrl = String.format("https://%s.s3.%s.amazonaws.com/%s", bucket, "ap-northeast-2", "profile-images/default_image.png");
+        } else if (profileImage != null && !profileImage.isEmpty()) {
+            if (!isDefaultImage) {
+                // 기존 이미지가 기본 이미지가 아닌 경우에만 삭제
+                handleExistingImageDeletion(member);
+            }
+            // 새로운 이미지 업로드
+            profileImageUrl = getS3UploadUrl(profileImage);
+        }
+        if (profileImageUrl != null) { // 기본 이미지 또는 새로운 이미지가 있는 경우 Image 객체에 업데이트
+            updateMemberImage(member, profileImageUrl);
+        }
+    }
+
+    /**
+     * 기존 이미지 삭제
+     *
+     * @param member
+     */
+    private void handleExistingImageDeletion(Member member) {
+        Optional<Image> existingImage = imageRepository.findByMemberIdAndPostIsNull(member.getId());
+        existingImage.ifPresent(image -> {
+            s3Service.delete(image.getImageUrl());
+            imageRepository.delete(image);
+        });
+    }
+
+
+    /**
+     * member 업데이트
+     *
+     * @param member
+     * @param profileUpdateRequestDto
+     */
+    @Transactional
+    public void updateMemberDetails(Member member, ProfileUpdateRequestDto profileUpdateRequestDto) {
+        Member updatedMember = Member.builder()
+                .id(member.getId())
+                .name(profileUpdateRequestDto.getName())
+                .nickname(member.getNickname())
+                .email(member.getEmail())
+                .pwd(member.getPwd())
+                .build();
+        memberRepository.save(updatedMember);
+    }
+
+    /**
+     * 프로필 이미지 정보 업데이트
+     *
+     * @param member
+     * @param profileImageUrl
+     */
+    @Transactional
+    public void updateMemberImage(Member member, String profileImageUrl) {
+        Image image = imageRepository.findByMemberIdAndPostIsNull(member.getId())
+                .orElseGet(() -> Image.builder().member(member).build());
+        image.setImageUrl(profileImageUrl);
+        imageRepository.save(image);
+    }
+
+    /**
+     * 회원 탈퇴를 처리합니다.
+     *
+     * @param email 탈퇴할 회원의 이메일
+     */
+    @Transactional
+    public String deleteMember(String email) {
+        Member member = memberRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("해당 이메일의 회원이 존재하지 않습니다."));
+
+        // 관련 이미지 삭제
+        Optional<Image> image = imageRepository.findByMemberIdAndPostIsNull(member.getId());
+        String imageUrl = null;
+
+        if (image.isPresent()) {
+            Image presentImage = image.get();
+            imageUrl = presentImage.getImageUrl();
+            s3Service.delete(imageUrl); // S3 삭제
+            imageRepository.delete(presentImage); // Image 엔티티 삭제
+        }
+
+        // TODO member 관련 데이터 삭제 로직 추가 (자동 삭제가 안 되어 있는 경우)
+        memberRepository.delete(member);
+
+        return imageUrl;
     }
 }
