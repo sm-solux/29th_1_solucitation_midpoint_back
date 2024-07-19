@@ -14,6 +14,7 @@ import org.apache.http.auth.InvalidCredentialsException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -110,22 +111,5 @@ public class MemberController {
         } catch (Exception e) { // 만료되거나 유효하지 않은 Refresh Token일 경우 401 Unauthorized 응답 반환
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", e.getMessage()));
         }
-    }
-
-    /**
-     * 사용자를 로그아웃시키고 Refresh Token을 무효화합니다.
-     *
-     * @param refreshTokenHeader Authorization 헤더에 포함된 Refresh Token
-     * @return 로그아웃 성공 메시지 응답
-     */
-    @PostMapping("/logout")
-    public ResponseEntity<?> logoutMember(@RequestHeader("Authorization") String refreshTokenHeader) {
-        String refreshToken = jwtTokenProvider.resolveToken(refreshTokenHeader); // Authorization 헤더에서 Bearer 토큰을 제외한 Refresh Token만 추출
-
-        jwtTokenProvider.invalidateRefreshToken(refreshToken); // Redis에서 토큰을 삭제(Refresh Token을 무효화하여 로그아웃 처리)
-        SecurityContextHolder.clearContext(); // SecurityContextHolder에서 인증 정보 삭제
-
-        jwtTokenProvider.addToBlacklist(refreshToken); // refreshToken을 블랙리스트에 추가
-        return ResponseEntity.ok(Map.of("message", "로그아웃에 성공하였습니다."));
     }
 }
