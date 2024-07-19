@@ -135,12 +135,11 @@ public class MemberController2 {
      *
      * @param resetToken        비밀번호 확인했고, 비밀번호 재설정하겠다는 인증 토큰
      * @param resetPwRequestDto 비밀번호 재설정 요청 DTO
-     * @param authentication    인증 객체
      * @return 비밀번호 재설정 성공 메시지 또는 오류 메시지
      */
     @PostMapping("/reset-pw")
-    public ResponseEntity<?> resetPassword(@RequestHeader("X-Reset-Password-Token") String resetToken, @RequestBody @Valid ResetPwRequestDto resetPwRequestDto, Authentication authentication) {
-        ResponseEntity<?> validationResponse = validateTokenAndEmail(resetToken, "reset-password", authentication);
+    public ResponseEntity<?> resetPassword(@RequestHeader("X-Reset-Password-Token") String resetToken, @RequestBody @Valid ResetPwRequestDto resetPwRequestDto) {
+        ResponseEntity<?> validationResponse = validateTokenAndEmail(resetToken, "reset-password");
         if (validationResponse != null) {
             return validationResponse;
         }
@@ -152,17 +151,17 @@ public class MemberController2 {
         return ResponseEntity.ok(Map.of("message", "비밀번호 재설정이 성공적으로 완료되었습니다."));
     }
 
-    private ResponseEntity<?> validateTokenAndEmail(String BFtoken, String action, Authentication authentication) {
+    private ResponseEntity<?> validateTokenAndEmail(String BFtoken, String action) {
         String token = jwtTokenProvider.resolveToken(BFtoken);
         if (!jwtTokenProvider.validateTokenByPwConfirm(token, action)) {
             return ResponseEntity.status(401).body(Map.of("error", "unauthorized", "message", "권한이 없습니다. action: " + action));
         }
-        String tokenEmail = jwtTokenProvider.extractEmailFromToken(token); // 토큰으로부터 이메일 추출
-        String authEmail = authentication.getName(); // 인증 객체로부터 이메일 추출
+//        String tokenEmail = jwtTokenProvider.extractEmailFromToken(token); // 토큰으로부터 이메일 추출
+//        String authEmail = authentication.getName(); // 인증 객체로부터 이메일 추출
 
-        if (!tokenEmail.equals(authEmail)) { // 토큰으로부터 추출한 이메일과 인증 객체로부터 추출한 이메일이 동일한지 비교
-            return ResponseEntity.status(403).body(Map.of("error", "forbidden", "message", "토큰의 이메일과 인증된 이메일이 일치하지 않습니다."));
-        }
+//        if (!tokenEmail.equals(authEmail)) { // 토큰으로부터 추출한 이메일과 인증 객체로부터 추출한 이메일이 동일한지 비교
+//            return ResponseEntity.status(403).body(Map.of("error", "forbidden", "message", "토큰의 이메일과 인증된 이메일이 일치하지 않습니다."));
+//        }
         return null;
     }
 
