@@ -4,7 +4,6 @@ import com.solucitation.midpoint_backend.domain.member.entity.Member;
 import com.solucitation.midpoint_backend.domain.member.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -32,6 +31,6 @@ public class UserDetailsServiceImpl implements UserDetailsService {
                 });
 
         Set<GrantedAuthority> grantedAuthorities = new HashSet<>();
-        return new org.springframework.security.core.userdetails.User(member.getEmail(), member.getPwd(), grantedAuthorities);
+        return new org.springframework.security.core.userdetails.User(member.getEmail(), member.getPwd() != null ? member.getPwd() : "", grantedAuthorities);
     }
 }

@@ -2,6 +2,7 @@ package com.solucitation.midpoint_backend.domain.member.entity;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.*;
 
 @Entity
@@ -16,10 +17,12 @@ public class Member {
     @Column(name = "member_id")
     private Long id;
 
-    @NotNull
-    @Column(name = "member_pw", nullable = false)
+    @Column(name = "member_pw", nullable = true) // pwd는 null 가능
     private String pwd;
 
+    @Column(name = "member_login_id", nullable = true, unique = true, length = 100) // loginId는 null 가능하지만 유니크
+    private String loginId;
+    
     @NotNull
     @Column(name = "member_name", nullable = false, length = 100)
     private String name;
