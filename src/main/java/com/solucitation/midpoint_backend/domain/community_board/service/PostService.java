@@ -253,7 +253,7 @@ public class PostService {
                 .orElseThrow(() -> new EntityNotFoundException("해당 게시글이 존재하지 않습니다."));
 
         if (!post.getMember().getId().equals(member.getId())) {
-            throw new AccessDeniedException("해당 게시글을 수정할 권한이 없습니다.");
+            throw new AccessDeniedException("해당 게시글을 수정할 권한이 없습니다. 본인이 작성한 글만 수정할 수 있습니다.");
         }
 
         List<PostHashtag> newPostHashtag = null;
