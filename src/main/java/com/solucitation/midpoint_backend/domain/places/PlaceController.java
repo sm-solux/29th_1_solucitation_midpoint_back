@@ -7,9 +7,9 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class PlaceController {
 
-    private final MapService mapService;
+    private final com.solucitation.midpoint_backend.domain.places.MapService mapService;
 
-    public PlaceController(MapService mapService) {
+    public PlaceController(com.solucitation.midpoint_backend.domain.places.MapService mapService) {
         this.mapService = mapService;
     }
 
@@ -17,9 +17,16 @@ public class PlaceController {
     public String getPlaces(
             @RequestParam double latitude,
             @RequestParam double longitude,
+            @RequestParam String category,
             @RequestParam(defaultValue = "20000") int radius
     ) {
-        return mapService.findPlaces(latitude, longitude, radius);
+        try {
+            return mapService.findPlaces(latitude, longitude, radius, category);
+        } catch (IllegalArgumentException e) {
+            return "Invalid category: " + category;
+        } catch (Exception e) {
+            return "An error occurred while fetching places: " + e.getMessage();
+        }
     }
 }
 
