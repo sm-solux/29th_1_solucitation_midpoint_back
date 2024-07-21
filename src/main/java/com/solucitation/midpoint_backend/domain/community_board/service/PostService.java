@@ -3,6 +3,7 @@ package com.solucitation.midpoint_backend.domain.community_board.service;
 import com.solucitation.midpoint_backend.domain.community_board.dto.PostDetailDto;
 import com.solucitation.midpoint_backend.domain.community_board.dto.PostRequestDto;
 import com.solucitation.midpoint_backend.domain.community_board.dto.PostResponseDto;
+import com.solucitation.midpoint_backend.domain.community_board.dto.PostUpdateDto;
 import com.solucitation.midpoint_backend.domain.community_board.entity.*;
 import com.solucitation.midpoint_backend.domain.community_board.repository.*;
 import com.solucitation.midpoint_backend.domain.file.service.S3Service;
@@ -14,6 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.interceptor.TransactionAspectSupport;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -245,7 +247,7 @@ public class PostService {
     }
 
     @Transactional
-    public void updatePost(Long postId, PostRequestDto postRequestDto, Member member, List<MultipartFile> postImages)
+    public void updatePost(Long postId, PostUpdateDto postUpdateDto, Member member, List<MultipartFile> postImages)
             throws AccessDeniedException {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new EntityNotFoundException("해당 게시글이 존재하지 않습니다."));
@@ -254,18 +256,68 @@ public class PostService {
             throw new AccessDeniedException("해당 게시글을 수정할 권한이 없습니다.");
         }
 
-        List<PostHashtag> postHashtags = addHashtags(post, postRequestDto.getPostHashtag());
+        List<PostHashtag> newPostHashtag = null;
+        if (postUpdateDto.getPostHashtag() != null)  // 해시태그 변경 시 수정
+            newPostHashtag = addHashtags(post, postUpdateDto.getPostHashtag());
 
-        post = Post.builder()
-                .id(post.getId())
-                .member(post.getMember())
-                .createDate(post.getCreateDate())
-                .title(postRequestDto.getTitle() != null ? postRequestDto.getTitle() : post.getTitle())
-                .content(postRequestDto.getContent() != null ? postRequestDto.getContent() : post.getContent())
-                .postHashtags(!postHashtags.isEmpty() ? postHashtags : post.getPostHashtags())
-                .images(post.getImages())
-                .build();
+        List<Image> existImages = new ArrayList<>(post.getImages());
+        List<Image> newImages = null;
 
-        postRepository.save(post);
+        try {
+            if (postImages != null && !postImages.isEmpty()) // 이미지 변경 시 수정
+                newImages = addForUpdateImages(post, member, postImages);
+
+            // 기존 이미지 삭제
+            if (newImages != null && !newImages.isEmpty()) {
+                deleteImages(existImages);
+            }
+
+            post = Post.builder()
+                    .id(post.getId())
+                    .member(post.getMember())
+                    .createDate(post.getCreateDate())
+                    .title(postUpdateDto.getTitle() != null ? postUpdateDto.getTitle() : post.getTitle())
+                    .content(postUpdateDto.getContent() != null ? postUpdateDto.getContent() : post.getContent())
+                    .postHashtags(newPostHashtag != null && !newPostHashtag.isEmpty() ? newPostHashtag : post.getPostHashtags())
+                    .images(newImages != null && !newImages.isEmpty() ? newImages : existImages)
+                    .build();
+
+            postRepository.save(post);
+        } catch (Exception e) {
+            // 트랜잭션 롤백
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+            throw e; // 오류를 다시 던집니다.
+        }
     }
+
+    private List<Image> addForUpdateImages(Post post, Member member, List<MultipartFile> postImages) {
+        List<Image> images = new ArrayList<>();
+        if (!postImages.isEmpty()) {
+            try {
+                for (MultipartFile postImage : postImages) {
+                    if (postImage.isEmpty())  // 사용자가 이미지 변경을 요청하지 않음
+                        return null; 
+                    String postImageUrl = s3Service.upload("post-images", postImage.getOriginalFilename(), postImage);
+
+                    Image image = Image.builder()
+                            .imageUrl(postImageUrl).member(member).post(post).build();
+                    imageRepository.save(image);
+                    images.add(image);
+                }
+            } catch (IOException e){
+                log.error("게시글 이미지 업로드 실패: {}", e.getMessage());
+                throw new RuntimeException("게시글 이미지 업로드에 실패하였습니다.");
+            }
+        }
+        return images;
+    }
+
+    @Transactional
+    protected void deleteImages(List<Image> images) {
+        for (Image image : images) {
+            s3Service.delete(image.getImageUrl()); // S3에서 이미지 삭제
+        }
+        imageRepository.deleteAll(images);
+    }
+
 }
