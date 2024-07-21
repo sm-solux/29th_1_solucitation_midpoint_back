@@ -14,6 +14,7 @@ import org.apache.http.auth.InvalidCredentialsException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -111,21 +112,24 @@ public class MemberController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", e.getMessage()));
         }
     }
-
     /**
-     * 사용자를 로그아웃시키고 Refresh Token을 무효화합니다.
+     * 비밀번호를 재설정합니다.
      *
-     * @param refreshTokenHeader Authorization 헤더에 포함된 Refresh Token
-     * @return 로그아웃 성공 메시지 응답
+     * @param resetToken        비밀번호 확인했고, 비밀번호 재설정하겠다는 인증 토큰
+     * @param resetPwRequestDto 비밀번호 재설정 요청 DTO
+     * @return 비밀번호 재설정 성공 메시지 또는 오류 메시지
      */
-    @PostMapping("/logout")
-    public ResponseEntity<?> logoutMember(@RequestHeader("Authorization") String refreshTokenHeader) {
-        String refreshToken = jwtTokenProvider.resolveToken(refreshTokenHeader); // Authorization 헤더에서 Bearer 토큰을 제외한 Refresh Token만 추출
-
-        jwtTokenProvider.invalidateRefreshToken(refreshToken); // Redis에서 토큰을 삭제(Refresh Token을 무효화하여 로그아웃 처리)
-        SecurityContextHolder.clearContext(); // SecurityContextHolder에서 인증 정보 삭제
-
-        jwtTokenProvider.addToBlacklist(refreshToken); // refreshToken을 블랙리스트에 추가
-        return ResponseEntity.ok(Map.of("message", "로그아웃에 성공하였습니다."));
+    @PostMapping("/reset-pw")
+    public ResponseEntity<?> resetPassword(@RequestHeader("X-Reset-Password-Token") String resetToken, @RequestBody @Valid ResetPwRequestDto resetPwRequestDto) {
+        String token = jwtTokenProvider.resolveToken(resetToken);
+        if (!jwtTokenProvider.validateTokenByPwConfirm(token, resetToken)) {
+            return ResponseEntity.status(401).body(Map.of("error", "unauthorized", "message", "비밀번호를 재설정할 권한이 없습니다"));
+        }
+        if (!resetPwRequestDto.getNewPassword().equals(resetPwRequestDto.getNewPasswordConfirm())) {
+            return ResponseEntity.badRequest().body(Map.of("error", "password_mismatch", "message", "새 비밀번호와 새 비밀번호 확인이 일치하지 않습니다."));
+        }
+        String tokenEmail = jwtTokenProvider.extractEmailFromToken(jwtTokenProvider.resolveToken(resetToken));
+        memberService.resetPassword(tokenEmail, resetPwRequestDto.getNewPassword());
+        return ResponseEntity.ok(Map.of("message", "비밀번호 재설정이 성공적으로 완료되었습니다."));
     }
 }
