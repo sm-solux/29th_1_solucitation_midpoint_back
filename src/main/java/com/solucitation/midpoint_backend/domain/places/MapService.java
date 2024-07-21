@@ -67,6 +67,7 @@ public class MapService {
                 place.put("latitude", resultNode.path("geometry").path("location").path("lat").asDouble());
                 place.put("longitude", resultNode.path("geometry").path("location").path("lng").asDouble());
                 place.put("types", resultNode.path("types").toString());
+                place.put("placeID", resultNode.path("place_id").asText());
 
                 places.add(place);
             }
