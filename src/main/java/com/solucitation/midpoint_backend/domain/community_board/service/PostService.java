@@ -244,4 +244,28 @@ public class PostService {
         return resultSet;
     }
 
+    @Transactional
+    public void updatePost(Long postId, PostRequestDto postRequestDto, Member member, List<MultipartFile> postImages)
+            throws AccessDeniedException {
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new EntityNotFoundException("해당 게시글이 존재하지 않습니다."));
+
+        if (!post.getMember().getId().equals(member.getId())) {
+            throw new AccessDeniedException("해당 게시글을 수정할 권한이 없습니다.");
+        }
+
+        List<PostHashtag> postHashtags = addHashtags(post, postRequestDto.getPostHashtag());
+
+        post = Post.builder()
+                .id(post.getId())
+                .member(post.getMember())
+                .createDate(post.getCreateDate())
+                .title(postRequestDto.getTitle() != null ? postRequestDto.getTitle() : post.getTitle())
+                .content(postRequestDto.getContent() != null ? postRequestDto.getContent() : post.getContent())
+                .postHashtags(!postHashtags.isEmpty() ? postHashtags : post.getPostHashtags())
+                .images(post.getImages())
+                .build();
+
+        postRepository.save(post);
+    }
 }
