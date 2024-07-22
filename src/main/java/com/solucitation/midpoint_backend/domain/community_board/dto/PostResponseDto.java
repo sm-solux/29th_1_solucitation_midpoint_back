@@ -1,7 +1,6 @@
 package com.solucitation.midpoint_backend.domain.community_board.dto;
 
 import com.solucitation.midpoint_backend.domain.community_board.entity.Post;
-import com.solucitation.midpoint_backend.domain.community_board.entity.PostHashtag;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

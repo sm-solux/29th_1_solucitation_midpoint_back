@@ -12,13 +12,16 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpServletRequest;
 
 import java.security.Key;
+import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -93,7 +96,15 @@ public class JwtTokenProvider {
     public Authentication getAuthentication(String token) {
         Claims claims = getClaimsFromToken(token);
         String userPrincipal = claims.getSubject();
+
+        // 자체 로그인 -> UserDetailsService를 사용하여 사용자 정보를 로드
         UserDetails userDetails = userDetailsService.loadUserByUsername(userPrincipal);
+
+        // 소셜 로그인(권한 정보가 없는 경우) -> 기본 권한 "ROLE_USER"을 추가하여 인증 객체 생성
+        if (userDetails.getAuthorities().isEmpty()) {
+            List<SimpleGrantedAuthority> authorities = Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER"));
+            return new UsernamePasswordAuthenticationToken(userDetails, "", authorities);
+        }
         return new UsernamePasswordAuthenticationToken(userDetails, "", userDetails.getAuthorities());
     }
 
@@ -123,6 +134,32 @@ public class JwtTokenProvider {
         } catch (JwtException e) {
             log.error("Invalid JWT token", e);
             throw new BaseException("INVALID_JWT");
+        }
+    }
+    // 비밀번호 확인시 발급되는 토큰 검증
+    public boolean validateTokenByPwConfirm(String token, String expectedPurpose) {
+        try {
+            Claims claims = getClaimsFromToken(token);
+            log.info("Claims: {}", claims);
+
+            String purpose = claims.get("purpose", String.class);
+            log.info("Token purpose: {}", purpose);
+
+            if (!expectedPurpose.equals(purpose)) {
+                log.error("Token purpose mismatch: expected={}, actual={}", expectedPurpose, purpose);
+                return false;
+            }
+
+            Date expiration = claims.getExpiration();
+            if (expiration.before(new Date())) {
+                log.error("Token has expired: expiration={}", expiration);
+                return false;
+            }
+
+            return true;
+        } catch (Exception e) {
+            log.error("Token validation failed: {}", e.getMessage());
+            return false;
         }
     }
 
@@ -174,5 +211,20 @@ public class JwtTokenProvider {
             log.error("토큰에서 이메일 추출 중 오류 발생: {}", e.getMessage());
             return null;
         }
+    }
+
+    public String createShortLivedTokenWithPurpose(Authentication authentication, String purpose) {
+        Claims claims = Jwts.claims().setSubject(authentication.getName());
+        claims.put("purpose", purpose);
+
+        Date now = new Date();
+        Date validity = new Date(now.getTime() + 600_000); // 매우 짧은 만료 시간인 10분을 가짐
+
+        return Jwts.builder()
+                .setClaims(claims)
+                .setIssuedAt(now)
+                .setExpiration(validity)
+                .signWith(key)
+                .compact();
     }
 }

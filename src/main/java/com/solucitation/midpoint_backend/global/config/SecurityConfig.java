@@ -75,6 +75,11 @@ public class SecurityConfig {
                 .exceptionHandling(exception -> exception
                         .accessDeniedHandler(jwtAccessDeniedHandler) // 접근 거부 처리기 설정
                         .authenticationEntryPoint(jwtAuthenticationEntryPoint) // 인증 진입점 설정
+                )
+                // Spring Security에서 OAuth2 로그인을 설정
+                // OAuth2 인증이 성공적으로 완료된 후 리다이렉트할 URL을 설정
+                .oauth2Login(oauth2 -> oauth2
+                        .defaultSuccessUrl("/api/auth/oauth2/code/kakao")
                 );
 
         // JWT 필터 추가
