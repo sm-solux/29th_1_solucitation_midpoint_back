@@ -31,6 +31,7 @@ services:
       - SPRING_REDIS_PORT=${REDIS_PORT}
       - CLOUD_AWS_CREDENTIALS_ACCESS_KEY=${AWS_ACCESS_KEY_ID}
       - CLOUD_AWS_CREDENTIALS_SECRET_KEY=${AWS_SECRET_ACCESS_KEY}
+      - CLOUD_AWS_REGION_STATIC=${AWS_REGION}
     depends_on:
       - postgres
       - redis
