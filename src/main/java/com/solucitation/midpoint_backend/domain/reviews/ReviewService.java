@@ -1,4 +1,4 @@
-package com.solucitation.midpoint_backend.domain.reviews;
+package com.example.demo.service;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -10,18 +10,16 @@ public class ReviewService {
     @Value("${google.api.key}")
     private String apiKey;
 
-    private final ReviewRepository reviewRepository;
+    private final RestTemplate restTemplate;
 
-    public ReviewService(ReviewRepository reviewRepository) {
-        this.reviewRepository = reviewRepository;
+    public ReviewService(RestTemplate restTemplate) {
+        this.restTemplate = restTemplate;
     }
 
-    public String fetchReviews(String placeId) {
-        String url = String.format("https://maps.googleapis.com/maps/api/place/details/json?place_id=%s&key=%s", placeId, apiKey);
-        RestTemplate restTemplate = new RestTemplate();
+    public String getReviewsByPlaceId(String placeId) {
+        String url = String.format("https://maps.googleapis.com/maps/api/place/details/json?place_id=%s&fields=reviews&key=%s", placeId, apiKey);
         String response = restTemplate.getForObject(url, String.class);
-
-        // 파싱 및 리뷰 저장 로직 추가 필요 (현재는 단순 응답만 반환)
         return response;
     }
 }
+

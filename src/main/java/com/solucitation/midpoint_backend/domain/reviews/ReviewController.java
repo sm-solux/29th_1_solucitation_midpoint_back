@@ -1,5 +1,6 @@
-package com.solucitation.midpoint_backend.domain.reviews;
+package com.example.demo.controller;
 
+import com.example.demo.service.ReviewService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -15,6 +16,7 @@ public class ReviewController {
 
     @GetMapping("/api/reviews")
     public String getReviews(@RequestParam String placeId) {
-        return reviewService.fetchReviews(placeId);
+        return reviewService.getReviewsByPlaceId(placeId);
     }
 }
+
