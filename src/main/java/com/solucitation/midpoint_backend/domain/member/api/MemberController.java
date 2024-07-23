@@ -122,7 +122,7 @@ public class MemberController {
     @PostMapping("/reset-pw")
     public ResponseEntity<?> resetPassword(@RequestHeader("X-Reset-Password-Token") String resetToken, @RequestBody @Valid ResetPwRequestDto resetPwRequestDto) {
         String token = jwtTokenProvider.resolveToken(resetToken);
-        if (!jwtTokenProvider.validateTokenByPwConfirm(token, resetToken)) {
+        if (!jwtTokenProvider.validateTokenByPwConfirm(token, "reset-password")) {
             return ResponseEntity.status(401).body(Map.of("error", "unauthorized", "message", "비밀번호를 재설정할 권한이 없습니다"));
         }
         if (!resetPwRequestDto.getNewPassword().equals(resetPwRequestDto.getNewPasswordConfirm())) {
