@@ -19,6 +19,14 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
+      # 환경 변수 설정
+      - name: Make application.properties
+        run: |
+          cd ./src/main/resources
+          touch ./application.properties
+          echo "${{ secrets.APPLICATION_PROPERTIES }}" > ./application.properties
+        shell: bash
+
       - name: Grant execute permission for gradlew
         run: chmod +x ./gradlew
 
@@ -48,5 +56,4 @@ jobs:
             git pull origin main && \
             docker pull ${{ secrets.DOCKERHUB_USERNAME }}/${{ secrets.DOCKERHUB_REPOSITORY }}:${{ github.sha }} && \
             echo "DOCKER_IMAGE=${{ secrets.DOCKERHUB_USERNAME }}/${{ secrets.DOCKERHUB_REPOSITORY }}:${{ github.sha }}" >> .env && \
-            echo "${{ secrets.APPLICATION_PROPERTIES }}" > .env && \
             docker-compose --env-file .env up -d
