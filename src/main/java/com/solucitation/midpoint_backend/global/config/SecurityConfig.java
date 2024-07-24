@@ -4,6 +4,8 @@ import com.solucitation.midpoint_backend.global.auth.JwtFilter;
 import com.solucitation.midpoint_backend.global.auth.JwtTokenProvider;
 import com.solucitation.midpoint_backend.global.exception.JwtAccessDeniedHandler;
 import com.solucitation.midpoint_backend.global.exception.JwtAuthenticationEntryPoint;
+import lombok.Value;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -15,16 +17,23 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.web.filter.CorsFilter;
+import org.springframework.core.env.Environment;
 
 /**
  * Spring Security 설정 클래스 - JWT를 사용한 보안 설정 구성
  */
+@Slf4j
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
     private final JwtTokenProvider jwtTokenProvider;
     private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
     private final JwtAccessDeniedHandler jwtAccessDeniedHandler;
+
+    private final Environment env;
 
     /**
      * SecurityConfig 생성자 - 필수 구성 요소 주입
@@ -36,10 +45,12 @@ public class SecurityConfig {
     public SecurityConfig(
             JwtTokenProvider jwtTokenProvider,
             JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint,
-            JwtAccessDeniedHandler jwtAccessDeniedHandler) {
+            JwtAccessDeniedHandler jwtAccessDeniedHandler,
+            Environment env) {
         this.jwtTokenProvider = jwtTokenProvider;
         this.jwtAuthenticationEntryPoint = jwtAuthenticationEntryPoint;
         this.jwtAccessDeniedHandler = jwtAccessDeniedHandler;
+        this.env = env;
     }
 
     /**
@@ -65,6 +76,27 @@ public class SecurityConfig {
      */
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        // CORS 설정 추가
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        CorsConfiguration config = new CorsConfiguration();
+        config.setAllowCredentials(true);
+
+        // 환경 변수에서 허용할 Origin을 설정
+        String allowedOrigins = env.getProperty("allowed.origins");
+//        log.info("Allowed Origins: " + allowedOrigins); // 허용할 Origin 값 출력
+        if (allowedOrigins != null) {
+            String[] origins = allowedOrigins.split(",");
+            for (String origin : origins) {
+//                log.info("Adding allowed origin: " + origin.trim());
+                config.addAllowedOrigin(origin.trim());
+            }
+        }
+
+        config.addAllowedHeader("*");
+        config.addAllowedMethod("*");
+        source.registerCorsConfiguration("/**", config);
+        CorsFilter corsFilter = new CorsFilter(source);
+
         http
                 .csrf(csrf -> csrf.disable()) // CSRF 비활성화
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // Stateless 세션 설정
@@ -84,6 +116,9 @@ public class SecurityConfig {
 
         // JWT 필터 추가
         http.addFilterBefore(new JwtFilter(jwtTokenProvider), UsernamePasswordAuthenticationFilter.class);
+
+        // CORS 필터 추가
+        http.addFilterBefore(corsFilter, JwtFilter.class);
 
         return http.build();
     }
