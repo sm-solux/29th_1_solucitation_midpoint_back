@@ -4,8 +4,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
-
 @RestController
 public class ReviewController {
 
@@ -16,7 +14,7 @@ public class ReviewController {
     }
 
     @GetMapping("/api/reviews")
-    public List<ReviewResponse> getReviews(@RequestParam String placeId) {
+    public PlaceDetailsResponse getReviews(@RequestParam String placeId) {
         return reviewService.getReviewsByPlaceId(placeId);
     }
 }

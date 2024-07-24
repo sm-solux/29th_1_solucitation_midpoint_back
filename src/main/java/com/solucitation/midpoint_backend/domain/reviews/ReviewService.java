@@ -20,17 +20,36 @@ public class ReviewService {
         this.restTemplate = restTemplate;
     }
 
-    public List<ReviewResponse> getReviewsByPlaceId(String placeId) {
-        // 언어 파라미터를 추가하여 한국어로 응답을 받음
-        String url = String.format("https://maps.googleapis.com/maps/api/place/details/json?place_id=%s&fields=reviews&key=%s&language=ko", placeId, apiKey);
+    public PlaceDetailsResponse getReviewsByPlaceId(String placeId) {
+        String url = String.format("https://maps.googleapis.com/maps/api/place/details/json?place_id=%s&fields=reviews,photos&key=%s&language=ko", placeId, apiKey);
         Map<String, Object> response = restTemplate.getForObject(url, Map.class);
+
+        PlaceDetailsResponse placeDetailsResponse = new PlaceDetailsResponse();
 
         if (response != null && response.get("result") != null) {
             Map<String, Object> result = (Map<String, Object>) response.get("result");
+            
             List<Map<String, Object>> reviews = (List<Map<String, Object>>) result.get("reviews");
-
-            return reviews.stream()
+            List<ReviewResponse> reviewResponses = reviews.stream()
                     .map(this::mapToReviewResponse)
+                    .collect(Collectors.toList());
+            placeDetailsResponse.setReviews(reviewResponses);
+
+            List<String> photoUrls = getPhotoUrls(result);
+            placeDetailsResponse.setPhotoUrls(photoUrls);
+        }
+
+        return placeDetailsResponse;
+    }
+
+    private List<String> getPhotoUrls(Map<String, Object> result) {
+        if (result.get("photos") != null) {
+            List<Map<String, Object>> photos = (List<Map<String, Object>>) result.get("photos");
+            return photos.stream()
+                    .map(photo -> {
+                        String photoReference = (String) photo.get("photo_reference");
+                        return String.format("https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=%s&key=%s", photoReference, apiKey);
+                    })
                     .collect(Collectors.toList());
         }
         return List.of();
@@ -46,4 +65,3 @@ public class ReviewService {
         return reviewResponse;
     }
 }
-
