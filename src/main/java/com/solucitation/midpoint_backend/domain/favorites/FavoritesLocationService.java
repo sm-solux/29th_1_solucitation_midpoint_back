@@ -23,10 +23,17 @@ public class FavoritesLocationService {
 
         LocationDetails locationDetails = googlePlacesService.getLocationDetails(placeName);
 
-        String favorite = String.format("%s (%s): %.6f, %.6f", category, placeName, locationDetails.getLatitude(), locationDetails.getLongitude());
+        String favorite = String.format("%s (%s): %.6f, %.6f", category, locationDetails.getGooglePlaceName(), locationDetails.getLatitude(), locationDetails.getLongitude());
         member.getFavorites().add(favorite);
         memberRepository.save(member);
 
-        return new FavoriteLocationResponseDto(email, category, placeName, locationDetails.getLatitude(), locationDetails.getLongitude());
+        return new FavoriteLocationResponseDto(
+                email,
+                category,
+                placeName, // 사용자 입력한 장소 이름
+                locationDetails.getLatitude(),
+                locationDetails.getLongitude(),
+                locationDetails.getGooglePlaceName() // 구글에서 가져온 장소 이름
+        );
     }
 }

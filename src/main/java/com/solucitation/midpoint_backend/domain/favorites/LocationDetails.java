@@ -3,10 +3,12 @@ package com.solucitation.midpoint_backend.domain.favorites;
 public class LocationDetails {
     private final double latitude;
     private final double longitude;
+    private final String googlePlaceName;
 
-    public LocationDetails(double latitude, double longitude) {
+    public LocationDetails(double latitude, double longitude, String googlePlaceName) {
         this.latitude = latitude;
         this.longitude = longitude;
+        this.googlePlaceName = googlePlaceName;
     }
 
     public double getLatitude() {
@@ -15,5 +17,9 @@ public class LocationDetails {
 
     public double getLongitude() {
         return longitude;
+    }
+
+    public String getGooglePlaceName() {
+        return googlePlaceName;
     }
 }

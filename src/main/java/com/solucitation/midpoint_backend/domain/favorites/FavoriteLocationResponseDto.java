@@ -11,4 +11,5 @@ public class FavoriteLocationResponseDto {
     private final String placeName;
     private final double latitude;
     private final double longitude;
+    private final String googlePlaceName;
 }
