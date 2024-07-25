@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.*;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @Table(name = "member")
@@ -34,6 +36,11 @@ public class Member {
     @NotNull
     @Column(name = "member_nickname", nullable = false, unique = true, length = 100)
     private String nickname;
+
+    @ElementCollection
+    @CollectionTable(name = "favorite_locations", joinColumns = @JoinColumn(name = "member_id"))
+    @Column(name = "favorite_location")
+    private Set<String> favorites = new HashSet<>();
 
     public Member(String password, String name, String email, String nickname, String loginId) {
         this.email= email;
