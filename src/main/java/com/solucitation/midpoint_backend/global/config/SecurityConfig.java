@@ -18,8 +18,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-import org.springframework.web.filter.CorsFilter;
 import org.springframework.core.env.Environment;
 
 /**
@@ -76,27 +76,6 @@ public class SecurityConfig {
      */
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        // CORS 설정 추가
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        CorsConfiguration config = new CorsConfiguration();
-        config.setAllowCredentials(true);
-
-        // 환경 변수에서 허용할 Origin을 설정
-        String allowedOrigins = env.getProperty("allowed.origins");
-//        log.info("Allowed Origins: " + allowedOrigins); // 허용할 Origin 값 출력
-        if (allowedOrigins != null) {
-            String[] origins = allowedOrigins.split(",");
-            for (String origin : origins) {
-//                log.info("Adding allowed origin: " + origin.trim());
-                config.addAllowedOrigin(origin.trim());
-            }
-        }
-
-        config.addAllowedHeader("*");
-        config.addAllowedMethod("*");
-        source.registerCorsConfiguration("/**", config);
-        CorsFilter corsFilter = new CorsFilter(source);
-
         http
                 .csrf(csrf -> csrf.disable()) // CSRF 비활성화
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // Stateless 세션 설정
@@ -117,10 +96,36 @@ public class SecurityConfig {
         // JWT 필터 추가
         http.addFilterBefore(new JwtFilter(jwtTokenProvider), UsernamePasswordAuthenticationFilter.class);
 
-        // CORS 필터 추가
-        http.addFilterBefore(corsFilter, JwtFilter.class);
-
         return http.build();
+    }
+
+
+    /**
+     * CORS 설정 빈 등록
+     *
+     * @return CorsConfigurationSource 인스턴스
+     */
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+
+        // 환경 변수에서 허용할 Origin을 설정
+        String allowedOrigins = env.getProperty("allowed.origins");
+//        log.info("Allowed Origins: " + allowedOrigins); // 허용할 Origin 값 출력
+        if (allowedOrigins != null) {
+            String[] origins = allowedOrigins.split(",");
+            for (String origin : origins) {
+//                log.info("Adding allowed origin: " + origin.trim());
+                configuration.addAllowedOrigin(origin.trim());
+            }
+        }
+        configuration.addAllowedMethod("*");
+        configuration.addAllowedHeader("*");
+        configuration.setAllowCredentials(true);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
     }
 
     /**
