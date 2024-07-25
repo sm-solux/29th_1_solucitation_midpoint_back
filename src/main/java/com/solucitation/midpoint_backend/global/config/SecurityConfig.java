@@ -22,6 +22,8 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.core.env.Environment;
 
+import static org.springframework.security.config.Customizer.withDefaults;
+
 /**
  * Spring Security 설정 클래스 - JWT를 사용한 보안 설정 구성
  */
@@ -32,7 +34,7 @@ public class SecurityConfig {
     private final JwtTokenProvider jwtTokenProvider;
     private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
     private final JwtAccessDeniedHandler jwtAccessDeniedHandler;
-
+    private final Environment env;
     /**
      * SecurityConfig 생성자 - 필수 구성 요소 주입
      *
@@ -43,10 +45,12 @@ public class SecurityConfig {
     public SecurityConfig(
             JwtTokenProvider jwtTokenProvider,
             JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint,
-            JwtAccessDeniedHandler jwtAccessDeniedHandler) {
+            JwtAccessDeniedHandler jwtAccessDeniedHandler,
+            Environment env) {
         this.jwtTokenProvider = jwtTokenProvider;
         this.jwtAuthenticationEntryPoint = jwtAuthenticationEntryPoint;
         this.jwtAccessDeniedHandler = jwtAccessDeniedHandler;
+        this.env = env;
     }
 
     /**
@@ -87,7 +91,8 @@ public class SecurityConfig {
                 // OAuth2 인증이 성공적으로 완료된 후 리다이렉트할 URL을 설정
                 .oauth2Login(oauth2 -> oauth2
                         .defaultSuccessUrl("/api/auth/oauth2/code/kakao")
-                );
+                )
+                .cors(withDefaults());
 
         // JWT 필터 추가
         http.addFilterBefore(new JwtFilter(jwtTokenProvider), UsernamePasswordAuthenticationFilter.class);
@@ -104,7 +109,15 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.addAllowedOrigin("*"); // 모든 도메인 허용
+
+        // 환경 변수에서 허용할 Origin을 설정
+        String allowedOrigins = env.getProperty("allowed.origins");
+        if (allowedOrigins != null) {
+            String[] origins = allowedOrigins.split(",");
+            for (String origin : origins) {
+                configuration.addAllowedOrigin(origin.trim());
+            }
+        }
         configuration.addAllowedMethod("*");
         configuration.addAllowedHeader("*");
         configuration.setAllowCredentials(true);
