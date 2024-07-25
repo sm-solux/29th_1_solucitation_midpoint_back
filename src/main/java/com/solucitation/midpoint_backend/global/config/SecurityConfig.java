@@ -33,8 +33,6 @@ public class SecurityConfig {
     private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
     private final JwtAccessDeniedHandler jwtAccessDeniedHandler;
 
-    private final Environment env;
-
     /**
      * SecurityConfig 생성자 - 필수 구성 요소 주입
      *
@@ -45,12 +43,10 @@ public class SecurityConfig {
     public SecurityConfig(
             JwtTokenProvider jwtTokenProvider,
             JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint,
-            JwtAccessDeniedHandler jwtAccessDeniedHandler,
-            Environment env) {
+            JwtAccessDeniedHandler jwtAccessDeniedHandler) {
         this.jwtTokenProvider = jwtTokenProvider;
         this.jwtAuthenticationEntryPoint = jwtAuthenticationEntryPoint;
         this.jwtAccessDeniedHandler = jwtAccessDeniedHandler;
-        this.env = env;
     }
 
     /**
@@ -108,17 +104,8 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-
-        // 환경 변수에서 허용할 Origin을 설정
-        String allowedOrigins = env.getProperty("allowed.origins");
-//        log.info("Allowed Origins: " + allowedOrigins); // 허용할 Origin 값 출력
-        if (allowedOrigins != null) {
-            String[] origins = allowedOrigins.split(",");
-            for (String origin : origins) {
-//                log.info("Adding allowed origin: " + origin.trim());
-                configuration.addAllowedOrigin(origin.trim());
-            }
-        }
+        configuration.addAllowedOrigin("http://localhost:3000");
+        configuration.addAllowedOrigin("http://3.36.150.194:8080");
         configuration.addAllowedMethod("*");
         configuration.addAllowedHeader("*");
         configuration.setAllowCredentials(true);
