@@ -1,5 +1,7 @@
-package com.solucitation.midpoint_backend.domain.favorites;
+package com.solucitation.midpoint_backend.domain.favorites.api;
 
+import com.solucitation.midpoint_backend.domain.favorites.dto.FavoriteLocationResponseDto;
+import com.solucitation.midpoint_backend.domain.favorites.service.FavoritesLocationService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

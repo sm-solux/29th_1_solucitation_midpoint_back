@@ -1,4 +1,4 @@
-package com.solucitation.midpoint_backend.domain.favorites;
+package com.solucitation.midpoint_backend.domain.favorites.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

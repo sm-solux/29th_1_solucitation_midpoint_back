@@ -1,5 +1,7 @@
-package com.solucitation.midpoint_backend.domain.favorites;
+package com.solucitation.midpoint_backend.domain.favorites.service;
 
+import com.solucitation.midpoint_backend.domain.favorites.entity.LocationDetails;
+import com.solucitation.midpoint_backend.domain.favorites.dto.FavoriteLocationResponseDto;
 import com.solucitation.midpoint_backend.domain.member.entity.Member;
 import com.solucitation.midpoint_backend.domain.member.repository.MemberRepository;
 import org.springframework.stereotype.Service;

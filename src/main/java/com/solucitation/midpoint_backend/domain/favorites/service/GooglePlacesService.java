@@ -1,7 +1,8 @@
-package com.solucitation.midpoint_backend.domain.favorites;
+package com.solucitation.midpoint_backend.domain.favorites.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.solucitation.midpoint_backend.domain.favorites.entity.LocationDetails;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;

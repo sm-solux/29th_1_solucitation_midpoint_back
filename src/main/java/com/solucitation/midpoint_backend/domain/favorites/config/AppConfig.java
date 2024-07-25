@@ -1,4 +1,4 @@
-package com.solucitation.midpoint_backend.domain.favorites;
+package com.solucitation.midpoint_backend.domain.favorites.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.context.annotation.Bean;
