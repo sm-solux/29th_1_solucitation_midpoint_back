@@ -2,11 +2,11 @@ package com.solucitation.midpoint_backend.domain.places;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -27,7 +27,6 @@ public class MapService {
     private static final Map<String, String> CATEGORY_TYPE_MAP = new HashMap<>();
 
     static {
-        // 카테고리 및 장소유형 매핑
         CATEGORY_TYPE_MAP.put("맛집", "american_restaurant|barbecue_restaurant|brazilian_restaurant|breakfast_restaurant|chinese_restaurant|fast_food_restaurant|french_restaurant|greek_restaurant|hamburger_restaurant|indian_restaurant|indonesian_restaurant|italian_restaurant|japanese_restaurant|korean_restaurant|lebanese_restaurant|meal_delivery|meal_takeaway|mediterranean_restaurant|mexican_restaurant|middle_eastern_restaurant|pizza_restaurant|ramen_restaurant|restaurant|sandwich_shop|seafood_restaurant|spanish_restaurant|steak_house|sushi_restaurant|thai_restaurant|turkish_restaurant|vegan_restaurant|vegetarian_restaurant|vietnamese_restaurant");
         CATEGORY_TYPE_MAP.put("카페", "bakery|cafe|coffee_shop|brunch_restaurant|ice_cream_shop");
         CATEGORY_TYPE_MAP.put("산책", "park|hiking_area|national_park");
@@ -73,12 +72,13 @@ public class MapService {
             }
 
             return places;
-        } catch (IllegalArgumentException e) {
-            logger.error("Invalid category provided: {}", category, e);
-            throw e;
         } catch (Exception e) {
-            logger.error("An error occurred while fetching places", e);
+            logger.error("An error occurred while fetching places: {}", e.getMessage(), e);
             throw new RuntimeException("An error occurred while fetching places", e);
         }
+    }
+
+    public static boolean isValidCategory(String category) {
+        return CATEGORY_TYPE_MAP.containsKey(category);
     }
 }

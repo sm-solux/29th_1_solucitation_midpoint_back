@@ -1,5 +1,7 @@
 package com.solucitation.midpoint_backend.domain.places;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -17,22 +19,29 @@ public class PlaceController {
     }
 
     @GetMapping("/api/places")
-    public List<Map<String, Object>> getPlaces(
+    public ResponseEntity<?> getPlaces(
             @RequestParam double latitude,
             @RequestParam double longitude,
             @RequestParam String category,
             @RequestParam(defaultValue = "1000") int radius // 기본값은 1km로 설정
     ) {
+        // 반경이 유효하지 않으면 400 Bad Request 응답
         if (radius != 1000 && radius != 2000 && radius != 3000) {
-            return List.of(Map.of("error", "Invalid radius: " + radius + ". Allowed values are 1000, 2000, 3000 meters."));
+            return ResponseEntity.badRequest().body(Map.of("error", "Invalid radius: " + radius));
+        }
+
+        // 카테고리가 유효하지 않으면 400 Bad Request 응답
+        if (!MapService.isValidCategory(category)) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Invalid category: " + category));
         }
 
         try {
-            return mapService.findPlaces(latitude, longitude, radius, category);
+            List<Map<String, Object>> places = mapService.findPlaces(latitude, longitude, radius, category);
+            return ResponseEntity.ok(places);
         } catch (IllegalArgumentException e) {
-            return List.of(Map.of("error", "Invalid category: " + category));
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         } catch (Exception e) {
-            return List.of(Map.of("error", "An error occurred while fetching places: " + e.getMessage()));
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "An error occurred while fetching places: " + e.getMessage()));
         }
     }
 }
