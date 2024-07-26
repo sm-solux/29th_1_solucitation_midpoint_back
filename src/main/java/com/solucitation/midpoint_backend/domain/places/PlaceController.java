@@ -21,8 +21,12 @@ public class PlaceController {
             @RequestParam double latitude,
             @RequestParam double longitude,
             @RequestParam String category,
-            @RequestParam(defaultValue = "20000") int radius
+            @RequestParam(defaultValue = "1000") int radius // 기본값은 1km로 설정
     ) {
+        if (radius != 1000 && radius != 2000 && radius != 3000) {
+            return List.of(Map.of("error", "Invalid radius: " + radius + ". Allowed values are 1000, 2000, 3000 meters."));
+        }
+
         try {
             return mapService.findPlaces(latitude, longitude, radius, category);
         } catch (IllegalArgumentException e) {
@@ -32,14 +36,3 @@ public class PlaceController {
         }
     }
 }
-
-
-
-
-
-
-
-
-
-
-
