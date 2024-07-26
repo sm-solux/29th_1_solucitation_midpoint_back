@@ -35,7 +35,8 @@ public class FavoritesLocationService {
                 searchName, // 사용자 입력한 장소 이름
                 locationDetails.getLatitude(),
                 locationDetails.getLongitude(),
-                locationDetails.getGooglePlaceName() // 구글에서 가져온 장소 이름
+                locationDetails.getGooglePlaceName(), // 구글에서 가져온 장소 이름
+                locationDetails.getGooglePlaceAddress() // 구글에서 가져온 장소 주소
         );
     }
 }

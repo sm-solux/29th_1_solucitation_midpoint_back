@@ -23,7 +23,7 @@ public class GooglePlacesService {
 
     public LocationDetails getLocationDetails(String placeName) {
         String url = String.format(
-                "https://maps.googleapis.com/maps/api/place/findplacefromtext/json?input=%s&inputtype=textquery&fields=geometry,name&key=%s",
+                "https://maps.googleapis.com/maps/api/place/findplacefromtext/json?input=%s&inputtype=textquery&fields=geometry,name,formatted_address&key=%s",
                 placeName,
                 apiKey
         );
@@ -42,15 +42,21 @@ public class GooglePlacesService {
             }
 
             JsonNode candidatesNode = rootNode.path("candidates");
+            if (candidatesNode.isEmpty()) {
+                throw new RuntimeException("존재하지 않는 장소입니다. 정확한 장소를 입력해주세요.");
+            }
+
             JsonNode candidateNode = candidatesNode.get(0);
             JsonNode locationNode = candidateNode.path("geometry").path("location");
             double latitude = locationNode.path("lat").asDouble();
             double longitude = locationNode.path("lng").asDouble();
             String googlePlaceName = candidateNode.path("name").asText();
+            String googlePlaceAddress = candidateNode.path("formatted_address").asText();
 
-            return new LocationDetails(latitude, longitude, googlePlaceName);
+            return new LocationDetails(latitude, longitude, googlePlaceName, googlePlaceAddress);
         } catch (Exception e) {
             throw new RuntimeException("구글 Places API 응답 처리 중 오류가 발생했습니다.", e);
         }
     }
 }
+
