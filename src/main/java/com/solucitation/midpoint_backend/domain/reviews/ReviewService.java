@@ -2,18 +2,30 @@ package com.solucitation.midpoint_backend.domain.reviews;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.server.ResponseStatusException;
 
 @Service
 public class ReviewService {
 
+    private static final Logger logger = LoggerFactory.getLogger(ReviewService.class);
+
     @Value("${google.api.key}")
     private String apiKey;
 
-    private final RestTemplate restTemplate = new RestTemplate();
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final RestTemplate restTemplate;
+    private final ObjectMapper objectMapper;
+
+    public ReviewService(RestTemplate restTemplate, ObjectMapper objectMapper) {
+        this.restTemplate = restTemplate;
+        this.objectMapper = objectMapper;
+    }
 
     public String getReviewUrl(String placeId) {
         String url = String.format("https://maps.googleapis.com/maps/api/place/details/json?place_id=%s&key=%s", placeId, apiKey);
@@ -23,13 +35,17 @@ public class ReviewService {
             JsonNode jsonResponse = objectMapper.readTree(response);
             JsonNode result = jsonResponse.path("result");
 
-            String websiteUrl = result.path("website").asText(null);
             String placeUrl = result.path("url").asText(null);
 
-            return (websiteUrl != null && !websiteUrl.isEmpty()) ? websiteUrl : placeUrl;
+            if (placeUrl == null || placeUrl.isEmpty()) {
+                logger.error("No URL found for placeId: {}", placeId);
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid placeId: " + placeId);
+            }
+
+            return placeUrl;
         } catch (Exception e) {
-            e.printStackTrace();
-            return "Error retrieving place details";
+            logger.error("Error retrieving place details for placeId: {}", placeId, e);
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid placeId: " + placeId);
         }
     }
 }
