@@ -78,6 +78,7 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(csrf -> csrf.disable()) // CSRF 비활성화
+                .cors(withDefaults())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // Stateless 세션 설정
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/", "/api/auth/**", "/api/posts/**", "/midpoint/api/logic", "/api/s3/**").permitAll() // 인증 없이 접근 허용
@@ -91,9 +92,7 @@ public class SecurityConfig {
                 // OAuth2 인증이 성공적으로 완료된 후 리다이렉트할 URL을 설정
                 .oauth2Login(oauth2 -> oauth2
                         .defaultSuccessUrl("/api/auth/oauth2/code/kakao")
-                )
-                .cors(withDefaults());
-
+                );
         // JWT 필터 추가
         http.addFilterBefore(new JwtFilter(jwtTokenProvider), UsernamePasswordAuthenticationFilter.class);
 
