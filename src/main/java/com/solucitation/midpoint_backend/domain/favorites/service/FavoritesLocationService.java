@@ -19,11 +19,11 @@ public class FavoritesLocationService {
     }
 
     @Transactional
-    public FavoriteLocationResponseDto addFavoriteLocation(String email, String category, String placeName) {
+    public FavoriteLocationResponseDto addFavoriteLocation(String email, String category, String searchName) {
         Member member = memberRepository.findByEmail(email)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 회원입니다."));
 
-        LocationDetails locationDetails = googlePlacesService.getLocationDetails(placeName);
+        LocationDetails locationDetails = googlePlacesService.getLocationDetails(searchName);
 
         String favorite = String.format("%s (%s): %.6f, %.6f", category, locationDetails.getGooglePlaceName(), locationDetails.getLatitude(), locationDetails.getLongitude());
         member.getFavorites().add(favorite);
@@ -32,7 +32,7 @@ public class FavoritesLocationService {
         return new FavoriteLocationResponseDto(
                 email,
                 category,
-                placeName, // 사용자 입력한 장소 이름
+                searchName, // 사용자 입력한 장소 이름
                 locationDetails.getLatitude(),
                 locationDetails.getLongitude(),
                 locationDetails.getGooglePlaceName() // 구글에서 가져온 장소 이름

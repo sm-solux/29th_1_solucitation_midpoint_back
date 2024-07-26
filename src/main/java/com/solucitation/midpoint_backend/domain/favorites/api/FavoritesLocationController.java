@@ -20,14 +20,14 @@ public class FavoritesLocationController {
     public ResponseEntity<?> addFavoriteLocation(
             @RequestParam String email,
             @RequestParam String category,
-            @RequestParam String placeName) {
+            @RequestParam String searchName) {
 
         if (!"집".equals(category) && !"직장/학교".equals(category)) {
             return ResponseEntity.badRequest().body("유효하지 않은 카테고리입니다.");
         }
 
         try {
-            FavoriteLocationResponseDto response = favoritesLocationService.addFavoriteLocation(email, category, placeName);
+            FavoriteLocationResponseDto response = favoritesLocationService.addFavoriteLocation(email, category, searchName);
             return ResponseEntity.ok(response);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());

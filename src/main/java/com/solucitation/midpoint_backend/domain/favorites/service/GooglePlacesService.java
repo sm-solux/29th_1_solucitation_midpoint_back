@@ -42,10 +42,6 @@ public class GooglePlacesService {
             }
 
             JsonNode candidatesNode = rootNode.path("candidates");
-            if (candidatesNode.isEmpty()) {
-                throw new RuntimeException("존재하지 않는 장소입니다. 정확한 장소를 입력해주세요.");
-            }
-
             JsonNode candidateNode = candidatesNode.get(0);
             JsonNode locationNode = candidateNode.path("geometry").path("location");
             double latitude = locationNode.path("lat").asDouble();

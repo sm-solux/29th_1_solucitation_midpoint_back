@@ -8,7 +8,7 @@ import lombok.Getter;
 public class FavoriteLocationResponseDto {
     private final String email;
     private final String category;
-    private final String placeName;
+    private final String searchName;
     private final double latitude;
     private final double longitude;
     private final String googlePlaceName;
