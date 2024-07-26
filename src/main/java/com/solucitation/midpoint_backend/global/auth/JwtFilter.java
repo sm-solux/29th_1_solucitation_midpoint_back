@@ -1,6 +1,7 @@
 package com.solucitation.midpoint_backend.global.auth;
 
 import com.solucitation.midpoint_backend.global.exception.BaseException;
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -43,7 +44,21 @@ public class JwtFilter extends OncePerRequestFilter {
             SecurityContextHolder.clearContext(); // 인증 정보 삭제
             response.setContentType("application/json;charset=UTF-8");
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            response.getWriter().write("{\"error\": \"access_token_expired\", \"message\": \"Access Token이 만료되었습니다.\"}");
+            boolean isRefreshToken = false;
+            try {
+                Claims claims = e.getClaims();
+                if (claims != null) {
+                    isRefreshToken = "refresh".equals(claims.get("type"));
+//                    log.info("isRefreshToken은?" + isRefreshToken);
+                }
+            } catch (Exception ex) {
+                log.error("Error while checking if token is refresh token", ex);
+            }
+            if (isRefreshToken) {
+                response.getWriter().write("{\"error\": \"refresh_token_expired\", \"message\": \"Refresh Token이 만료되었습니다.\"}");
+            } else {
+                response.getWriter().write("{\"error\": \"access_token_expired\", \"message\": \"Access Token이 만료되었습니다.\"}");
+            }
             return;
         } catch (RedisConnectionFailureException e) {
             SecurityContextHolder.clearContext();
