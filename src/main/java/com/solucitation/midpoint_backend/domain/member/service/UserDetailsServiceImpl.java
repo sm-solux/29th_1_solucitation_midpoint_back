@@ -24,7 +24,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String identifier) throws UsernameNotFoundException {
-        Member member = memberRepository.findByEmailOrNickname(identifier, identifier)
+        Member member = memberRepository.findByEmailOrLoginId(identifier, identifier)
                 .orElseThrow(() -> {
                     log.error("Invalid email or nickname: " + identifier);
                     return new UsernameNotFoundException("Invalid email or nickname: " + identifier);

@@ -22,6 +22,7 @@ public class Hashtag {
     @Column(name="hashtag_name", nullable = false)
     private String name;
 
+    @Builder.Default
     @OneToMany(mappedBy = "hashtag", fetch = LAZY)
     private List<PostHashtag> postHashtags = new ArrayList<>();
 }

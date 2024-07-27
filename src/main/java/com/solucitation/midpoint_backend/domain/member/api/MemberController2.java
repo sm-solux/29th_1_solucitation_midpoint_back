@@ -15,6 +15,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -129,32 +130,11 @@ public class MemberController2 {
         return ResponseEntity.ok(Map.of("message", "회원 탈퇴가 성공적으로 완료되었습니다."));
     }
 
-    /**
-     * 비밀번호를 재설정합니다.
-     *
-     * @param resetToken         비밀번호 확인했고, 비밀번호 재설정하겠다는 인증 토큰
-     * @param resetPwRequestDto 비밀번호 재설정 요청 DTO
-     * @param authentication    인증 객체
-     * @return 비밀번호 재설정 성공 메시지 또는 오류 메시지
-     */
-    @PostMapping("/reset-pw")
-    public ResponseEntity<?> resetPassword(@RequestHeader("X-Reset-Password-Token") String resetToken, @RequestBody @Valid ResetPwRequestDto resetPwRequestDto, Authentication authentication) {
-        ResponseEntity<?> validationResponse = validateTokenAndEmail(resetToken, "reset-password", authentication);
-        if (validationResponse != null) {
-            return validationResponse;
-        }
-        if (!resetPwRequestDto.getNewPassword().equals(resetPwRequestDto.getNewPasswordConfirm())) {
-            return ResponseEntity.badRequest().body(Map.of("error", "password_mismatch", "message", "새 비밀번호와 새 비밀번호 확인이 일치하지 않습니다."));
-        }
-        String tokenEmail = jwtTokenProvider.extractEmailFromToken(jwtTokenProvider.resolveToken(resetToken));
-        memberService.resetPassword(tokenEmail, resetPwRequestDto.getNewPassword());
-        return ResponseEntity.ok(Map.of("message", "비밀번호 재설정이 성공적으로 완료되었습니다."));
-    }
 
     private ResponseEntity<?> validateTokenAndEmail(String BFtoken, String action, Authentication authentication) {
         String token = jwtTokenProvider.resolveToken(BFtoken);
         if (!jwtTokenProvider.validateTokenByPwConfirm(token, action)) {
-            return ResponseEntity.status(401).body(Map.of("error", "unauthorized", "message", "권한이 없습니다. action: " + action));
+            return ResponseEntity.status(401).body(Map.of("error", "unauthorized", "message", "회원을 탈퇴할 권한이 없습니다"));
         }
         String tokenEmail = jwtTokenProvider.extractEmailFromToken(token); // 토큰으로부터 이메일 추출
         String authEmail = authentication.getName(); // 인증 객체로부터 이메일 추출
@@ -163,5 +143,36 @@ public class MemberController2 {
             return ResponseEntity.status(403).body(Map.of("error", "forbidden", "message", "토큰의 이메일과 인증된 이메일이 일치하지 않습니다."));
         }
         return null;
+    }
+
+    /**
+     * 사용자를 로그아웃시키고 Refresh Token을 무효화합니다.
+     *
+     * @param refreshTokenHeader Authorization 헤더에 포함된 Refresh Token
+     * @param authentication     인증 정보
+     * @return 로그아웃 성공 메시지 응답
+     */
+    @PostMapping("/logout")
+    public ResponseEntity<?> logoutMember(@RequestHeader("logout-token") String refreshTokenHeader, Authentication authentication) {
+        String refreshToken = jwtTokenProvider.resolveToken(refreshTokenHeader); // Authorization 헤더에서 Bearer 토큰을 제외한 Refresh Token만 추출
+
+        // 현재 인증된 사용자의 정보 가져오기
+        if (authentication != null) {
+            String authenticatedEmail = authentication.getName(); // 인증된 사용자의 이메일
+
+            // Refresh Token에서 이메일 추출
+            String tokenEmail = jwtTokenProvider.extractEmailFromToken(refreshToken);
+            if (!authenticatedEmail.equals(tokenEmail)) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "로그아웃할 권한이 없습니다."));
+            }
+
+            jwtTokenProvider.invalidateRefreshToken(refreshToken); // Redis에서 토큰을 삭제(Refresh Token을 무효화하여 로그아웃 처리)
+            SecurityContextHolder.clearContext(); // SecurityContextHolder에서 인증 정보 삭제
+
+            jwtTokenProvider.addToBlacklist(refreshToken); // refreshToken을 블랙리스트에 추가
+            return ResponseEntity.ok(Map.of("message", "로그아웃에 성공하였습니다."));
+        } else {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "로그인된 사용자가 없습니다."));
+        }
     }
 }

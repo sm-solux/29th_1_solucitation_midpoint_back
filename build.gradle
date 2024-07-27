@@ -58,6 +58,11 @@ dependencies {
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.springframework.security:spring-security-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+	//  Spring과 commons-logging의 충돌을 피하기 위해 commons-logging.jar를 제거
+	implementation('org.springframework.boot:spring-boot-starter') {
+		exclude group: 'commons-logging', module: 'commons-logging'
+	}
 }
 
 tasks.named('test') {

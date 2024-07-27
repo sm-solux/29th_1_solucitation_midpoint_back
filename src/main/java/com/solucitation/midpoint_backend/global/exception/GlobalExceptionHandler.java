@@ -76,7 +76,7 @@ public class GlobalExceptionHandler {
      * @param e 발생한 사용자 정의 예외
      * @return 400 Bad Request와 구조화된 오류 메시지를 반환
      */
-    @ExceptionHandler({EmailNotVerifiedException.class, NicknameAlreadyInUseException.class, EmailAlreadyInUseException.class, PasswordMismatchException.class})
+    @ExceptionHandler({EmailNotVerifiedException.class, NicknameAlreadyInUseException.class, EmailAlreadyInUseException.class, PasswordMismatchException.class, LoginIdAlreadyInUseException.class})
     public ResponseEntity<ValidationErrorResponse> handleSignUpExceptions(RuntimeException e) {
         String field;
         if (e instanceof EmailNotVerifiedException) {
@@ -87,6 +87,8 @@ public class GlobalExceptionHandler {
             field = "email";
         } else if (e instanceof PasswordMismatchException) {
             field = "password";
+        } else if (e instanceof LoginIdAlreadyInUseException) {
+            field = "loginId";
         } else {
             field = "unknown";
         }

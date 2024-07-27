@@ -8,6 +8,7 @@ import lombok.Data;
 public class MemberProfileResponseDto {
     private String name;
     private String nickname;
+    private String loginId;
     private String email;
     private String profileImageUrl;
 }
