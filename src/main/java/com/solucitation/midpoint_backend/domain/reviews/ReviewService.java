@@ -6,10 +6,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.server.ResponseStatusException;
+
+import java.util.Map;
 
 @Service
 public class ReviewService {
@@ -27,7 +29,7 @@ public class ReviewService {
         this.objectMapper = objectMapper;
     }
 
-    public String getReviewUrl(String placeId) {
+    public Map<String, String> getReviewUrl(String placeId) {
         String url = String.format("https://maps.googleapis.com/maps/api/place/details/json?place_id=%s&key=%s", placeId, apiKey);
 
         try {
@@ -42,7 +44,7 @@ public class ReviewService {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid placeId: " + placeId);
             }
 
-            return placeUrl;
+            return Map.of("url", placeUrl);
         } catch (Exception e) {
             logger.error("Error retrieving place details for placeId: {}", placeId, e);
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid placeId: " + placeId);

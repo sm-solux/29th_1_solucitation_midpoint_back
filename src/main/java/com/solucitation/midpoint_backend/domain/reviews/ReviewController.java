@@ -8,6 +8,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.Map;
+
 @RestController
 @RequestMapping("/api/reviews")
 public class ReviewController {
@@ -19,15 +21,18 @@ public class ReviewController {
     }
 
     @GetMapping
-    public ResponseEntity<String> getReviewUrl(@RequestParam String placeId) {
+    public ResponseEntity<Map<String, String>> getReviewUrl(@RequestParam String placeId) {
         try {
-            String reviewUrl = reviewService.getReviewUrl(placeId);
-            return ResponseEntity.ok(reviewUrl);
+            Map<String, String> response = reviewService.getReviewUrl(placeId);
+            return ResponseEntity.ok(response);
         } catch (ResponseStatusException e) {
-            return ResponseEntity.status(e.getStatusCode()).body(e.getReason());
+            return ResponseEntity
+                    .status(e.getStatusCode())
+                    .body(Map.of("error", e.getReason()));
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An unexpected error occurred.");
+            return ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "An unexpected error occurred."));
         }
     }
 }
-
