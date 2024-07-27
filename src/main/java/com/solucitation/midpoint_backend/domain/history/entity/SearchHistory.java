@@ -37,4 +37,4 @@ public class SearchHistory {
     @OneToMany(mappedBy = "searchHistory", fetch = LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<PlaceInfo> placeList = new ArrayList<>();
-}ㅉ
+}
