@@ -81,7 +81,7 @@ public class SecurityConfig {
                 .cors(withDefaults())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // Stateless 세션 설정
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/", "/api/auth/**", "/api/posts/**", "/midpoint/api/logic", "/api/s3/**", "/api/places").permitAll() // 인증 없이 접근 허용
+                        .requestMatchers("/", "/api/auth/**", "/api/posts/**", "/midpoint/api/logic", "/api/s3/**", "/api/places", "/api/reviews").permitAll() // 인증 없이 접근 허용
                         .anyRequest().authenticated() // 나머지 요청은 인증 필요
                 )
                 .exceptionHandling(exception -> exception
