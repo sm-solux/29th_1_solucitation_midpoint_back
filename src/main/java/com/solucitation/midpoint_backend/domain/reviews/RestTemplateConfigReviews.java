@@ -5,9 +5,9 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.web.client.RestTemplate;
 
 @Configuration
-public class RestTemplateConfig {
+public class RestTemplateConfigReviews {
 
-    @Bean
+    @Bean(name = "reviewsRestTemplate")
     public RestTemplate restTemplate() {
         return new RestTemplate();
     }

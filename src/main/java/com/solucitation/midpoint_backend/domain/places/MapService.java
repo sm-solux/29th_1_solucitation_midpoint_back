@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -37,7 +38,7 @@ public class MapService {
         CATEGORY_TYPE_MAP.put("친목", "amusement_center|amusement_park|aquarium|banquet_hall|bowling_alley|community_center|convention_center|cultural_center|dog_park|event_venue|zoo");
     }
 
-    public MapService(RestTemplate restTemplate, ObjectMapper objectMapper) {
+    public MapService(@Qualifier("placesRestTemplate") RestTemplate restTemplate, ObjectMapper objectMapper) {
         this.restTemplate = restTemplate;
         this.objectMapper = objectMapper;
     }
