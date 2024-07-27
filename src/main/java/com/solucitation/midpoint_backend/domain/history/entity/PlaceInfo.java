@@ -1,6 +1,5 @@
 package com.solucitation.midpoint_backend.domain.history.entity;
 
-import com.solucitation.midpoint_backend.domain.community_board.entity.Post;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -11,17 +10,21 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 public class PlaceInfo {
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name="palce_info_id")
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "place_info_id")
     private Long id;
 
-    @ManyToOne
-    @JoinColumn(name="search_history_id", nullable = false)
-    private Post post;
+    @Column(name="place_id")
+    private String placeId;
 
-    @Column(name="place_name", nullable = false)
+    @ManyToOne
+    @JoinColumn(name = "search_history_id", nullable = false)
+    private SearchHistory searchHistory;
+
+    @Column(name = "place_name", nullable = false)
     private String name;
 
-    @Column(name="place_address", nullable = false)
+    @Column(name = "place_address", nullable = false)
     private String address;
 }
