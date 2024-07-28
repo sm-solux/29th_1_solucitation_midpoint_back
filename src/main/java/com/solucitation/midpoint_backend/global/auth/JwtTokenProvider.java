@@ -218,6 +218,7 @@ public class JwtTokenProvider {
     public String createShortLivedTokenWithPurpose(Authentication authentication, String purpose) {
         Claims claims = Jwts.claims().setSubject(authentication.getName());
         claims.put("purpose", purpose);
+        log.info("Creating token with purpose: {}", purpose);  // 로그 추가
 
         Date now = new Date();
         Date validity = new Date(now.getTime() + 600_000); // 매우 짧은 만료 시간인 10분을 가짐
