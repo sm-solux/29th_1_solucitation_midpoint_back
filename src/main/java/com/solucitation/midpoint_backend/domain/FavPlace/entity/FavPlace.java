@@ -1,0 +1,39 @@
+package com.solucitation.midpoint_backend.domain.FavPlace.entity;
+
+import com.solucitation.midpoint_backend.domain.member.entity.Member;
+import jakarta.persistence.*;
+import lombok.*;
+
+@Builder
+@Entity
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor
+@Table(name = "fav_place")
+public class FavPlace {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "addr_id")
+    private Long addrId;
+
+    @Column(name = "addr", nullable = false, length = 255)
+    private String addr;
+
+    @Column(name = "latitude", nullable = false)
+    private Float latitude;
+
+    @Column(name = "longitude", nullable = false)
+    private Float longitude;
+
+    @ManyToOne
+    @JoinColumn(name = "member_id", nullable = false)
+    private Member member;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "addr_type", nullable = false)
+    private AddrType addrType;
+
+    public enum AddrType {
+        HOME, WORK
+    }
+}

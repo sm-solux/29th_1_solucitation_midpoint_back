@@ -1,5 +1,7 @@
 package com.solucitation.midpoint_backend.domain.member.entity;
 
+import com.solucitation.midpoint_backend.domain.FavFriend.entity.FavFriend;
+import com.solucitation.midpoint_backend.domain.FavPlace.entity.FavPlace;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -37,10 +39,12 @@ public class Member {
     @Column(name = "member_nickname", nullable = false, unique = true, length = 100)
     private String nickname;
 
-    @ElementCollection
-    @CollectionTable(name = "favorite_locations", joinColumns = @JoinColumn(name = "member_id"))
-    @Column(name = "favorite_location")
-    private Set<String> favorites = new HashSet<>();
+    @OneToMany(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<FavFriend> favFriends;
+
+    @OneToMany(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<FavPlace> favPlaces;
+
 
     public Member(String password, String name, String email, String nickname, String loginId) {
         this.email= email;
