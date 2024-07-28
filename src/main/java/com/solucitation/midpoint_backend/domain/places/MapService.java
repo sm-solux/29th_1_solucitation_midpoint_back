@@ -32,6 +32,7 @@ public class MapService {
         CATEGORY_TYPE_MAP.put("카페", "bakery|cafe|coffee_shop|brunch_restaurant|ice_cream_shop");
         CATEGORY_TYPE_MAP.put("산책", "park|hiking_area|national_park");
         CATEGORY_TYPE_MAP.put("등산", "park|hiking_area|national_park");
+        CATEGORY_TYPE_MAP.put("산책/등산", "park|hiking_area|national_park");
         CATEGORY_TYPE_MAP.put("공부", "library|book_store");
         CATEGORY_TYPE_MAP.put("문화생활", "auto_parts_store|bicycle_store|book_store|cell_phone_store|clothing_store|convenience_store|department_store|discount_store|electronics_store|furniture_store|gift_shop|grocery_store|hardware_store|home_goods_store|home_improvement_store|jewelry_store|liquor_store|market|pet_store|shoe_store|shopping_mall|sporting_goods_store|store|supermarket|wholesaler|art_gallery|performing_arts_theater|movie_rental|movie_theater|museum|historical_landmark|tourist_attraction|spa");
         CATEGORY_TYPE_MAP.put("핫플", "casino|liquor_store|night_club|bar");
