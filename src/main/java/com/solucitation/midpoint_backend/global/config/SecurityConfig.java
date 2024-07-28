@@ -16,6 +16,8 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
+import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -81,7 +83,7 @@ public class SecurityConfig {
                 .cors(withDefaults())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // Stateless 세션 설정
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/", "/api/auth/**", "/api/posts/**", "/midpoint/api/logic", "/api/s3/**", "/api/places", "/api/reviews").permitAll() // 인증 없이 접근 허용
+                        .requestMatchers("/", "/api/auth/**", "/api/posts/**", "/api/logic", "/api/s3/**", "/api/places", "/api/reviews").permitAll() // 인증 없이 접근 허용
                         .anyRequest().authenticated() // 나머지 요청은 인증 필요
                 )
                 .exceptionHandling(exception -> exception
@@ -91,14 +93,17 @@ public class SecurityConfig {
                 // Spring Security에서 OAuth2 로그인을 설정
                 // OAuth2 인증이 성공적으로 완료된 후 리다이렉트할 URL을 설정
                 .oauth2Login(oauth2 -> oauth2
-                        .defaultSuccessUrl("/api/auth/oauth2/code/kakao")
+                        .successHandler(oauth2AuthenticationSuccessHandler())
                 );
         // JWT 필터 추가
         http.addFilterBefore(new JwtFilter(jwtTokenProvider), UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
-
+    @Bean
+    public AuthenticationSuccessHandler oauth2AuthenticationSuccessHandler() {
+        return new SimpleUrlAuthenticationSuccessHandler("http://localhost:3000/oauth2/callback");
+    }
 
     /**
      * CORS 설정 빈 등록
