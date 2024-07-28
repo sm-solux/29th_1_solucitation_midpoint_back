@@ -31,8 +31,8 @@ public class EmailService {
     // 인증 시간을 저장하는 Map 추가
     private final Map<String, LocalDateTime> verifiedEmailTimestamps = new ConcurrentHashMap<>();
 
-    private static final int EXPIRATION_TIME_MINUTES = 1; // 인증코드는 유효시간 4분을 갖는다. 4분이 지난 인증코드는 검증할 수 없음
-    private static final int VERIFICATION_VALID_MINUTES = 2; // 인증검증 후 유효시간 30분을 갖는다.
+    private static final int EXPIRATION_TIME_MINUTES = 4; // 인증코드는 유효시간 4분을 갖는다. 4분이 지난 인증코드는 검증할 수 없음
+    private static final int VERIFICATION_VALID_MINUTES = 20; // 인증검증 후 유효시간 20분을 갖는다.
 
     // 인증코드 이메일 발송
     public String sendVerificationMail(EmailMessage emailMessage, String type) {
@@ -102,7 +102,7 @@ public class EmailService {
         }
         // 검증된 이메일인지 확인
         boolean isVerified = verifiedEmails.getOrDefault(email, false);
-        // 인증 후 30분이 지났는지 확인
+        // 인증 후 20분이 지났는지 확인
         boolean isRecentlyVerified = lastVerifiedTime.isAfter(LocalDateTime.now().minusMinutes(VERIFICATION_VALID_MINUTES));
         return isVerified && isRecentlyVerified;
     }
