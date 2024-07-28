@@ -7,5 +7,4 @@ INSERT INTO hashtag (hashtag_name) VALUES ('자연');
 INSERT INTO hashtag (hashtag_name) VALUES ('산책');
 INSERT INTO hashtag (hashtag_name) VALUES ('친목');
 INSERT INTO hashtag (hashtag_name) VALUES ('여럿이');
-INSERT INTO hashtag (hashtag_name) VALUES ('어린이');
 INSERT INTO hashtag (hashtag_name) VALUES ('혼자');
