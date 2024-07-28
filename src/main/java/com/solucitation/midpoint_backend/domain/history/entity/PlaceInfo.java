@@ -27,4 +27,7 @@ public class PlaceInfo {
 
     @Column(name = "place_address", nullable = false)
     private String address;
+
+    @Column(name="place_image_url")
+    private String imageUrl;
 }
