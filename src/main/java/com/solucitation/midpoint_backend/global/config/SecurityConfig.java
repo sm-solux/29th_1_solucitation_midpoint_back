@@ -4,6 +4,8 @@ import com.solucitation.midpoint_backend.global.auth.JwtFilter;
 import com.solucitation.midpoint_backend.global.auth.JwtTokenProvider;
 import com.solucitation.midpoint_backend.global.exception.JwtAccessDeniedHandler;
 import com.solucitation.midpoint_backend.global.exception.JwtAuthenticationEntryPoint;
+import lombok.Value;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -14,18 +16,27 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
+import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.core.env.Environment;
+
+import static org.springframework.security.config.Customizer.withDefaults;
 
 /**
  * Spring Security 설정 클래스 - JWT를 사용한 보안 설정 구성
  */
+@Slf4j
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
     private final JwtTokenProvider jwtTokenProvider;
     private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
     private final JwtAccessDeniedHandler jwtAccessDeniedHandler;
-
+    private final Environment env;
     /**
      * SecurityConfig 생성자 - 필수 구성 요소 주입
      *
@@ -36,10 +47,12 @@ public class SecurityConfig {
     public SecurityConfig(
             JwtTokenProvider jwtTokenProvider,
             JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint,
-            JwtAccessDeniedHandler jwtAccessDeniedHandler) {
+            JwtAccessDeniedHandler jwtAccessDeniedHandler,
+            Environment env) {
         this.jwtTokenProvider = jwtTokenProvider;
         this.jwtAuthenticationEntryPoint = jwtAuthenticationEntryPoint;
         this.jwtAccessDeniedHandler = jwtAccessDeniedHandler;
+        this.env = env;
     }
 
     /**
@@ -67,9 +80,10 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(csrf -> csrf.disable()) // CSRF 비활성화
+                .cors(withDefaults())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // Stateless 세션 설정
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/", "/api/auth/**", "/api/posts/**", "/midpoint/api/logic", "/api/s3/**", "/api/places").permitAll() // 인증 없이 접근 허용
+                        .requestMatchers("/", "/api/auth/**", "/api/posts/**", "/api/logic", "/api/s3/**", "/api/places", "/api/reviews").permitAll() // 인증 없이 접근 허용
                         .anyRequest().authenticated() // 나머지 요청은 인증 필요
                 )
                 .exceptionHandling(exception -> exception
@@ -79,13 +93,42 @@ public class SecurityConfig {
                 // Spring Security에서 OAuth2 로그인을 설정
                 // OAuth2 인증이 성공적으로 완료된 후 리다이렉트할 URL을 설정
                 .oauth2Login(oauth2 -> oauth2
-                        .defaultSuccessUrl("/api/auth/oauth2/code/kakao")
+                        .successHandler(oauth2AuthenticationSuccessHandler())
                 );
-
         // JWT 필터 추가
         http.addFilterBefore(new JwtFilter(jwtTokenProvider), UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
+    }
+    @Bean
+    public AuthenticationSuccessHandler oauth2AuthenticationSuccessHandler() {
+        return new SimpleUrlAuthenticationSuccessHandler("http://localhost:3000/oauth2/callback");
+    }
+
+    /**
+     * CORS 설정 빈 등록
+     *
+     * @return CorsConfigurationSource 인스턴스
+     */
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+
+        // 환경 변수에서 허용할 Origin을 설정
+        String allowedOrigins = env.getProperty("allowed.origins");
+        if (allowedOrigins != null) {
+            String[] origins = allowedOrigins.split(",");
+            for (String origin : origins) {
+                configuration.addAllowedOrigin(origin.trim());
+            }
+        }
+        configuration.addAllowedMethod("*");
+        configuration.addAllowedHeader("*");
+        configuration.setAllowCredentials(true);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
     }
 
     /**

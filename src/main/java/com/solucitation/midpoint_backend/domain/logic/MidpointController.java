@@ -10,7 +10,7 @@ import java.util.List;
 @RestController
 public class MidpointController {
 
-    @PostMapping("/midpoint/api/logic")
+    @PostMapping("/api/logic")
     public Coordinate calculateMidpoint(@RequestBody @Valid CoordinateRequest request) {
         List<Double> latitudes = request.getLatitudes();
         List<Double> longitudes = request.getLongitudes();

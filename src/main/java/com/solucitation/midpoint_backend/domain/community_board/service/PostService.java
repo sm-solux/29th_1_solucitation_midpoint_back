@@ -181,6 +181,8 @@ public class PostService {
     public void deletePost(Member member, Long postId) throws AccessDeniedException {
         Optional<Post> post = postRepository.findById(postId); // 해당 멤버가 게시글 작성자인지 확인힙니다.
         if (post.isPresent() && post.get().getMember().getId().equals(member.getId())) {
+            likesRepository.deleteByPostId(postId);
+            deleteImages(post.get().getImages()); // s3에 저장된 이미지 삭제
             postRepository.deleteById(postId);
         }
         else
