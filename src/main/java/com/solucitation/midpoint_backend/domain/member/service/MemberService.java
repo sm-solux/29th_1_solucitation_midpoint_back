@@ -422,9 +422,15 @@ public class MemberService {
             imageRepository.delete(presentImage); // Image 엔티티 삭제
         }
 
-        // TODO member 관련 데이터 삭제 로직 추가 (자동 삭제가 안 되어 있는 경우)
         memberRepository.delete(member);
 
         return imageUrl;
+    }
+
+    public void logoutMember(String refreshToken) {
+        jwtTokenProvider.invalidateRefreshToken(refreshToken); // Redis에서 토큰을 삭제(Refresh Token을 무효화하여 로그아웃 처리)
+        SecurityContextHolder.clearContext(); // SecurityContextHolder에서 인증 정보 삭제
+
+        jwtTokenProvider.addToBlacklist(refreshToken); // refreshToken을 블랙리스트에 추가
     }
 }
