@@ -98,6 +98,14 @@ public class MemberController {
         try {
             String refreshToken = jwtTokenProvider.resolveToken(refreshTokenHeader);
 
+            // 토큰 유형 확인
+            if (!jwtTokenProvider.isRefreshToken(refreshToken)) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of(
+                        "error", "invalid_token_type",
+                        "message", "Access Token은 사용할 수 없습니다. Refresh Token을 사용해 주세요."
+                ));
+            }
+
             // 블랙리스트에 등록된 토큰인지 확인
             if (jwtTokenProvider.isInBlacklist(refreshToken)) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of(
@@ -122,7 +130,7 @@ public class MemberController {
     @PostMapping("/reset-pw")
     public ResponseEntity<?> resetPassword(@RequestHeader("X-Reset-Password-Token") String resetToken, @RequestBody @Valid ResetPwRequestDto resetPwRequestDto) {
         String token = jwtTokenProvider.resolveToken(resetToken);
-        if (!jwtTokenProvider.validateTokenByPwConfirm(token, resetToken)) {
+        if (!jwtTokenProvider.validateTokenByPwConfirm(token, "reset-password")) {
             return ResponseEntity.status(401).body(Map.of("error", "unauthorized", "message", "비밀번호를 재설정할 권한이 없습니다"));
         }
         if (!resetPwRequestDto.getNewPassword().equals(resetPwRequestDto.getNewPasswordConfirm())) {

@@ -69,6 +69,7 @@ public class JwtTokenProvider {
 
     public String createRefreshToken(Authentication authentication) {
         Claims claims = Jwts.claims().setSubject(authentication.getName());
+        claims.put("type", "refresh"); // 토큰 타입을 명시적으로 추가
         Date now = new Date();
         Date expireDate = new Date(now.getTime() + refreshExpirationTime);
 
@@ -130,7 +131,7 @@ public class JwtTokenProvider {
             return true;
         } catch (ExpiredJwtException e) {
             log.error("JWT token is expired", e);
-            throw e; // 예외를 던지도록 수정
+            throw e; // 예외를 던져 만료된 토큰 처리
         } catch (JwtException e) {
             log.error("Invalid JWT token", e);
             throw new BaseException("INVALID_JWT");
@@ -204,6 +205,7 @@ public class JwtTokenProvider {
     public boolean isInBlacklist(String refreshToken) {
         return Boolean.TRUE.equals(tokenRedisTemplate.hasKey(refreshToken));
     }
+
     public String extractEmailFromToken(String token) {
         try {
             return getClaimsFromToken(token.replace("Bearer ", "")).getSubject();
@@ -226,5 +228,10 @@ public class JwtTokenProvider {
                 .setExpiration(validity)
                 .signWith(key)
                 .compact();
+    }
+
+    public boolean isRefreshToken(String token) {
+        Claims claims = getClaimsFromToken(token);
+        return "refresh".equals(claims.get("type"));
     }
 }
