@@ -92,19 +92,19 @@ public class EmailController {
      * @return 유효한 인증 코드일 경우 JWT 액세스 토큰, 그렇지 않을 경우 오류 메시지
      */
     @PostMapping("/reset-pw/verify-code")
-    public ResponseEntity<?> verifyCodeV3(@RequestBody @Valid VerificationCodeRequestDto verificationCodeRequestDto) {
+    public ResponseEntity<?> verifyCodeForPasswordReset(@RequestBody @Valid VerificationCodeRequestDto verificationCodeRequestDto) {
         boolean isValid = emailService.verifyCode(verificationCodeRequestDto.getEmail(), verificationCodeRequestDto.getCode());
 
         if (isValid) {
             Authentication authentication = new UsernamePasswordAuthenticationToken(
                     verificationCodeRequestDto.getEmail(), null, Collections.emptyList()
             );
-            String accessToken = jwtTokenProvider.createAccessToken(authentication);
-            AccessTokenResponseDto tokenResponse = AccessTokenResponseDto.builder()
-                    .grantType("Bearer")
-                    .accessToken(accessToken)
-                    .build();
-            return ResponseEntity.ok(tokenResponse);
+            String resetPasswordToken = jwtTokenProvider.createShortLivedTokenWithPurpose(authentication, "reset-password");
+
+            return ResponseEntity.ok(Map.of(
+                    "grantType", "Bearer",
+                    "X-Reset-Password-Token", resetPasswordToken
+            ));
         } else {
             return ResponseEntity.badRequest().body(Map.of("error", "invalid_code", "message", "유효하지 않거나 만료된 인증번호입니다."));
         }

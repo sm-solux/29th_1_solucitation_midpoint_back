@@ -17,5 +17,10 @@ public interface LikesRepository extends JpaRepository<Likes, Long> {
     // 해당 멈베가 해당 게시글에 대해 좋아요를 눌렀는지를 반환
     @Query("SELECT CASE WHEN COUNT(l) > 0 THEN TRUE ELSE FALSE END FROM Likes l WHERE l.post.id = :postId AND l.member.email= :email AND l.isLike = true")
     boolean isMemberLikesPostByEmail(@Param("postId") Long postId, @Param("email") String email);
+
+    @Transactional // 좋아요 취소
+    @Modifying
+    @Query("DELETE FROM Likes l WHERE l.member.email = :memberEmail AND l.post.id = :postId")
+    void deleteByMemberEmailAndPostId(String memberEmail, Long postId);
 }
 

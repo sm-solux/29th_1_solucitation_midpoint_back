@@ -28,6 +28,7 @@ public class Likes {
     @JoinColumn(name="member_id", nullable = false)
     private Member member;
 
+    @Builder.Default
     private Boolean isLike = true;
 
     @CreationTimestamp
