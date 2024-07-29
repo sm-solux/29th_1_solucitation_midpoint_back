@@ -31,10 +31,6 @@ public class SearchHistoryService {
     public void save(String neighborhood, String memberEmail, List<SearchHistoryRequestDto> placeDtos) {
         Member member = memberService.getMemberByEmail(memberEmail);
 
-        if (neighborhood == null) {
-           throw new IllegalArgumentException(String.valueOf(Map.of("error", "EMPTY_FIELD", "message", "동 정보가 누락되었습니다.")));
-        }
-
         SearchHistory searchHistory = SearchHistory.builder()
                 .member(member)
                 .neighborhood(neighborhood)

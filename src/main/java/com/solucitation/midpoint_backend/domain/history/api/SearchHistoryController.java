@@ -52,6 +52,11 @@ public class SearchHistoryController {
                                               @RequestPart("neighborhood") String neighborhood,
                                               @RequestPart("historyDto") String historyDtoJson) throws JsonProcessingException {
         try {
+            if (neighborhood.isEmpty()|| neighborhood.isBlank()) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(Map.of("error", "EMPTY_FIELD", "message", "동 정보가 누락되었습니다."));
+            }
+
             List<SearchHistoryRequestDto> placeList = objectMapper.readValue(historyDtoJson,
                     objectMapper.getTypeFactory().constructCollectionType(List.class, SearchHistoryRequestDto.class));
 
