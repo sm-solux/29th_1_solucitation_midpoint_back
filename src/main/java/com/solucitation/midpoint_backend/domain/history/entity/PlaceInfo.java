@@ -15,7 +15,7 @@ public class PlaceInfo {
     @Column(name = "place_info_id")
     private Long id;
 
-    @Column(name="place_id")
+    @Column(name="place_id", nullable = false)
     private String placeId;
 
     @ManyToOne
@@ -28,6 +28,6 @@ public class PlaceInfo {
     @Column(name = "place_address", nullable = false)
     private String address;
 
-    @Column(name="place_image_url")
+    @Column(name="place_image_url", nullable = false)
     private String imageUrl;
 }

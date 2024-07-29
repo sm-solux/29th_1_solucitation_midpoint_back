@@ -3,7 +3,7 @@ package com.solucitation.midpoint_backend.domain.history.entity;
 import com.solucitation.midpoint_backend.domain.member.entity.Member;
 import jakarta.persistence.*;
 import lombok.*;
-import org.springframework.data.annotation.CreatedDate;
+import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -23,14 +23,14 @@ public class SearchHistory {
     @Column(name = "search_history_id")
     private Long id;
 
-    @Column(name="neighborhood")
+    @Column(name="neighborhood", nullable = false)
     private String neighborhood; // 동 정보 ex. 청파동
 
     @ManyToOne(fetch = LAZY)
     @JoinColumn(name = "member_id", nullable = false)
     private Member member;
 
-    @CreatedDate
+    @CreationTimestamp
     @Column(name = "search_date", nullable = false, updatable = false)
     private LocalDateTime searchDate;
 
