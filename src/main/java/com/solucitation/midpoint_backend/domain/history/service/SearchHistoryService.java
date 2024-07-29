@@ -8,33 +8,36 @@ import com.solucitation.midpoint_backend.domain.history.repository.SearchHistory
 import com.solucitation.midpoint_backend.domain.member.entity.Member;
 import com.solucitation.midpoint_backend.domain.member.service.MemberService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
+import java.util.Map;
 import java.util.stream.Collectors;
+
 
 @Service
 @RequiredArgsConstructor
 public class SearchHistoryService {
-    private final String defaultImageUrl = "https://midpoint-s3-bucket.s3.ap-northeast-2.amazonaws.com/place_default_image.jpg";
+    @Value("${cloud.aws.s3.bucket}")
+    private String bucket;
+
+    private final String defaultImageUrl = String.format("https://%s.s3.%s.amazonaws.com/%s", bucket, "ap-northeast-2", "place_default_image.png");
     private final SearchHistoryRepository searchHistoryRepository;
     private final MemberService memberService;
 
     @Transactional
     public void save(String neighborhood, String memberEmail, List<SearchHistoryRequestDto> placeDtos) {
         Member member = memberService.getMemberByEmail(memberEmail);
-        if (member == null) {
-            throw new RuntimeException("사용자를 찾을 수 없습니다.");
+
+        if (neighborhood == null) {
+           throw new IllegalArgumentException(String.valueOf(Map.of("error", "EMPTY_FIELD", "message", "동 정보가 누락되었습니다.")));
         }
 
-        LocalDateTime now = LocalDateTime.now();
         SearchHistory searchHistory = SearchHistory.builder()
                 .member(member)
                 .neighborhood(neighborhood)
-                .searchDate(now)
                 .build();
 
         for (SearchHistoryRequestDto dto : placeDtos) {
