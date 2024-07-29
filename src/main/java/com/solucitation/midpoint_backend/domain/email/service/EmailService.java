@@ -13,6 +13,7 @@ import org.thymeleaf.spring6.SpringTemplateEngine;
 
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -27,7 +28,11 @@ public class EmailService {
     private final Map<String, VerificationCode> verificationCodes = new ConcurrentHashMap<>();
     private final Map<String, Boolean> verifiedEmails = new ConcurrentHashMap<>();
 
-    private static final int EXPIRATION_TIME_MINUTES = 4; // 인증코드는 4분의 유효시간을 갖는다.
+    // 인증 시간을 저장하는 Map 추가
+    private final Map<String, LocalDateTime> verifiedEmailTimestamps = new ConcurrentHashMap<>();
+
+    private static final int EXPIRATION_TIME_MINUTES = 4; // 인증코드는 유효시간 4분을 갖는다. 4분이 지난 인증코드는 검증할 수 없음
+    private static final int VERIFICATION_VALID_MINUTES = 20; // 인증검증 후 유효시간 20분을 갖는다.
 
     // 인증코드 이메일 발송
     public String sendVerificationMail(EmailMessage emailMessage, String type) {
@@ -73,7 +78,7 @@ public class EmailService {
         return templateEngine.process(type, context);
     }
 
-    // 인증코드 검증
+    // 인증코드 검증 및 인증 시간 기록
     public boolean verifyCode(String email, String code) {
         VerificationCode verificationCode = verificationCodes.get(email);
 
@@ -83,13 +88,23 @@ public class EmailService {
         boolean isValid = verificationCode.code().equals(code);
         if (isValid) {
             verifiedEmails.put(email, true);
+            // 인증 시간을 기록
+            verifiedEmailTimestamps.put(email, LocalDateTime.now());
         }
         return isValid;
     }
 
     // 이메일이 인증되었는지 확인
     public boolean isEmailVerified(String email) {
-        return verifiedEmails.getOrDefault(email, false);
+        LocalDateTime lastVerifiedTime = verifiedEmailTimestamps.get(email);
+        if (lastVerifiedTime == null) {
+            return false;
+        }
+        // 검증된 이메일인지 확인
+        boolean isVerified = verifiedEmails.getOrDefault(email, false);
+        // 인증 후 20분이 지났는지 확인
+        boolean isRecentlyVerified = lastVerifiedTime.isAfter(LocalDateTime.now().minusMinutes(VERIFICATION_VALID_MINUTES));
+        return isVerified && isRecentlyVerified;
     }
 
     private record VerificationCode(String code, LocalDateTime expiresAt) {}

@@ -59,16 +59,16 @@ public class S3Controller {
         }
     }
 
-    @DeleteMapping(path = "/s3/test")
-    public ResponseEntity<String> deleteFile(@RequestParam(value = "email") String email) {
-        try {
-            String profileImgUrl = memberService.deleteMember(email); // 이미지와 멤버 엔티티 삭제
-            log.info("profileImgUrl는 by test? " + profileImgUrl);
-            s3Service.delete(profileImgUrl); // 이미지 S3에서 삭제
-            return ResponseEntity.ok("File deleted successfully");
-        } catch (Exception e) {
-            log.error("Failed to delete file: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to delete file");
-        }
-    }
+//    @DeleteMapping(path = "/s3/test")
+//    public ResponseEntity<String> deleteFile(@RequestParam(value = "email") String email) {
+//        try {
+//            String profileImgUrl = memberService.deleteMember(email); // 이미지와 멤버 엔티티 삭제
+//            log.info("profileImgUrl는 by test? " + profileImgUrl);
+//            s3Service.delete(profileImgUrl); // 이미지 S3에서 삭제
+//            return ResponseEntity.ok("File deleted successfully");
+//        } catch (Exception e) {
+//            log.error("Failed to delete file: {}", e.getMessage());
+//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to delete file");
+//        }
+//    }
 }
