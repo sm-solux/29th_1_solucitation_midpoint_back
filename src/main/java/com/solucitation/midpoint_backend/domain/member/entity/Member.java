@@ -4,9 +4,8 @@ import com.solucitation.midpoint_backend.domain.FavFriend.entity.FavFriend;
 import com.solucitation.midpoint_backend.domain.FavPlace.entity.FavPlace;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
 import lombok.*;
-import java.util.HashSet;
+
 import java.util.Set;
 
 @Entity
