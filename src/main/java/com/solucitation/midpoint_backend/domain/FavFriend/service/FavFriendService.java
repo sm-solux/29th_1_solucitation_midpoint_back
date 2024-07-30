@@ -20,16 +20,6 @@ public class FavFriendService {
 
     @Transactional
     public FavFriend saveFavoriteFriend(String address, String name, Float latitude, Float longitude, String email) {
-//        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-//        String username = null;
-//        if (principal instanceof UserDetails) {
-//            username = ((UserDetails) principal).getUsername();
-//        } else {
-//            username = principal.toString();
-//        }
-//
-//        Member member = memberRepository.findByEmail(username)
-//                .orElseThrow(() -> new RuntimeException("Member not found"));
         Member member = memberRepository.findByEmail(email)
                 .orElseThrow(() -> new IllegalArgumentException("해당 이메일의 회원이 존재하지 않습니다."));
 
@@ -51,41 +41,20 @@ public class FavFriendService {
     }
 
     @Transactional(readOnly = true)
-    public FavFriend getFavoriteFriendByName(String name, String email) {
-//        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-//        String username = null;
-//        if (principal instanceof UserDetails) {
-//            username = ((UserDetails) principal).getUsername();
-//        } else {
-//            username = principal.toString();
-//        }
-//
-//        Member member = memberRepository.findByEmail(username)
-//                .orElseThrow(() -> new RuntimeException("Member not found"));
-
+    public FavFriend getFavoriteFriendByFavFriendId(Long favFriendId, String email) {
         Member member = memberRepository.findByEmail(email)
                 .orElseThrow(() -> new IllegalArgumentException("해당 이메일의 회원이 존재하지 않습니다."));
 
-        return favoriteFriendRepository.findByNameAndMemberId(name, member.getId())
+        return favoriteFriendRepository.findByFavFriendIdAndMemberId(favFriendId, member.getId())
                 .orElseThrow(() -> new RuntimeException("존재하지 않는 친구입니다."));
     }
 
     @Transactional
-    public void deleteFavoriteFriendByName(String name, String email) {
-//        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-//        String username = null;
-//        if (principal instanceof UserDetails) {
-//            username = ((UserDetails) principal).getUsername();
-//        } else {
-//            username = principal.toString();
-//        }
-//        Member member = memberRepository.findByEmail(username)
-//                .orElseThrow(() -> new RuntimeException("Member not found"));
-
+    public void deleteFavoriteFriendByName(Long favFriendId, String email) {
         Member member = memberRepository.findByEmail(email)
                 .orElseThrow(() -> new IllegalArgumentException("해당 이메일의 회원이 존재하지 않습니다."));
 
-        FavFriend favFriend = favoriteFriendRepository.findByNameAndMemberId(name, member.getId())
+        FavFriend favFriend = favoriteFriendRepository.findByFavFriendIdAndMemberId(favFriendId, member.getId())
                 .orElseThrow(() -> new RuntimeException("존재하지 않는 친구입니다."));
 
         favoriteFriendRepository.delete(favFriend);
@@ -93,16 +62,6 @@ public class FavFriendService {
 
     @Transactional(readOnly = true)
     public List<FavFriend> getFavoriteFriends(String email) {
-//        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-//        String username = null;
-//        if (principal instanceof UserDetails) {
-//            username = ((UserDetails) principal).getUsername();
-//        } else {
-//            username = principal.toString();
-//        }
-//        Member member = memberRepository.findByEmail(username)
-//                .orElseThrow(() -> new RuntimeException("Member not found"));
-
         Member member = memberRepository.findByEmail(email)
                 .orElseThrow(() -> new IllegalArgumentException("해당 이메일의 회원이 존재하지 않습니다."));
 

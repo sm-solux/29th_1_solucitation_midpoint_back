@@ -11,4 +11,5 @@ import java.util.Optional;
 public interface FavoriteFriendRepository extends JpaRepository<FavFriend, Long> {
     Optional<FavFriend> findByNameAndMemberId(String name, Long memberId);
     List<FavFriend> findByMemberId(Long memberId);
+    Optional<FavFriend> findByFavFriendIdAndMemberId(Long favFriendId, Long member_id);
 }
