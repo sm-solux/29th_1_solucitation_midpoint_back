@@ -34,4 +34,19 @@ public class FavPlaceService {
 
         return favPlaceRepository.save(favPlace);
     }
+
+    @Transactional
+    public void deleteFavoritePlace(Long favPlaceId, String email) {
+        Member member = memberRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("해당 이메일의 회원이 존재하지 않습니다."));
+
+        FavPlace favPlace = favPlaceRepository.findById(favPlaceId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 장소입니다."));
+
+        if (!favPlace.getMember().getId().equals(member.getId())) {
+            throw new RuntimeException("권한이 없습니다.");
+        }
+
+        favPlaceRepository.delete(favPlace);
+    }
 }

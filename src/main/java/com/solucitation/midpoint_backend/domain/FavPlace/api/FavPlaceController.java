@@ -55,6 +55,27 @@ public class FavPlaceController {
         }
     }
 
+    @DeleteMapping("/delete")
+    public ResponseEntity<?> deleteFavPlace(Authentication authentication, @RequestParam Long favPlaceId) {
+        String email = authentication.getName();
+        try {
+            favPlaceService.deleteFavoritePlace(favPlaceId, email);
+            return ResponseEntity.ok(new ApiResponse(true, "즐겨찾는 장소 삭제에 성공했습니다."));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body(new ApiResponse(false, "존재하지 않는 장소입니다."));
+        } catch (RuntimeException e) {
+            return ResponseEntity
+                    .status(HttpStatus.FORBIDDEN)
+                    .body(new ApiResponse(false, "권한이 없습니다."));
+        } catch (Exception e) {
+            return ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponse(false, "서버 오류가 발생했습니다. "));
+        }
+    }
+
     @Getter
     @Setter
     public static class ApiResponse {
