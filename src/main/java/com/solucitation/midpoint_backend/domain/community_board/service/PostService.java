@@ -7,6 +7,7 @@ import com.solucitation.midpoint_backend.domain.community_board.dto.PostUpdateDt
 import com.solucitation.midpoint_backend.domain.community_board.entity.*;
 import com.solucitation.midpoint_backend.domain.community_board.repository.*;
 import com.solucitation.midpoint_backend.domain.file.service.S3Service;
+import com.solucitation.midpoint_backend.domain.member.dto.MemberProfileResponseDto;
 import com.solucitation.midpoint_backend.domain.member.entity.Member;
 import com.solucitation.midpoint_backend.domain.member.service.MemberService;
 import jakarta.persistence.EntityNotFoundException;
@@ -39,6 +40,9 @@ public class PostService {
     @Transactional(readOnly = true)
     public PostDetailDto getPostById(Long postId) {
         Post post = postRepository.findById(postId).orElseThrow(EntityNotFoundException::new);
+        String memberEmail = post.getMember().getEmail();
+
+        MemberProfileResponseDto memberProfileResponseDto = memberService.getMemberProfile(memberEmail);
 
         List<String> images = post.getImages().stream()
                 .map(Image::getImageUrl)
@@ -51,7 +55,8 @@ public class PostService {
         int likeCnt = likesRepository.countByPostIdAndIsLiked(postId);
 
         return new PostDetailDto(
-                post.getMember().getNickname(),
+                memberProfileResponseDto.getNickname(),
+                memberProfileResponseDto.getProfileImageUrl(),
                 post.getTitle(),
                 post.getContent(),
                 post.getCreateDate(),

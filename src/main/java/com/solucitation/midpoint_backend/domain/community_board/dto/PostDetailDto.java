@@ -12,6 +12,7 @@ import java.util.List;
 @AllArgsConstructor
 public class PostDetailDto {
     private String nickname;
+    private String profileImagerUrl;
     private String title;
     private String content;
     private LocalDateTime createDate;
