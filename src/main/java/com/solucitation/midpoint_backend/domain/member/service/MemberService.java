@@ -136,21 +136,23 @@ public class MemberService {
         // 회원 저장
         memberRepository.save(newMember);
 
+        String profileImageUrl;
         // 프로필 이미지 업로드 및 저장
         if (profileImage != null && !profileImage.isEmpty()) {
             try {
-                String profileImageUrl = getS3UploadUrl(profileImage);
-                Image image = Image.builder()
-                        .imageUrl(profileImageUrl)
-                        .member(newMember)
-                        .build();
-                imageRepository.save(image);
+                profileImageUrl = getS3UploadUrl(profileImage);
             } catch (IOException e) {
                 log.error("프로필 이미지 업로드 실패: {}", e.getMessage());
-                // 이미지 업로드 실패 알림
                 throw new RuntimeException("프로필 이미지 업로드에 실패했습니다.");
             }
+        } else { // null이라면 기본 프로필 이미지 할당
+            profileImageUrl = String.format("https://%s.s3.%s.amazonaws.com/%s", bucket, "ap-northeast-2", "profile-images/default_image.png");
         }
+        Image image = Image.builder()
+                .imageUrl(profileImageUrl)
+                .member(newMember)
+                .build();
+        imageRepository.save(image);
     }
 
     /**
