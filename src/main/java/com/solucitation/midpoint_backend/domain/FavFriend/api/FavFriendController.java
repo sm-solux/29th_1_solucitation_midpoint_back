@@ -61,7 +61,7 @@ public class FavFriendController {
         String email = authentication.getName();
         try {
             FavFriend favFriend = favFriendService.getFavoriteFriendByFavFriendId(favFriendId, email);
-            return ResponseEntity.ok(new FavFriendResponse(favFriend.getName(), favFriend.getAddress()));
+            return ResponseEntity.ok(new FavFriendResponse(favFriend.getFavFriendId(), favFriend.getName(), favFriend.getAddress()));
         } catch (RuntimeException e) {
             return ResponseEntity
                     .status(HttpStatus.BAD_REQUEST)
@@ -96,7 +96,7 @@ public class FavFriendController {
         try {
             List<FavFriend> favFriends = favFriendService.getFavoriteFriends(email);
             return ResponseEntity.ok(favFriends.stream()
-                    .map(favFriend -> new FavFriendResponse(favFriend.getName(), favFriend.getAddress()))
+                    .map(favFriend -> new FavFriendResponse(favFriend.getFavFriendId(), favFriend.getName(), favFriend.getAddress()))
                     .collect(Collectors.toList()));
         } catch (RuntimeException e) {
             return ResponseEntity
@@ -112,10 +112,12 @@ public class FavFriendController {
     @Getter
     @Setter
     public static class FavFriendResponse {
+        private Long favFriendId;
         private String name;
         private String address;
 
-        public FavFriendResponse(String name, String address) {
+        public FavFriendResponse(Long favFriendId, String name, String address) {
+            this.favFriendId = favFriendId;
             this.name = name;
             this.address = address;
         }
