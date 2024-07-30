@@ -102,8 +102,29 @@ public class FavPlaceController {
     public ResponseEntity<?> getAllFavPlaces(Authentication authentication) {
         String email = authentication.getName();
         try {
-            List<com.solucitation.midpoint_backend.domain.FavPlace.api.FavPlaceResponse> favPlacesList = favPlaceService.getAllFavoritePlaces(email);
+            List<FavPlaceResponse> favPlacesList = favPlaceService.getAllFavoritePlaces(email);
             return ResponseEntity.ok(favPlacesList);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body(new ApiResponse(false, e.getMessage()));
+        } catch (RuntimeException e) {
+            return ResponseEntity
+                    .status(HttpStatus.FORBIDDEN)
+                    .body(new ApiResponse(false, e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponse(false, "서버 오류가 발생했습니다. " + e.getMessage()));
+        }
+    }
+
+    @PatchMapping("/update")
+    public ResponseEntity<?> updateFavPlace(Authentication authentication, @RequestParam Long favPlaceId, @RequestParam String addr) {
+        String email = authentication.getName();
+        try {
+            FavPlace updatedPlace = favPlaceService.updateFavoritePlace(favPlaceId, addr, email);
+            return ResponseEntity.ok(new ApiResponse(true, "즐겨찾는 장소 수정에 성공했습니다.", updatedPlace.getFavPlaceId()));
         } catch (IllegalArgumentException e) {
             return ResponseEntity
                     .status(HttpStatus.BAD_REQUEST)
@@ -134,20 +155,6 @@ public class FavPlaceController {
 
         public ApiResponse(boolean success, String message) {
             this(success, message, null);
-        }
-    }
-
-    @Getter
-    @Setter
-    public static class FavPlaceResponse {
-        private Long favPlaceId;
-        private String addr;
-        private String addrType;
-
-        public FavPlaceResponse(Long favPlaceId, String addr, String addrType) {
-            this.favPlaceId = favPlaceId;
-            this.addr = addr;
-            this.addrType = addrType;
         }
     }
 }

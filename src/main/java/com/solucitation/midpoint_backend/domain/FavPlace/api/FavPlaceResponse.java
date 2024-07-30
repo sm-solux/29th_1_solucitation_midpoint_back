@@ -7,11 +7,18 @@ import lombok.Setter;
 @Getter
 @Setter
 public class FavPlaceResponse {
-    private FavPlace.AddrType addrType;
+    private Long favPlaceId;
     private String addr;
+    private String addrType;
+
+    public FavPlaceResponse(Long favPlaceId, String addr, String addrType) {
+        this.favPlaceId = favPlaceId;
+        this.addr = addr;
+        this.addrType = addrType;
+    }
 
     public FavPlaceResponse(FavPlace.AddrType addrType, String addr) {
-        this.addrType = addrType;
+        this.addrType = addrType.name();
         this.addr = addr;
     }
 }

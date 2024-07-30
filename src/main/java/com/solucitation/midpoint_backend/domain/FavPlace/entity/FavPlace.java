@@ -33,6 +33,10 @@ public class FavPlace {
     @Column(name = "addr_type", nullable = false)
     private AddrType addrType;
 
+    public void setAddr(String addr) {
+        this.addr = addr;
+    }
+
     public enum AddrType {
         HOME, WORK
     }
