@@ -5,8 +5,6 @@ import com.solucitation.midpoint_backend.domain.FavFriend.repository.FavoriteFri
 import com.solucitation.midpoint_backend.domain.member.entity.Member;
 import com.solucitation.midpoint_backend.domain.member.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,7 +19,7 @@ public class FavFriendService {
     @Transactional
     public FavFriend saveFavoriteFriend(String address, String name, Float latitude, Float longitude, String email) {
         Member member = memberRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("해당 이메일의 회원이 존재하지 않습니다."));
+                .orElseThrow(() -> new RuntimeException("해당 이메일의 회원이 존재하지 않습니다."));
 
         // 중복 확인 로직
         favoriteFriendRepository.findByNameAndMemberId(name, member.getId())
@@ -43,7 +41,7 @@ public class FavFriendService {
     @Transactional(readOnly = true)
     public FavFriend getFavoriteFriendByFavFriendId(Long favFriendId, String email) {
         Member member = memberRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("해당 이메일의 회원이 존재하지 않습니다."));
+                .orElseThrow(() -> new RuntimeException("해당 이메일의 회원이 존재하지 않습니다."));
 
         return favoriteFriendRepository.findByFavFriendIdAndMemberId(favFriendId, member.getId())
                 .orElseThrow(() -> new RuntimeException("존재하지 않는 친구입니다."));
@@ -52,7 +50,7 @@ public class FavFriendService {
     @Transactional
     public void deleteFavoriteFriendByName(Long favFriendId, String email) {
         Member member = memberRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("해당 이메일의 회원이 존재하지 않습니다."));
+                .orElseThrow(() -> new RuntimeException("해당 이메일의 회원이 존재하지 않습니다."));
 
         FavFriend favFriend = favoriteFriendRepository.findByFavFriendIdAndMemberId(favFriendId, member.getId())
                 .orElseThrow(() -> new RuntimeException("존재하지 않는 친구입니다."));
@@ -63,7 +61,7 @@ public class FavFriendService {
     @Transactional(readOnly = true)
     public List<FavFriend> getFavoriteFriends(String email) {
         Member member = memberRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("해당 이메일의 회원이 존재하지 않습니다."));
+                .orElseThrow(() -> new RuntimeException("해당 이메일의 회원이 존재하지 않습니다."));
 
         return favoriteFriendRepository.findByMemberId(member.getId());
     }
