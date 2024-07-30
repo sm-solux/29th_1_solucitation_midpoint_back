@@ -45,4 +45,21 @@ public class FavFriendService {
 
         return favoriteFriendRepository.save(favFriend);
     }
+
+    @Transactional(readOnly = true)
+    public FavFriend getFavoriteFriendByName(String name) {
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        String username = null;
+        if (principal instanceof UserDetails) {
+            username = ((UserDetails) principal).getUsername();
+        } else {
+            username = principal.toString();
+        }
+
+        Member member = memberRepository.findByEmail(username)
+                .orElseThrow(() -> new RuntimeException("Member not found"));
+
+        return favoriteFriendRepository.findByNameAndMemberId(name, member.getId())
+                .orElseThrow(() -> new RuntimeException("존재하지 않는 친구입니다."));
+    }
 }

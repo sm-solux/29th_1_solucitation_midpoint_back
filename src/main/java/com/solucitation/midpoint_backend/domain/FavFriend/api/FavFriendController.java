@@ -4,7 +4,9 @@ import com.solucitation.midpoint_backend.domain.FavFriend.dto.FavFriendRequest;
 import com.solucitation.midpoint_backend.domain.FavFriend.entity.FavFriend;
 import com.solucitation.midpoint_backend.domain.FavFriend.service.FavFriendService;
 import jakarta.validation.Valid;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
@@ -50,6 +52,22 @@ public class FavFriendController {
         }
     }
 
+    @GetMapping("/details")
+    public ResponseEntity<?> getFavFriendDetails(@RequestParam String name) {
+        try {
+            FavFriend favFriend = favFriendService.getFavoriteFriendByName(name);
+            return ResponseEntity.ok(new FavFriendResponse(favFriend.getName(), favFriend.getAddress()));
+        } catch (RuntimeException e) {
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body(new ApiResponse(false, e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponse(false, "서버 오류가 발생했습니다. " + e.getMessage()));
+        }
+    }
+
     public static class ApiResponse {
         private boolean success;
         private String message;
@@ -87,6 +105,18 @@ public class FavFriendController {
 
         public void setFavFriendId(Long favFriendId) {
             this.favFriendId = favFriendId;
+        }
+    }
+
+    @Getter
+    @Setter
+    public static class FavFriendResponse {
+        private String name;
+        private String address;
+
+        public FavFriendResponse(String name, String address) {
+            this.name = name;
+            this.address = address;
         }
     }
 }

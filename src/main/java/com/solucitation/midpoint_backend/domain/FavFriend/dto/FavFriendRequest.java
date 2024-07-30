@@ -21,3 +21,4 @@ public class FavFriendRequest {
     @NotNull(message = "Longitude is required")
     private Float longitude;
 }
+
