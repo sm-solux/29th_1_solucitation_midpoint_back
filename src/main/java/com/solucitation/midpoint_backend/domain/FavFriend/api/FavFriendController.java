@@ -68,6 +68,22 @@ public class FavFriendController {
         }
     }
 
+    @DeleteMapping("/delete")
+    public ResponseEntity<?> deleteFavFriend(@RequestParam String name) {
+        try {
+            favFriendService.deleteFavoriteFriendByName(name);
+            return ResponseEntity.ok(new ApiResponse(true, "즐겨찾는 친구 삭제에 성공했습니다."));
+        } catch (RuntimeException e) {
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body(new ApiResponse(false, e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponse(false, "서버 오류가 발생했습니다. " + e.getMessage()));
+        }
+    }
+
     public static class ApiResponse {
         private boolean success;
         private String message;
