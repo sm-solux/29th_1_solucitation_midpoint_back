@@ -46,8 +46,11 @@ public class FavPlaceService {
                 .orElseThrow(() -> new IllegalArgumentException("해당 이메일의 회원이 존재하지 않습니다."));
 
         FavPlace favPlace = favPlaceRepository.findById(favPlaceId)
-                .filter(place -> place.getMember().equals(member))
-                .orElseThrow(() -> new RuntimeException("해당 즐겨찾는 장소가 존재하지 않거나 접근 권한이 없습니다."));
+                .orElseThrow(() -> new RuntimeException("존재하지 않는 장소입니다."));
+
+        if (!favPlace.getMember().equals(member)) {
+            throw new RuntimeException("접근 권한이 없습니다.");
+        }
 
         favPlaceRepository.delete(favPlace);
     }
@@ -57,9 +60,14 @@ public class FavPlaceService {
         Member member = memberRepository.findByEmail(email)
                 .orElseThrow(() -> new IllegalArgumentException("해당 이메일의 회원이 존재하지 않습니다."));
 
-        return favPlaceRepository.findById(favPlaceId)
-                .filter(place -> place.getMember().equals(member))
-                .orElseThrow(() -> new RuntimeException("해당 즐겨찾는 장소가 존재하지 않거나 접근 권한이 없습니다."));
+        FavPlace favPlace = favPlaceRepository.findById(favPlaceId)
+                .orElseThrow(() -> new RuntimeException("존재하지 않는 장소입니다."));
+
+        if (!favPlace.getMember().equals(member)) {
+            throw new RuntimeException("접근 권한이 없습니다.");
+        }
+
+        return favPlace;
     }
 
     @Transactional(readOnly = true)
@@ -89,8 +97,15 @@ public class FavPlaceService {
                 .orElseThrow(() -> new IllegalArgumentException("해당 이메일의 회원이 존재하지 않습니다."));
 
         FavPlace favPlace = favPlaceRepository.findById(favPlaceId)
-                .filter(place -> place.getMember().equals(member))
-                .orElseThrow(() -> new RuntimeException("해당 즐겨찾는 장소가 존재하지 않거나 접근 권한이 없습니다."));
+                .orElseThrow(() -> new RuntimeException("존재하지 않는 장소입니다."));
+
+        if (!favPlace.getMember().equals(member)) {
+            throw new RuntimeException("접근 권한이 없습니다.");
+        }
+
+        if (favPlace.getAddr().equals(addr)) {
+            throw new IllegalArgumentException("기존 주소와 동일한 주소입니다.");
+        }
 
         favPlace.setAddr(addr);
         return favPlaceRepository.save(favPlace);

@@ -45,10 +45,20 @@ public class FavPlaceController {
             return ResponseEntity
                     .status(HttpStatus.CREATED)
                     .body(new ApiResponse(true, "즐겨찾는 장소 저장에 성공했습니다.", savedPlace.getFavPlaceId()));
-        } catch (RuntimeException e) {
+        } catch (IllegalArgumentException e) {
             return ResponseEntity
                     .status(HttpStatus.BAD_REQUEST)
                     .body(new ApiResponse(false, e.getMessage()));
+        } catch (RuntimeException e) {
+            if (e.getMessage().contains("존재하지 않는 장소")) {
+                return ResponseEntity
+                        .status(HttpStatus.NOT_FOUND)
+                        .body(new ApiResponse(false, e.getMessage()));
+            } else {
+                return ResponseEntity
+                        .status(HttpStatus.FORBIDDEN)
+                        .body(new ApiResponse(false, e.getMessage()));
+            }
         } catch (Exception e) {
             return ResponseEntity
                     .status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -67,9 +77,15 @@ public class FavPlaceController {
                     .status(HttpStatus.BAD_REQUEST)
                     .body(new ApiResponse(false, e.getMessage()));
         } catch (RuntimeException e) {
-            return ResponseEntity
-                    .status(HttpStatus.FORBIDDEN)
-                    .body(new ApiResponse(false, e.getMessage()));
+            if (e.getMessage().contains("존재하지 않는 장소")) {
+                return ResponseEntity
+                        .status(HttpStatus.NOT_FOUND)
+                        .body(new ApiResponse(false, e.getMessage()));
+            } else {
+                return ResponseEntity
+                        .status(HttpStatus.FORBIDDEN)
+                        .body(new ApiResponse(false, e.getMessage()));
+            }
         } catch (Exception e) {
             return ResponseEntity
                     .status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -88,9 +104,15 @@ public class FavPlaceController {
                     .status(HttpStatus.BAD_REQUEST)
                     .body(new ApiResponse(false, e.getMessage()));
         } catch (RuntimeException e) {
-            return ResponseEntity
-                    .status(HttpStatus.FORBIDDEN)
-                    .body(new ApiResponse(false, e.getMessage()));
+            if (e.getMessage().contains("존재하지 않는 장소")) {
+                return ResponseEntity
+                        .status(HttpStatus.NOT_FOUND)
+                        .body(new ApiResponse(false, e.getMessage()));
+            } else {
+                return ResponseEntity
+                        .status(HttpStatus.FORBIDDEN)
+                        .body(new ApiResponse(false, e.getMessage()));
+            }
         } catch (Exception e) {
             return ResponseEntity
                     .status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -109,9 +131,15 @@ public class FavPlaceController {
                     .status(HttpStatus.BAD_REQUEST)
                     .body(new ApiResponse(false, e.getMessage()));
         } catch (RuntimeException e) {
-            return ResponseEntity
-                    .status(HttpStatus.FORBIDDEN)
-                    .body(new ApiResponse(false, e.getMessage()));
+            if (e.getMessage().contains("존재하지 않는 장소")) {
+                return ResponseEntity
+                        .status(HttpStatus.NOT_FOUND)
+                        .body(new ApiResponse(false, e.getMessage()));
+            } else {
+                return ResponseEntity
+                        .status(HttpStatus.FORBIDDEN)
+                        .body(new ApiResponse(false, e.getMessage()));
+            }
         } catch (Exception e) {
             return ResponseEntity
                     .status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -130,9 +158,15 @@ public class FavPlaceController {
                     .status(HttpStatus.BAD_REQUEST)
                     .body(new ApiResponse(false, e.getMessage()));
         } catch (RuntimeException e) {
-            return ResponseEntity
-                    .status(HttpStatus.FORBIDDEN)
-                    .body(new ApiResponse(false, e.getMessage()));
+            if (e.getMessage().contains("존재하지 않는 장소")) {
+                return ResponseEntity
+                        .status(HttpStatus.NOT_FOUND)
+                        .body(new ApiResponse(false, e.getMessage()));
+            } else {
+                return ResponseEntity
+                        .status(HttpStatus.FORBIDDEN)
+                        .body(new ApiResponse(false, e.getMessage()));
+            }
         } catch (Exception e) {
             return ResponseEntity
                     .status(HttpStatus.INTERNAL_SERVER_ERROR)
