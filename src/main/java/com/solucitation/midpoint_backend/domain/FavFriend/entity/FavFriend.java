@@ -20,11 +20,11 @@ public class FavFriend {
     @JoinColumn(name = "member_id", nullable = false)
     private Member member;
 
-    @Column(name = "address", nullable = false)
+    @Column(name = "address", nullable = false, length = 255)
     private String address;
 
-    @Column(name = "name", nullable = false)
-    private String name;
+    @Column(name = "name", nullable = false, unique = true, length = 100)
+    private String name; // 친구 이름은 중복 저장 불가능
 
     @Column(name = "latitude", nullable = false)
     private Float latitude;
