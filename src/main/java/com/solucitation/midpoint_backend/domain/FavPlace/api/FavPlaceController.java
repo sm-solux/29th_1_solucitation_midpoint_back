@@ -13,6 +13,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.stream.Collectors;
 
 @RestController
@@ -81,7 +82,7 @@ public class FavPlaceController {
         String email = authentication.getName();
         try {
             FavPlace favPlace = favPlaceService.getFavoritePlaceDetails(favPlaceId, email);
-            return ResponseEntity.ok(new FavPlaceResponse(favPlace.getFavPlaceId(), favPlace.getAddrType().name(), favPlace.getAddr()));
+            return ResponseEntity.ok(new FavPlaceResponse(favPlace.getFavPlaceId(), favPlace.getAddr(), favPlace.getAddrType().name()));
         } catch (IllegalArgumentException e) {
             return ResponseEntity
                     .status(HttpStatus.BAD_REQUEST)
@@ -97,17 +98,24 @@ public class FavPlaceController {
         }
     }
 
-    @Getter
-    @Setter
-    public static class FavPlaceResponse {
-        private Long favPlaceId;
-        private String addrType;
-        private String addr;
-
-        public FavPlaceResponse(Long favPlaceId, String addrType, String addr) {
-            this.favPlaceId = favPlaceId;
-            this.addrType = addrType;
-            this.addr = addr;
+    @GetMapping("/list")
+    public ResponseEntity<?> getAllFavPlaces(Authentication authentication) {
+        String email = authentication.getName();
+        try {
+            List<com.solucitation.midpoint_backend.domain.FavPlace.api.FavPlaceResponse> favPlacesList = favPlaceService.getAllFavoritePlaces(email);
+            return ResponseEntity.ok(favPlacesList);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body(new ApiResponse(false, e.getMessage()));
+        } catch (RuntimeException e) {
+            return ResponseEntity
+                    .status(HttpStatus.FORBIDDEN)
+                    .body(new ApiResponse(false, e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponse(false, "서버 오류가 발생했습니다. " + e.getMessage()));
         }
     }
 
@@ -126,6 +134,20 @@ public class FavPlaceController {
 
         public ApiResponse(boolean success, String message) {
             this(success, message, null);
+        }
+    }
+
+    @Getter
+    @Setter
+    public static class FavPlaceResponse {
+        private Long favPlaceId;
+        private String addr;
+        private String addrType;
+
+        public FavPlaceResponse(Long favPlaceId, String addr, String addrType) {
+            this.favPlaceId = favPlaceId;
+            this.addr = addr;
+            this.addrType = addrType;
         }
     }
 }
