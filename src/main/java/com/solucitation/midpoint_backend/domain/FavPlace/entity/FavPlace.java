@@ -13,8 +13,8 @@ import lombok.*;
 public class FavPlace {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "addr_id")
-    private Long addrId;
+    @Column(name = "fav_place_id")
+    private Long favPlaceId;
 
     @Column(name = "addr", nullable = false, length = 255)
     private String addr;

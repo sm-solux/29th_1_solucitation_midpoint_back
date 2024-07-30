@@ -13,22 +13,22 @@ import lombok.*;
 public class FavFriend {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "friendship_id")
-    private Long friendshipId;
+    @Column(name = "fav_friend_id")
+    private Long favFriendId;
 
     @ManyToOne
     @JoinColumn(name = "member_id", nullable = false)
     private Member member;
 
-    @Column(name = "address")
+    @Column(name = "address", nullable = false)
     private String address;
 
-    @Column(name = "name")
+    @Column(name = "name", nullable = false)
     private String name;
 
-    @Column(name = "latitude")
+    @Column(name = "latitude", nullable = false)
     private Float latitude;
 
-    @Column(name = "longitude")
+    @Column(name = "longitude", nullable = false)
     private Float longitude;
 }
