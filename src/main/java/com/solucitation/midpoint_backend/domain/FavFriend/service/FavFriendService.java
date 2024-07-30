@@ -29,6 +29,12 @@ public class FavFriendService {
         Member member = memberRepository.findByEmail(username)
                 .orElseThrow(() -> new RuntimeException("Member not found"));
 
+        // 중복 확인 로직
+        favoriteFriendRepository.findByNameAndMemberId(name, member.getId())
+                .ifPresent(favFriend -> {
+                    throw new RuntimeException("이미 존재하는 친구입니다.");
+                });
+
         FavFriend favFriend = FavFriend.builder()
                 .member(member)
                 .address(address)

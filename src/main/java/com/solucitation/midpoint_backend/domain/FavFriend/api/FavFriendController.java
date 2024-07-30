@@ -39,6 +39,10 @@ public class FavFriendController {
             return ResponseEntity
                     .status(HttpStatus.CREATED)
                     .body(new ApiResponse(true, "즐겨찾는 친구 저장에 성공했습니다.", savedFriend.getFavFriendId()));
+        } catch (RuntimeException e) {
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body(new ApiResponse(false, "이미 존재하는 친구입니다."));
         } catch (Exception e) {
             return ResponseEntity
                     .status(HttpStatus.INTERNAL_SERVER_ERROR)
