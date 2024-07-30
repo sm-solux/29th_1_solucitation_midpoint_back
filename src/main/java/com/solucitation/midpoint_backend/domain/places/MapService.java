@@ -69,6 +69,13 @@ public class MapService {
                 place.put("types", resultNode.path("types").toString());
                 place.put("placeID", resultNode.path("place_id").asText());
 
+                JsonNode photosNode = resultNode.path("photos");
+                if (photosNode.isArray() && photosNode.size() > 0) {
+                    place.put("photo", photosNode.get(0).path("photo_reference").asText());
+                } else {
+                    place.put("photo", null);
+                }
+
                 places.add(place);
             }
 
