@@ -46,15 +46,9 @@ public class FavFriendController {
                     .status(HttpStatus.CREATED)
                     .body(new ApiResponse(true, "즐겨찾는 친구 저장에 성공했습니다.", savedFriend.getFavFriendId()));
         } catch (RuntimeException e) {
-            if (e.getMessage().contains("이미 존재하는 친구입니다.")) {
-                return ResponseEntity
-                        .status(HttpStatus.BAD_REQUEST)
-                        .body(new ApiResponse(false, e.getMessage()));
-            } else {
-                return ResponseEntity
-                        .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                        .body(new ApiResponse(false, "서버 오류가 발생했습니다. " + e.getMessage()));
-            }
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body(new ApiResponse(false, "이미 존재하는 친구입니다."));
         } catch (Exception e) {
             return ResponseEntity
                     .status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -69,15 +63,9 @@ public class FavFriendController {
             FavFriend favFriend = favFriendService.getFavoriteFriendByFavFriendId(favFriendId, email);
             return ResponseEntity.ok(new FavFriendResponse(favFriend.getFavFriendId(), favFriend.getName(), favFriend.getAddress()));
         } catch (RuntimeException e) {
-            if (e.getMessage().contains("존재하지 않는 친구입니다.")) {
-                return ResponseEntity
-                        .status(HttpStatus.NOT_FOUND)
-                        .body(new ApiResponse(false, e.getMessage()));
-            } else {
-                return ResponseEntity
-                        .status(HttpStatus.FORBIDDEN)
-                        .body(new ApiResponse(false, "접근 권한이 없습니다."));
-            }
+            return ResponseEntity
+                    .status(HttpStatus.NOT_FOUND)
+                    .body(new ApiResponse(false, e.getMessage()));
         } catch (Exception e) {
             return ResponseEntity
                     .status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -92,15 +80,9 @@ public class FavFriendController {
             favFriendService.deleteFavoriteFriendByName(favFriendId, email);
             return ResponseEntity.ok(new ApiResponse(true, "즐겨찾는 친구 삭제에 성공했습니다."));
         } catch (RuntimeException e) {
-            if (e.getMessage().contains("존재하지 않는 친구입니다.")) {
-                return ResponseEntity
-                        .status(HttpStatus.NOT_FOUND)
-                        .body(new ApiResponse(false, e.getMessage()));
-            } else {
-                return ResponseEntity
-                        .status(HttpStatus.FORBIDDEN)
-                        .body(new ApiResponse(false, "접근 권한이 없습니다."));
-            }
+            return ResponseEntity
+                    .status(HttpStatus.NOT_FOUND)
+                    .body(new ApiResponse(false, e.getMessage()));
         } catch (Exception e) {
             return ResponseEntity
                     .status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -119,6 +101,27 @@ public class FavFriendController {
         } catch (RuntimeException e) {
             return ResponseEntity
                     .status(HttpStatus.BAD_REQUEST)
+                    .body(new ApiResponse(false, e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponse(false, "서버 오류가 발생했습니다. " + e.getMessage()));
+        }
+    }
+
+    @PatchMapping("/update")
+    public ResponseEntity<?> updateFavFriend(Authentication authentication, @RequestParam Long favFriendId, @RequestParam(required = false) String name, @RequestParam(required = false) String address) {
+        String email = authentication.getName();
+        try {
+            FavFriend updatedFriend = favFriendService.updateFavoriteFriend(favFriendId, name, address, email);
+            return ResponseEntity.ok(new ApiResponse(true, "즐겨찾는 친구 수정에 성공했습니다.", updatedFriend.getFavFriendId()));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body(new ApiResponse(false, e.getMessage()));
+        } catch (RuntimeException e) {
+            return ResponseEntity
+                    .status(HttpStatus.FORBIDDEN)
                     .body(new ApiResponse(false, e.getMessage()));
         } catch (Exception e) {
             return ResponseEntity

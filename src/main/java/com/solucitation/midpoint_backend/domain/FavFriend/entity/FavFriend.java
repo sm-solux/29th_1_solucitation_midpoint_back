@@ -31,4 +31,12 @@ public class FavFriend {
 
     @Column(name = "longitude", nullable = false)
     private Float longitude;
+
+    public void setAddress(String address) {
+        this.address = address;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
 }
