@@ -1,7 +1,6 @@
 package com.solucitation.midpoint_backend.domain.member.entity;
 
 import com.solucitation.midpoint_backend.domain.FavFriend.entity.FavFriend;
-import com.solucitation.midpoint_backend.domain.FavPlace.entity.FavPlace;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
@@ -40,10 +39,6 @@ public class Member {
 
     @OneToMany(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<FavFriend> favFriends;
-
-    @OneToMany(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Set<FavPlace> favPlaces;
-
 
     public Member(String password, String name, String email, String nickname, String loginId) {
         this.email= email;
