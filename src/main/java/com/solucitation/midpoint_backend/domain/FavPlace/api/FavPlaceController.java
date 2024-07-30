@@ -38,7 +38,7 @@ public class FavPlaceController {
                     favPlaceRequest.getAddr(),
                     favPlaceRequest.getLatitude(),
                     favPlaceRequest.getLongitude(),
-                    favPlaceRequest.getAddrType(),
+                    FavPlace.AddrType.valueOf(favPlaceRequest.getAddrType().toUpperCase()),
                     email
             );
             return ResponseEntity

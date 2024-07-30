@@ -1,6 +1,6 @@
 package com.solucitation.midpoint_backend.domain.FavPlace.dto;
 
-import com.solucitation.midpoint_backend.domain.FavPlace.entity.FavPlace;
+import com.solucitation.midpoint_backend.domain.FavPlace.validation.ValidAddrType;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -22,5 +22,6 @@ public class FavPlaceRequest {
     private Float longitude;
 
     @NotNull(message = "Address type is required")
-    private FavPlace.AddrType addrType;
+    @ValidAddrType
+    private String addrType;
 }
