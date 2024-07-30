@@ -34,15 +34,13 @@ public class SearchHistoryControllerV2 {
     private final SearchHistoryServiceV2 searchHistoryService;
 
     /**
-     * 검색 결과에서 저장하고 싶은 장소를 리스트로 받아와서 저장합니다.
      *
      * @param authentication 인증 정보
+     * @param request 검색 기록 저장에 필요한 정보 (동 정보, 장소 리스트)
      * @return 장소를 성공적으로 저장하면 201 CREATED를 반환합니다.
      *         로그인을 하지 않고 시도 시 401 UNAUTHORIZED를 반환합니다.
-     *         사용자를 찾을 수 없는 경우 404 NOT_FOUND를 반환합니다.
      *         저장하려는 장소 정보에 문제가 있을 때 (필드가 공백이거나 null일 경우) 400 BAD_REQUEST를 반환합니다.
      *         기타 사유로 저장 실패 시 500 INTERNAL_SERVER_ERROR를 반환합니다.
-     * @throws JsonProcessingException
      */
     @PostMapping("")
     public ResponseEntity<Object> saveHistory(Authentication authentication,
@@ -70,10 +68,6 @@ public class SearchHistoryControllerV2 {
 
             String memberEmail = authentication.getName();
             Member member = memberService.getMemberByEmail(memberEmail);
-            if (member == null) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(Map.of("error", "USER_NOT_FOUND", "message", "사용자를 찾을 수 없습니다."));
-            }
 
             // 리스트 내의 모든 요소에 대한 검증 수행
             for (PlaceDtoV2 place : searchHistoryRequestDtos) {
