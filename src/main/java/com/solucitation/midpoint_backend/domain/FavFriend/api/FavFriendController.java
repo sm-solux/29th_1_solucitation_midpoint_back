@@ -57,10 +57,10 @@ public class FavFriendController {
     }
 
     @GetMapping("/details")
-    public ResponseEntity<?> getFavFriendDetails(Authentication authentication, @RequestParam String name) {
+    public ResponseEntity<?> getFavFriendDetails(Authentication authentication, @RequestParam Long favFriendId) {
         String email = authentication.getName();
         try {
-            FavFriend favFriend = favFriendService.getFavoriteFriendByName(name, email);
+            FavFriend favFriend = favFriendService.getFavoriteFriendByFavFriendId(favFriendId, email);
             return ResponseEntity.ok(new FavFriendResponse(favFriend.getName(), favFriend.getAddress()));
         } catch (RuntimeException e) {
             return ResponseEntity
@@ -74,10 +74,10 @@ public class FavFriendController {
     }
 
     @DeleteMapping("/delete")
-    public ResponseEntity<?> deleteFavFriend(Authentication authentication, @RequestParam String name) {
+    public ResponseEntity<?> deleteFavFriend(Authentication authentication, @RequestParam Long favFriendId) {
         String email = authentication.getName();
         try {
-            favFriendService.deleteFavoriteFriendByName(name, email);
+            favFriendService.deleteFavoriteFriendByName(favFriendId, email);
             return ResponseEntity.ok(new ApiResponse(true, "즐겨찾는 친구 삭제에 성공했습니다."));
         } catch (RuntimeException e) {
             return ResponseEntity
