@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
@@ -22,7 +23,8 @@ public class FavFriendController {
     private final FavFriendService favFriendService;
 
     @PostMapping("/save")
-    public ResponseEntity<?> saveFavFriend(@Valid @RequestBody FavFriendRequest favFriendRequest, BindingResult result) {
+    public ResponseEntity<?> saveFavFriend(Authentication authentication, @Valid @RequestBody FavFriendRequest favFriendRequest, BindingResult result) {
+        String email = authentication.getName();
         if (result.hasErrors()) {
             String errorMessage = result.getAllErrors().stream()
                     .map(error -> error.getDefaultMessage())
@@ -37,7 +39,8 @@ public class FavFriendController {
                     favFriendRequest.getAddress(),
                     favFriendRequest.getName(),
                     favFriendRequest.getLatitude(),
-                    favFriendRequest.getLongitude()
+                    favFriendRequest.getLongitude(),
+                    email
             );
             return ResponseEntity
                     .status(HttpStatus.CREATED)
@@ -54,9 +57,10 @@ public class FavFriendController {
     }
 
     @GetMapping("/details")
-    public ResponseEntity<?> getFavFriendDetails(@RequestParam String name) {
+    public ResponseEntity<?> getFavFriendDetails(Authentication authentication, @RequestParam String name) {
+        String email = authentication.getName();
         try {
-            FavFriend favFriend = favFriendService.getFavoriteFriendByName(name);
+            FavFriend favFriend = favFriendService.getFavoriteFriendByName(name, email);
             return ResponseEntity.ok(new FavFriendResponse(favFriend.getName(), favFriend.getAddress()));
         } catch (RuntimeException e) {
             return ResponseEntity
@@ -70,9 +74,10 @@ public class FavFriendController {
     }
 
     @DeleteMapping("/delete")
-    public ResponseEntity<?> deleteFavFriend(@RequestParam String name) {
+    public ResponseEntity<?> deleteFavFriend(Authentication authentication, @RequestParam String name) {
+        String email = authentication.getName();
         try {
-            favFriendService.deleteFavoriteFriendByName(name);
+            favFriendService.deleteFavoriteFriendByName(name, email);
             return ResponseEntity.ok(new ApiResponse(true, "즐겨찾는 친구 삭제에 성공했습니다."));
         } catch (RuntimeException e) {
             return ResponseEntity
@@ -86,9 +91,10 @@ public class FavFriendController {
     }
 
     @GetMapping("/list")
-    public ResponseEntity<?> getFavFriendsList() {
+    public ResponseEntity<?> getFavFriendsList(Authentication authentication) {
+        String email = authentication.getName();
         try {
-            List<FavFriend> favFriends = favFriendService.getFavoriteFriends();
+            List<FavFriend> favFriends = favFriendService.getFavoriteFriends(email);
             return ResponseEntity.ok(favFriends.stream()
                     .map(favFriend -> new FavFriendResponse(favFriend.getName(), favFriend.getAddress()))
                     .collect(Collectors.toList()));
