@@ -47,7 +47,7 @@ public class FavPlaceController {
         } catch (RuntimeException e) {
             return ResponseEntity
                     .status(HttpStatus.BAD_REQUEST)
-                    .body(new ApiResponse(false, "이미 존재하는 장소입니다."));
+                    .body(new ApiResponse(false, e.getMessage()));
         } catch (Exception e) {
             return ResponseEntity
                     .status(HttpStatus.INTERNAL_SERVER_ERROR)

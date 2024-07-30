@@ -21,7 +21,7 @@ public class FavPlaceService {
 
         favPlaceRepository.findByAddrTypeAndMemberId(addrType, member.getId())
                 .ifPresent(favPlace -> {
-                    throw new RuntimeException("이미 존재하는 장소입니다.");
+                    throw new RuntimeException(addrType + " 장소는 이미 존재합니다.");
                 });
 
         FavPlace favPlace = FavPlace.builder()

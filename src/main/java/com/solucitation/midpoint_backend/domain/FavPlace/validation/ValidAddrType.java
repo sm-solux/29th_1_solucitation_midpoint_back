@@ -12,7 +12,7 @@ import java.lang.annotation.Target;
 @Target({ElementType.FIELD, ElementType.PARAMETER})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface ValidAddrType {
-    String message() default "Invalid address type. Allowed values are HOME and WORK.";
+    String message() default "Invalid address type.";
     Class<?>[] groups() default {};
     Class<? extends Payload>[] payload() default {};
 }
