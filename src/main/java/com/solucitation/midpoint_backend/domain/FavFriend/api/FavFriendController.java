@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/api/fav/friends")
+@RequestMapping("/api/favs/friends")
 @RequiredArgsConstructor
 public class FavFriendController {
     private final FavFriendService favFriendService;
