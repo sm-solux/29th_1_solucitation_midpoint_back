@@ -72,14 +72,30 @@ public class FavPlaceController {
         } catch (Exception e) {
             return ResponseEntity
                     .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponse(false, "서버 오류가 발생했습니다. " + e.getMessage()));
+        }
+    }
+
+    @GetMapping("/details")
+    public ResponseEntity<?> getFavPlaceDetails(Authentication authentication, @RequestParam Long favPlaceId) {
+        String email = authentication.getName();
+        try {
+            FavPlace favPlace = favPlaceService.getFavoritePlaceDetails(favPlaceId, email);
+            return ResponseEntity.ok(new FavPlaceResponse(favPlace.getFavPlaceId(), favPlace.getAddrType().name(), favPlace.getAddr()));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body(new ApiResponse(false, e.getMessage()));
         } catch (RuntimeException e) {
             return ResponseEntity
                     .status(HttpStatus.FORBIDDEN)
-                    .body(new ApiResponse(false, "권한이 없습니다."));
+                    .body(new ApiResponse(false, e.getMessage()));
         } catch (Exception e) {
             return ResponseEntity
                     .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ApiResponse(false, "서버 오류가 발생했습니다. "));
+                    .body(new ApiResponse(false, "서버 오류가 발생했습니다. " + e.getMessage()));
+        }
+    }
 
     @Getter
     @Setter
