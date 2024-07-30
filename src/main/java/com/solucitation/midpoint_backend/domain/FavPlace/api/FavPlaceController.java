@@ -64,7 +64,14 @@ public class FavPlaceController {
         } catch (IllegalArgumentException e) {
             return ResponseEntity
                     .status(HttpStatus.BAD_REQUEST)
-                    .body(new ApiResponse(false, "존재하지 않는 장소입니다."));
+                    .body(new ApiResponse(false, e.getMessage()));
+        } catch (RuntimeException e) {
+            return ResponseEntity
+                    .status(HttpStatus.FORBIDDEN)
+                    .body(new ApiResponse(false, e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
         } catch (RuntimeException e) {
             return ResponseEntity
                     .status(HttpStatus.FORBIDDEN)
@@ -73,6 +80,18 @@ public class FavPlaceController {
             return ResponseEntity
                     .status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiResponse(false, "서버 오류가 발생했습니다. "));
+
+    @Getter
+    @Setter
+    public static class FavPlaceResponse {
+        private Long favPlaceId;
+        private String addrType;
+        private String addr;
+
+        public FavPlaceResponse(Long favPlaceId, String addrType, String addr) {
+            this.favPlaceId = favPlaceId;
+            this.addrType = addrType;
+            this.addr = addr;
         }
     }
 
