@@ -10,6 +10,8 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 public class FavFriendService {
@@ -80,5 +82,21 @@ public class FavFriendService {
                 .orElseThrow(() -> new RuntimeException("존재하지 않는 친구입니다."));
 
         favoriteFriendRepository.delete(favFriend);
+    }
+
+    @Transactional(readOnly = true)
+    public List<FavFriend> getFavoriteFriends() {
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        String username = null;
+        if (principal instanceof UserDetails) {
+            username = ((UserDetails) principal).getUsername();
+        } else {
+            username = principal.toString();
+        }
+
+        Member member = memberRepository.findByEmail(username)
+                .orElseThrow(() -> new RuntimeException("Member not found"));
+
+        return favoriteFriendRepository.findByMemberId(member.getId());
     }
 }

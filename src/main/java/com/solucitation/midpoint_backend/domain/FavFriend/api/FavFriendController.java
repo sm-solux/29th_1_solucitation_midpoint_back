@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.stream.Collectors;
 
 @RestController
@@ -84,6 +85,36 @@ public class FavFriendController {
         }
     }
 
+    @GetMapping("/list")
+    public ResponseEntity<?> getFavFriendsList() {
+        try {
+            List<FavFriend> favFriends = favFriendService.getFavoriteFriends();
+            return ResponseEntity.ok(favFriends.stream()
+                    .map(favFriend -> new FavFriendResponse(favFriend.getName(), favFriend.getAddress()))
+                    .collect(Collectors.toList()));
+        } catch (RuntimeException e) {
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body(new ApiResponse(false, e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponse(false, "서버 오류가 발생했습니다. " + e.getMessage()));
+        }
+    }
+
+    @Getter
+    @Setter
+    public static class FavFriendResponse {
+        private String name;
+        private String address;
+
+        public FavFriendResponse(String name, String address) {
+            this.name = name;
+            this.address = address;
+        }
+    }
+
     public static class ApiResponse {
         private boolean success;
         private String message;
@@ -121,18 +152,6 @@ public class FavFriendController {
 
         public void setFavFriendId(Long favFriendId) {
             this.favFriendId = favFriendId;
-        }
-    }
-
-    @Getter
-    @Setter
-    public static class FavFriendResponse {
-        private String name;
-        private String address;
-
-        public FavFriendResponse(String name, String address) {
-            this.name = name;
-            this.address = address;
         }
     }
 }
