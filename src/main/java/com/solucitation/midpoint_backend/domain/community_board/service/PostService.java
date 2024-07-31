@@ -35,7 +35,7 @@ public class PostService {
     private final PostHashtagRepository postHashtagsRepository;
 
     @Transactional(readOnly = true)
-    public PostDetailDto getPostById(Long postId) {
+    public PostDetailDto getPostById(Long postId, Member member) {
         Post post = postRepository.findById(postId).orElseThrow(EntityNotFoundException::new);
         String memberEmail = post.getMember().getEmail();
 
@@ -59,8 +59,14 @@ public class PostService {
                 post.getCreateDate(),
                 hashtags,
                 images,
-                likeCnt
+                likeCnt,
+                likesRepository.isMemberLikesPostByEmail(post.getId(), member.getEmail())
         );
+    }
+
+    @Transactional(readOnly = true)
+    public Boolean isPostExist(Long postId){
+        return postRepository.existsById(postId);
     }
 
     @Transactional(readOnly = true)
@@ -73,6 +79,7 @@ public class PostService {
                     if (member != null) {
                         postDto.setLikes(likesRepository.isMemberLikesPostByEmail(post.getId(), member.getEmail()));
                     }
+
                     return postDto;
                 })
                 .collect(Collectors.toList());

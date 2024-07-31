@@ -19,4 +19,5 @@ public class PostDetailDto {
     private List<Long> postHashtags;
     private List<String> images;
     private int likeCnt;
+    private Boolean likes = false;
 }

@@ -68,9 +68,16 @@ public class PostController {
      * @return 성공 시 200 OK와 함께 게시글 상세 정보를 반환하며, 실패 시 404 Not Found 또는 500 Internal Server Error를 반환합니다.
      */
     @GetMapping("/{postId}")
-    public ResponseEntity<?> getPost(@PathVariable Long postId) {
+    public ResponseEntity<?> getPost(@PathVariable Long postId, Authentication authentication) {
         try {
-            PostDetailDto postDetailDto = postService.getPostById(postId);
+            Member member = null;
+
+            if (!(authentication == null || !authentication.isAuthenticated())) {
+                String memberEmail = authentication.getName();
+                member = memberService.getMemberByEmail(memberEmail);
+            }
+
+            PostDetailDto postDetailDto = postService.getPostById(postId, member);
             return ResponseEntity.ok(postDetailDto);
         } catch (EntityNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("해당 게시글이 존재하지 않습니다.");
@@ -98,7 +105,7 @@ public class PostController {
                         .body("해당 서비스를 이용하기 위해서는 로그인이 필요합니다.");
             }
 
-            postService.getPostById(postId); // 게시글 존재 여부 확인
+            postService.isPostExist(postId); // 게시글 존재 여부 확인
             String memberEmail = authentication.getName();
             Member member = memberService.getMemberByEmail(memberEmail);
 
@@ -226,7 +233,7 @@ public class PostController {
                         .body("해당 서비스를 이용하기 위해서는 로그인이 필요합니다.");
             }
 
-            postService.getPostById(postId); // 게시글 존재 여부 확인
+            postService.isPostExist(postId); // 게시글 존재 여부 확인
 
             String memberEmail = authentication.getName();
             Member member = memberService.getMemberByEmail(memberEmail);
@@ -304,7 +311,7 @@ public class PostController {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body("사용자를 찾을 수 없습니다.");
             }
 
-            int nowImageCnt = postService.getPostById(postId).getImages().size();
+            int nowImageCnt = postService.getPostById(postId, member).getImages().size();
             postUpdateDto.validate(nowImageCnt); // 제목, 본문, 해시태그, 삭제할 이미지 검증
 
             if (postImages != null && !postImages.isEmpty())  { // 이미지 변경이 있는 경우
