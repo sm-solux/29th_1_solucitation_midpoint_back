@@ -28,6 +28,6 @@ public class PlaceInfoV2 {
     @Column(name = "place_address", nullable = false)
     private String address;
 
-    @Column(name="place_image_url", nullable = false)
+    @Column(name="place_image_url", nullable = false, length=1024)
     private String imageUrl;
 }
