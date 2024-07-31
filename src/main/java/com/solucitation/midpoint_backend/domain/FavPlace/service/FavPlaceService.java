@@ -103,11 +103,19 @@ public class FavPlaceService {
             throw new RuntimeException("접근 권한이 없습니다.");
         }
 
+        if (isBlank(addr)) {
+            throw new IllegalArgumentException("변경할 주소를 입력해주세요.");
+        }
+
         if (favPlace.getAddr().equals(addr)) {
             throw new IllegalArgumentException("기존 주소와 동일한 주소입니다.");
         }
 
         favPlace.setAddr(addr);
         return favPlaceRepository.save(favPlace);
+    }
+
+    private boolean isBlank(String str) {
+        return str == null || str.trim().isEmpty();
     }
 }
