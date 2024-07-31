@@ -73,10 +73,10 @@ public class FavFriendService {
         FavFriend favFriend = favoriteFriendRepository.findByFavFriendIdAndMemberId(favFriendId, member.getId())
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 즐겨찾는 친구입니다."));
 
-        if (name != null && name.length() > 100) {
+        if (name == null || name.trim().isEmpty() || name.length() > 100) {
             throw new IllegalArgumentException("이름은 최소 1글자 이상 최대 100글자 이하로 입력해야 합니다.");
         }
-        if (address != null && address.length() > 255) {
+        if (address == null || address.trim().isEmpty() || address.length() > 255) {
             throw new IllegalArgumentException("주소는 최소 1글자 이상 최대 255글자 이하로 입력해야 합니다.");
         }
 
@@ -84,7 +84,7 @@ public class FavFriendService {
             favFriend.setAddress(address);
         }
 
-        if (name != null) {
+        if (!name.equals(favFriend.getName())) {
             if (favoriteFriendRepository.findByNameAndMemberId(name, member.getId()).isPresent()) {
                 throw new IllegalArgumentException("이미 존재하는 친구 이름입니다.");
             }
