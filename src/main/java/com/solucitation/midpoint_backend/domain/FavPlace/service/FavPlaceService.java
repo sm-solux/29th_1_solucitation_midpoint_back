@@ -79,7 +79,7 @@ public class FavPlaceService {
         FavPlaceResponse workResponse = new FavPlaceResponse("WORK");
 
         List<FavPlace> favPlaces = favPlaceRepository.findAllByMemberId(member.getId());
-        
+
         for (FavPlace favPlace : favPlaces) {
             if (favPlace.getAddrType() == FavPlace.AddrType.HOME) {
                 homeResponse = new FavPlaceResponse(
@@ -113,10 +113,6 @@ public class FavPlaceService {
 
         if (isBlank(addr)) {
             throw new IllegalArgumentException("변경할 주소를 입력해주세요.");
-        }
-
-        if (favPlace.getAddr().equals(addr)) {
-            throw new IllegalArgumentException("기존 주소와 동일한 주소입니다.");
         }
 
         favPlace.setAddr(addr);
