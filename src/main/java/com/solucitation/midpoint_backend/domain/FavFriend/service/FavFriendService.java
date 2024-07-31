@@ -73,26 +73,24 @@ public class FavFriendService {
         FavFriend favFriend = favoriteFriendRepository.findByFavFriendIdAndMemberId(favFriendId, member.getId())
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 즐겨찾는 친구입니다."));
 
-        if (isBlank(name) || isBlank(address)) {
-            throw new IllegalArgumentException("이름과 주소 모두 입력되어야 합니다.");
+        if (name != null && name.length() > 100) {
+            throw new IllegalArgumentException("이름은 최소 1글자 이상 최대 100글자 이하로 입력해야 합니다.");
+        }
+        if (address != null && address.length() > 255) {
+            throw new IllegalArgumentException("주소는 최소 1글자 이상 최대 255글자 이하로 입력해야 합니다.");
         }
 
         if (!address.equals(favFriend.getAddress())) {
             favFriend.setAddress(address);
-        } else {
-            throw new IllegalArgumentException("새 주소가 기존 주소와 동일합니다.");
         }
 
         if (name != null) {
             if (favoriteFriendRepository.findByNameAndMemberId(name, member.getId()).isPresent()) {
-                throw new RuntimeException("이미 존재하는 친구 이름입니다.");
+                throw new IllegalArgumentException("이미 존재하는 친구 이름입니다.");
             }
             favFriend.setName(name);
         }
 
         return favoriteFriendRepository.save(favFriend);
-    }
-    private boolean isBlank(String str) {
-        return str == null || str.trim().isEmpty();
     }
 }
