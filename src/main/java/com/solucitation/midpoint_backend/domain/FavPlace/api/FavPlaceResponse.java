@@ -1,6 +1,5 @@
 package com.solucitation.midpoint_backend.domain.FavPlace.api;
 
-import com.solucitation.midpoint_backend.domain.FavPlace.entity.FavPlace;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -15,10 +14,5 @@ public class FavPlaceResponse {
         this.favPlaceId = favPlaceId;
         this.addr = addr;
         this.addrType = addrType;
-    }
-
-    public FavPlaceResponse(FavPlace.AddrType addrType, String addr) {
-        this.addrType = addrType.name();
-        this.addr = addr;
     }
 }

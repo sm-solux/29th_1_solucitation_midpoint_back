@@ -77,17 +77,11 @@ public class FavPlaceService {
 
         List<FavPlace> favPlaces = favPlaceRepository.findAllByMemberId(member.getId());
 
-        Map<FavPlace.AddrType, String> addrMap = Map.of(
-                FavPlace.AddrType.HOME, null,
-                FavPlace.AddrType.WORK, null
-        );
-
-        favPlaces.forEach(favPlace -> {
-            addrMap.put(favPlace.getAddrType(), favPlace.getAddr());
-        });
-
-        return addrMap.entrySet().stream()
-                .map(entry -> new FavPlaceResponse(entry.getKey(), entry.getValue()))
+        return favPlaces.stream()
+                .map(favPlace -> new FavPlaceResponse(
+                        favPlace.getFavPlaceId(),
+                        favPlace.getAddr(),
+                        favPlace.getAddrType().name()))
                 .collect(Collectors.toList());
     }
 
