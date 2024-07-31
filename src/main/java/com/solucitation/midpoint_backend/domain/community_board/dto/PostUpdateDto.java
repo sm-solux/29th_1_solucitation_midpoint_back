@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Getter
@@ -18,7 +19,9 @@ public class PostUpdateDto {
 
     private List<Long> postHashtag;
 
-    public void validate() {
+    private List<String> deleteImageUrl = new ArrayList<>();
+
+    public void validate(int imageCnt) {
         if (postHashtag != null)  {
             if (postHashtag.size() != 2 || postHashtag.get(0).equals(postHashtag.get(1))) {
                 throw new IllegalArgumentException("서로 다른 두 개의 해시태그를 선택해야 합니다.");
@@ -39,6 +42,19 @@ public class PostUpdateDto {
             String trimmedContent = content.trim();
             if (trimmedContent.isEmpty()) {
                 throw new IllegalArgumentException("본문은 비워둘 수 없습니다.");
+            }
+        }
+
+        if (deleteImageUrl != null) {
+            if (deleteImageUrl.size() >= imageCnt) { // 이미지를 전부 삭제하는 경우 방지
+                throw new IllegalArgumentException("이미지는 최소 한 장 업로드해야 합니다.");
+            }
+
+            for (String s : deleteImageUrl) { // 삭제할 이미지 정보 1차 검증
+                String trimmedDeleteImageUrl = s.trim();
+                if (trimmedDeleteImageUrl.isEmpty()) {
+                    throw new IllegalArgumentException("이미지가 유효하지 않습니다.");
+                }
             }
         }
     }

@@ -1,9 +1,6 @@
 package com.solucitation.midpoint_backend.domain.community_board.service;
 
-import com.solucitation.midpoint_backend.domain.community_board.dto.PostDetailDto;
-import com.solucitation.midpoint_backend.domain.community_board.dto.PostRequestDto;
-import com.solucitation.midpoint_backend.domain.community_board.dto.PostResponseDto;
-import com.solucitation.midpoint_backend.domain.community_board.dto.PostUpdateDto;
+import com.solucitation.midpoint_backend.domain.community_board.dto.*;
 import com.solucitation.midpoint_backend.domain.community_board.entity.*;
 import com.solucitation.midpoint_backend.domain.community_board.repository.*;
 import com.solucitation.midpoint_backend.domain.file.service.S3Service;
@@ -253,6 +250,50 @@ public class PostService {
         return resultSet;
     }
 
+//    @Transactional
+//    public void updatePost(Long postId, PostUpdateDto postUpdateDto, Member member, List<MultipartFile> postImages)
+//            throws AccessDeniedException {
+//        Post post = postRepository.findById(postId)
+//                .orElseThrow(() -> new EntityNotFoundException("해당 게시글이 존재하지 않습니다."));
+//
+//        if (!post.getMember().getId().equals(member.getId())) {
+//            throw new AccessDeniedException("해당 게시글을 수정할 권한이 없습니다. 본인이 작성한 글만 수정할 수 있습니다.");
+//        }
+//
+//        List<PostHashtag> newPostHashtag = null;
+//        if (postUpdateDto.getPostHashtag() != null)  // 해시태그 변경 시 수정
+//            newPostHashtag = addHashtags(post, postUpdateDto.getPostHashtag());
+//
+//        List<Image> existImages = new ArrayList<>(post.getImages());
+//        List<Image> newImages = null;
+//
+//        try {
+//            if (postImages != null && !postImages.isEmpty()) // 이미지 변경 시 수정
+//                newImages = addImages(post, member, postImages);
+//
+//            // 기존 이미지 삭제
+//            if (newImages != null && !newImages.isEmpty()) {
+//                deleteImages(existImages);
+//            }
+//
+//            post = Post.builder()
+//                    .id(post.getId())
+//                    .member(post.getMember())
+//                    .createDate(post.getCreateDate())
+//                    .title(postUpdateDto.getTitle() != null ? postUpdateDto.getTitle() : post.getTitle())
+//                    .content(postUpdateDto.getContent() != null ? postUpdateDto.getContent() : post.getContent())
+//                    .postHashtags(newPostHashtag != null && !newPostHashtag.isEmpty() ? newPostHashtag : post.getPostHashtags())
+//                    .images(newImages != null && !newImages.isEmpty() ? newImages : existImages)
+//                    .build();
+//
+//            postRepository.save(post);
+//        } catch (Exception e) {
+//            // 트랜잭션 롤백
+//            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+//            throw e; // 오류를 다시 던집니다.
+//        }
+//    }
+
     @Transactional
     public void updatePost(Long postId, PostUpdateDto postUpdateDto, Member member, List<MultipartFile> postImages)
             throws AccessDeniedException {
@@ -271,22 +312,31 @@ public class PostService {
         List<Image> newImages = null;
 
         try {
-            if (postImages != null && !postImages.isEmpty()) // 이미지 변경 시 수정
-                newImages = addForUpdateImages(post, member, postImages);
+            if (postImages != null && !postImages.isEmpty()) {
+                newImages = addForUpdateImages(post, member, postImages); // 새 이미지 추가
+                if (newImages != null && !newImages.isEmpty()) {
+                    existImages.addAll(newImages);
+                }
+            }
 
             // 기존 이미지 삭제
-            if (newImages != null && !newImages.isEmpty()) {
-                deleteImages(existImages);
+            if (postUpdateDto.getDeleteImageUrl() != null && !postUpdateDto.getDeleteImageUrl().isEmpty()) {
+                for (String imageUrl : postUpdateDto.getDeleteImageUrl()) {
+                    Long cnt = imageRepository.countByImageUrlAndPostId(imageUrl, postId);
+                    if (cnt == 0) {
+                        throw new  RuntimeException("해당 게시글에 존재하지 않는 이미지는 삭제할 수 없습니다.");
+                    }
+                }
+                deleteImagesWithUrl(postUpdateDto.getDeleteImageUrl(), postId);
             }
 
             post = Post.builder()
                     .id(post.getId())
                     .member(post.getMember())
-                    .createDate(post.getCreateDate())
                     .title(postUpdateDto.getTitle() != null ? postUpdateDto.getTitle() : post.getTitle())
                     .content(postUpdateDto.getContent() != null ? postUpdateDto.getContent() : post.getContent())
                     .postHashtags(newPostHashtag != null && !newPostHashtag.isEmpty() ? newPostHashtag : post.getPostHashtags())
-                    .images(newImages != null && !newImages.isEmpty() ? newImages : existImages)
+                    .images(existImages)
                     .build();
 
             postRepository.save(post);
@@ -303,7 +353,7 @@ public class PostService {
             try {
                 for (MultipartFile postImage : postImages) {
                     if (postImage.isEmpty())  // 사용자가 이미지 변경을 요청하지 않음
-                        return null; 
+                        return null;
                     String postImageUrl = s3Service.upload("post-images", postImage.getOriginalFilename(), postImage);
 
                     Image image = Image.builder()
@@ -327,4 +377,11 @@ public class PostService {
         imageRepository.deleteAll(images);
     }
 
+    @Transactional
+    protected void deleteImagesWithUrl(List<String> images, Long postId) {
+        for (String imageUrl : images) {
+            s3Service.delete(imageUrl);
+            imageRepository.deleteImageByImageUrlAndPostId(imageUrl, postId);
+        }
+    }
 }
