@@ -111,15 +111,11 @@ public class FavPlaceService {
             throw new RuntimeException("접근 권한이 없습니다.");
         }
 
-        if (isBlank(addr)) {
-            throw new IllegalArgumentException("변경할 주소를 입력해주세요.");
+        if (addr == null || addr.trim().isEmpty()|| addr.length() >255) {
+            throw new IllegalArgumentException("주소는 최소 1글자 이상 최대 255글자 이하로 입력해야 합니다.");
         }
 
         favPlace.setAddr(addr);
         return favPlaceRepository.save(favPlace);
-    }
-
-    private boolean isBlank(String str) {
-        return str == null || str.trim().isEmpty();
     }
 }
