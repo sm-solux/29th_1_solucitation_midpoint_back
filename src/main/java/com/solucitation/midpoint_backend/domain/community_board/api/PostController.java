@@ -316,7 +316,12 @@ public class PostController {
 
             if (postImages != null && !postImages.isEmpty())  { // 이미지 변경이 있는 경우
                 int nextImageCnt = nowImageCnt - postUpdateDto.getDeleteImageUrl().size(); // 삭제 작업만 진행했을 때의 이미지 개수
-                if (nextImageCnt + postImages.size() > 3) // 최종 이미지 개수
+
+                int validImageCnt = 0;
+                for (MultipartFile postImage : postImages) { // 추가할 이미지 개수
+                    if (postImage != null && !postImage.isEmpty()) validImageCnt++;
+                }
+                if (nextImageCnt + validImageCnt > 3) // 최종 이미지 개수
                     return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("이미지는 최대 3장까지 업로드 가능합니다.");
             }
 
