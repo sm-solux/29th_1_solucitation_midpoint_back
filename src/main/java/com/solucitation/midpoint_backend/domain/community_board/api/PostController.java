@@ -270,7 +270,7 @@ public class PostController {
 
             postUpdateDto.validate(); // 제목, 본문, 해시태그 검증
             
-            if (!postImages.isEmpty() && postImages.size() > 3)  { // 이미지 변경이 있는 경우
+            if (postImages != null && !postImages.isEmpty() && postImages.size() > 3)  { // 이미지 변경이 있는 경우
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("이미지는 최대 3장까지 업로드 가능합니다.");
             }
 
