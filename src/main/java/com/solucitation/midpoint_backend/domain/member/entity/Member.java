@@ -1,9 +1,11 @@
 package com.solucitation.midpoint_backend.domain.member.entity;
 
+import com.solucitation.midpoint_backend.domain.FavFriend.entity.FavFriend;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
 import lombok.*;
+
+import java.util.Set;
 
 @Entity
 @Table(name = "member")
@@ -34,6 +36,9 @@ public class Member {
     @NotNull
     @Column(name = "member_nickname", nullable = false, unique = true, length = 100)
     private String nickname;
+
+    @OneToMany(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<FavFriend> favFriends;
 
     public Member(String password, String name, String email, String nickname, String loginId) {
         this.email= email;
