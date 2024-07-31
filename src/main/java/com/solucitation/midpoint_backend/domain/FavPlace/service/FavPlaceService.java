@@ -75,14 +75,28 @@ public class FavPlaceService {
         Member member = memberRepository.findByEmail(email)
                 .orElseThrow(() -> new IllegalArgumentException("해당 이메일의 회원이 존재하지 않습니다."));
 
-        List<FavPlace> favPlaces = favPlaceRepository.findAllByMemberId(member.getId());
+        FavPlaceResponse homeResponse = new FavPlaceResponse("HOME");
+        FavPlaceResponse workResponse = new FavPlaceResponse("WORK");
 
-        return favPlaces.stream()
-                .map(favPlace -> new FavPlaceResponse(
+        List<FavPlace> favPlaces = favPlaceRepository.findAllByMemberId(member.getId());
+        
+        for (FavPlace favPlace : favPlaces) {
+            if (favPlace.getAddrType() == FavPlace.AddrType.HOME) {
+                homeResponse = new FavPlaceResponse(
                         favPlace.getFavPlaceId(),
                         favPlace.getAddr(),
-                        favPlace.getAddrType().name()))
-                .collect(Collectors.toList());
+                        favPlace.getAddrType().name()
+                );
+            } else if (favPlace.getAddrType() == FavPlace.AddrType.WORK) {
+                workResponse = new FavPlaceResponse(
+                        favPlace.getFavPlaceId(),
+                        favPlace.getAddr(),
+                        favPlace.getAddrType().name()
+                );
+            }
+        }
+
+        return List.of(homeResponse, workResponse);
     }
 
     @Transactional

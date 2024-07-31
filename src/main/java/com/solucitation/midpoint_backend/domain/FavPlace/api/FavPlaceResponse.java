@@ -15,4 +15,10 @@ public class FavPlaceResponse {
         this.addr = addr;
         this.addrType = addrType;
     }
+
+    public FavPlaceResponse(String addrType) {
+        this.favPlaceId = null;
+        this.addr = null;
+        this.addrType = addrType;
+    }
 }
