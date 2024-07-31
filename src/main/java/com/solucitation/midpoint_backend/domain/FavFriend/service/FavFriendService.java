@@ -73,7 +73,7 @@ public class FavFriendService {
         FavFriend favFriend = favoriteFriendRepository.findByFavFriendIdAndMemberId(favFriendId, member.getId())
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 즐겨찾는 친구입니다."));
 
-        if (name == null || address == null) {
+        if (isBlank(name) || isBlank(address)) {
             throw new IllegalArgumentException("이름과 주소 모두 입력되어야 합니다.");
         }
 
@@ -91,5 +91,8 @@ public class FavFriendService {
         }
 
         return favoriteFriendRepository.save(favFriend);
+    }
+    private boolean isBlank(String str) {
+        return str == null || str.trim().isEmpty();
     }
 }
