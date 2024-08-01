@@ -32,7 +32,7 @@ public class FavPlaceController {
                     .collect(Collectors.joining(", "));
             return ResponseEntity
                     .status(HttpStatus.BAD_REQUEST)
-                    .body(new ApiResponse(false, "입력 값이 잘못되었습니다: " + errorMessage));
+                    .body(new ApiResponse(false,errorMessage));
         }
 
         try {
@@ -163,7 +163,7 @@ public class FavPlaceController {
                     .status(HttpStatus.BAD_REQUEST)
                     .body(new ApiResponse(false, "입력 값이 잘못되었습니다: " + errorMessage));
         }
-        
+
         if (favPlaceUpdateRequest.getFavPlaceId() == null) {
             return ResponseEntity
                     .status(HttpStatus.BAD_REQUEST)
