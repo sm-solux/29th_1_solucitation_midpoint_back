@@ -118,7 +118,7 @@ public class MemberController2 {
      * @return 회원 탈퇴 성공 메시지 또는 오류 메시지
      */
     @DeleteMapping("/delete")
-    public ResponseEntity<?> deleteMember(@RequestHeader("X-Delete-Token") String deleteToken, Authentication authentication) {
+    public ResponseEntity<?> deleteMember(@RequestHeader("X-Delete-Token") String deleteToken, @RequestHeader("X-Refresh-Token") String refreshTokenHeader, Authentication authentication) {
         ResponseEntity<?> validationResponse = validateTokenAndEmail(deleteToken, "delete", authentication);
         if (validationResponse != null) { // 에러 응답을 가진 경우
             return validationResponse; // 에러 응답을 리턴
@@ -127,6 +127,8 @@ public class MemberController2 {
         String profileImgUrl = memberService.deleteMember(tokenEmail); // 프로필 이미지와 멤버 엔티티 삭제
         log.info("profileImgUrl는 by test? " + profileImgUrl);
         s3Service.delete(profileImgUrl); // 프로필 이미지 S3에서 삭제
+        String refreshToken = jwtTokenProvider.resolveToken(refreshTokenHeader); // Authorization 헤더에서 Bearer 토큰을 제외한 Refresh Token만 추출
+        memberService.logoutMember(refreshToken); // 로그아웃 처리
         return ResponseEntity.ok(Map.of("message", "회원 탈퇴가 성공적으로 완료되었습니다."));
     }
 
@@ -166,10 +168,7 @@ public class MemberController2 {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "로그아웃할 권한이 없습니다."));
             }
 
-            jwtTokenProvider.invalidateRefreshToken(refreshToken); // Redis에서 토큰을 삭제(Refresh Token을 무효화하여 로그아웃 처리)
-            SecurityContextHolder.clearContext(); // SecurityContextHolder에서 인증 정보 삭제
-
-            jwtTokenProvider.addToBlacklist(refreshToken); // refreshToken을 블랙리스트에 추가
+            memberService.logoutMember(refreshToken);
             return ResponseEntity.ok(Map.of("message", "로그아웃에 성공하였습니다."));
         } else {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "로그인된 사용자가 없습니다."));

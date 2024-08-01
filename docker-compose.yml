@@ -20,6 +20,8 @@ services:
   app:
     image: ${DOCKER_IMAGE}
     container_name: spring-boot-app
+    environment:
+      - TZ=Asia/Seoul
     ports:
       - "8080:8080"
     depends_on:

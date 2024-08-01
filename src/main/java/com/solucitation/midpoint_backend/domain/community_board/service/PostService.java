@@ -1,12 +1,10 @@
 package com.solucitation.midpoint_backend.domain.community_board.service;
 
-import com.solucitation.midpoint_backend.domain.community_board.dto.PostDetailDto;
-import com.solucitation.midpoint_backend.domain.community_board.dto.PostRequestDto;
-import com.solucitation.midpoint_backend.domain.community_board.dto.PostResponseDto;
-import com.solucitation.midpoint_backend.domain.community_board.dto.PostUpdateDto;
+import com.solucitation.midpoint_backend.domain.community_board.dto.*;
 import com.solucitation.midpoint_backend.domain.community_board.entity.*;
 import com.solucitation.midpoint_backend.domain.community_board.repository.*;
 import com.solucitation.midpoint_backend.domain.file.service.S3Service;
+import com.solucitation.midpoint_backend.domain.member.dto.MemberProfileResponseDto;
 import com.solucitation.midpoint_backend.domain.member.entity.Member;
 import com.solucitation.midpoint_backend.domain.member.service.MemberService;
 import jakarta.persistence.EntityNotFoundException;
@@ -37,12 +35,16 @@ public class PostService {
     private final PostHashtagRepository postHashtagsRepository;
 
     @Transactional(readOnly = true)
-    public PostDetailDto getPostById(Long postId) {
+    public PostDetailDto getPostById(Long postId, Member member) {
         Post post = postRepository.findById(postId).orElseThrow(EntityNotFoundException::new);
+        String memberEmail = post.getMember().getEmail();
+
+        MemberProfileResponseDto memberProfileResponseDto = memberService.getMemberProfile(memberEmail);
 
         List<String> images = post.getImages().stream()
-                .map(Image::getImageUrl)
-                .toList();
+                .sorted(Comparator.comparingInt(Image::getOrder)) // order 값에 따라 정렬
+                .map(Image::getImageUrl) // 이미지 URL 추출
+                .toList(); // 리스트로 변환
 
         List<Long> hashtags = post.getPostHashtags().stream()
                 .map(postHashtag -> postHashtag.getHashtag().getId())
@@ -51,14 +53,21 @@ public class PostService {
         int likeCnt = likesRepository.countByPostIdAndIsLiked(postId);
 
         return new PostDetailDto(
-                post.getMember().getNickname(),
+                memberProfileResponseDto.getNickname(),
+                memberProfileResponseDto.getProfileImageUrl(),
                 post.getTitle(),
                 post.getContent(),
                 post.getCreateDate(),
                 hashtags,
                 images,
-                likeCnt
+                likeCnt,
+                likesRepository.isMemberLikesPostByEmail(post.getId(), member.getEmail())
         );
+    }
+
+    @Transactional(readOnly = true)
+    public Boolean isPostExist(Long postId){
+        return postRepository.existsById(postId);
     }
 
     @Transactional(readOnly = true)
@@ -71,6 +80,7 @@ public class PostService {
                     if (member != null) {
                         postDto.setLikes(likesRepository.isMemberLikesPostByEmail(post.getId(), member.getEmail()));
                     }
+
                     return postDto;
                 })
                 .collect(Collectors.toList());
@@ -130,6 +140,7 @@ public class PostService {
         List<Image> images = new ArrayList<>();
         if (!postImages.isEmpty()) {
             try {
+                int cnt = 1;
                 for (MultipartFile postImage : postImages) {
                     if (postImage.isEmpty()) {
                         log.error("게시글 이미지 업로드 실패");
@@ -138,9 +149,10 @@ public class PostService {
                     String postImageUrl = s3Service.upload("post-images", postImage.getOriginalFilename(), postImage);
 
                     Image image = Image.builder()
-                            .imageUrl(postImageUrl).member(member).post(post).build();
+                            .imageUrl(postImageUrl).member(member).post(post).order(cnt).build();
                     imageRepository.save(image);
                     images.add(image);
+                    cnt++;
                 }
             } catch (IOException e){
                 log.error("게시글 이미지 업로드 실패: {}", e.getMessage());
@@ -181,6 +193,8 @@ public class PostService {
     public void deletePost(Member member, Long postId) throws AccessDeniedException {
         Optional<Post> post = postRepository.findById(postId); // 해당 멤버가 게시글 작성자인지 확인힙니다.
         if (post.isPresent() && post.get().getMember().getId().equals(member.getId())) {
+            likesRepository.deleteByPostId(postId);
+            deleteImages(post.get().getImages()); // s3에 저장된 이미지 삭제
             postRepository.deleteById(postId);
         }
         else
@@ -261,25 +275,41 @@ public class PostService {
             newPostHashtag = addHashtags(post, postUpdateDto.getPostHashtag());
 
         List<Image> existImages = new ArrayList<>(post.getImages());
+        updateImageOrders(existImages);
         List<Image> newImages = null;
 
         try {
-            if (postImages != null && !postImages.isEmpty()) // 이미지 변경 시 수정
-                newImages = addForUpdateImages(post, member, postImages);
-
+            List<Integer> deleteIdx = new ArrayList<>();
             // 기존 이미지 삭제
-            if (newImages != null && !newImages.isEmpty()) {
-                deleteImages(existImages);
+            if (postUpdateDto.getDeleteImageUrl() != null && !postUpdateDto.getDeleteImageUrl().isEmpty()) {
+                for (String imageUrl : postUpdateDto.getDeleteImageUrl()) {
+                    Long cnt = imageRepository.countByImageUrlAndPostId(imageUrl, postId);
+                    if (cnt == 0) {
+                        throw new RuntimeException("해당 게시글에 존재하지 않는 이미지는 삭제할 수 없습니다.");
+                    }
+                }
+                deleteIdx = deleteImagesWithUrl(postUpdateDto.getDeleteImageUrl(), postId);
+            }
+
+            if (postImages != null && !postImages.isEmpty()) {
+                newImages = addForUpdateImages(post, member, postImages, deleteIdx);
+                if (newImages != null && !newImages.isEmpty()) {
+                    existImages.addAll(newImages);
+                }
+            }
+
+            // Debug: 정렬된 이미지 리스트 출력
+            for (Image image : existImages) {
+                System.out.println(image.getOrder() + " : " + image.getImageUrl());
             }
 
             post = Post.builder()
                     .id(post.getId())
                     .member(post.getMember())
-                    .createDate(post.getCreateDate())
                     .title(postUpdateDto.getTitle() != null ? postUpdateDto.getTitle() : post.getTitle())
                     .content(postUpdateDto.getContent() != null ? postUpdateDto.getContent() : post.getContent())
                     .postHashtags(newPostHashtag != null && !newPostHashtag.isEmpty() ? newPostHashtag : post.getPostHashtags())
-                    .images(newImages != null && !newImages.isEmpty() ? newImages : existImages)
+                    .images(existImages)
                     .build();
 
             postRepository.save(post);
@@ -290,26 +320,65 @@ public class PostService {
         }
     }
 
-    private List<Image> addForUpdateImages(Post post, Member member, List<MultipartFile> postImages) {
+    @Transactional
+    protected List<Image> addForUpdateImages(Post post, Member member, List<MultipartFile> postImages, List<Integer> deleteId) {
         List<Image> images = new ArrayList<>();
+
+        int idx = 0;
+
+        // Debug: 초기 idx 값 출력
+        System.out.println("Initial idx = " + idx);
+
         if (!postImages.isEmpty()) {
             try {
                 for (MultipartFile postImage : postImages) {
                     if (postImage.isEmpty())  // 사용자가 이미지 변경을 요청하지 않음
-                        return null; 
+                        continue;
+
                     String postImageUrl = s3Service.upload("post-images", postImage.getOriginalFilename(), postImage);
 
+                    int order;
+                    if (!deleteId.isEmpty() && idx < deleteId.size()) {
+                        order = deleteId.get(idx);
+                    } else {
+                        order = post.getImages().size() + idx + 1; // 기존 이미지 개수 + 현재 추가된 이미지 순서
+                    }
+
+                    // Debug: 현재 이미지의 order 값 출력
+                    System.out.println("Order for new image = " + order);
+
                     Image image = Image.builder()
-                            .imageUrl(postImageUrl).member(member).post(post).build();
+                            .imageUrl(postImageUrl).member(member).post(post)
+                            .order(order)
+                            .build();
+
                     imageRepository.save(image);
                     images.add(image);
+                    idx++;
                 }
-            } catch (IOException e){
+            } catch (IOException e) {
                 log.error("게시글 이미지 업로드 실패: {}", e.getMessage());
                 throw new RuntimeException("게시글 이미지 업로드에 실패하였습니다.");
             }
         }
         return images;
+    }
+
+    // 이미지의 order 값을 연속적으로 설정하는 메서드
+    @Transactional
+    protected void updateImageOrders(List<Image> images) {
+        // 이미지 리스트를 order 값에 따라 오름차순으로 정렬
+        images.sort(Comparator.comparingInt(image -> image.getOrder() != null ? image.getOrder() : Integer.MAX_VALUE));
+
+        int order = 1;
+        for (Image image : images) {
+            System.out.println("image.getImageUrl() = " + image.getImageUrl());
+            System.out.println("order = " + order);
+            image.setOrder(order++);
+        }
+
+        // 이미지의 order 값을 데이터베이스에 반영
+        imageRepository.saveAll(images);
     }
 
     @Transactional
@@ -320,4 +389,18 @@ public class PostService {
         imageRepository.deleteAll(images);
     }
 
+    @Transactional
+    protected List<Integer> deleteImagesWithUrl(List<String> images, Long postId) {
+        List<Integer> deleteImageIdx = new ArrayList<>();
+        for (String imageUrl : images) {
+            Integer idx = imageRepository.findOrderByImageUrlAndPostId(imageUrl, postId);
+            System.out.println("remove idx = " + idx);
+            if (idx != null) {
+                s3Service.delete(imageUrl);
+                imageRepository.deleteImageByImageUrlAndPostId(imageUrl, postId);
+                deleteImageIdx.add(idx);
+            }
+        }
+        return deleteImageIdx;
+    }
 }

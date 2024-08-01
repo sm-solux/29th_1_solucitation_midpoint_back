@@ -2,10 +2,7 @@ package com.solucitation.midpoint_backend.domain.community_board.api;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.solucitation.midpoint_backend.domain.community_board.dto.PostDetailDto;
-import com.solucitation.midpoint_backend.domain.community_board.dto.PostRequestDto;
-import com.solucitation.midpoint_backend.domain.community_board.dto.PostResponseDto;
-import com.solucitation.midpoint_backend.domain.community_board.dto.PostUpdateDto;
+import com.solucitation.midpoint_backend.domain.community_board.dto.*;
 import com.solucitation.midpoint_backend.domain.community_board.service.PostService;
 
 import com.solucitation.midpoint_backend.domain.member.dto.ValidationErrorResponse;
@@ -71,9 +68,16 @@ public class PostController {
      * @return 성공 시 200 OK와 함께 게시글 상세 정보를 반환하며, 실패 시 404 Not Found 또는 500 Internal Server Error를 반환합니다.
      */
     @GetMapping("/{postId}")
-    public ResponseEntity<?> getPost(@PathVariable Long postId) {
+    public ResponseEntity<?> getPost(@PathVariable Long postId, Authentication authentication) {
         try {
-            PostDetailDto postDetailDto = postService.getPostById(postId);
+            Member member = null;
+
+            if (!(authentication == null || !authentication.isAuthenticated())) {
+                String memberEmail = authentication.getName();
+                member = memberService.getMemberByEmail(memberEmail);
+            }
+
+            PostDetailDto postDetailDto = postService.getPostById(postId, member);
             return ResponseEntity.ok(postDetailDto);
         } catch (EntityNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("해당 게시글이 존재하지 않습니다.");
@@ -101,7 +105,7 @@ public class PostController {
                         .body("해당 서비스를 이용하기 위해서는 로그인이 필요합니다.");
             }
 
-            postService.getPostById(postId); // 게시글 존재 여부 확인
+            postService.isPostExist(postId); // 게시글 존재 여부 확인
             String memberEmail = authentication.getName();
             Member member = memberService.getMemberByEmail(memberEmail);
 
@@ -229,7 +233,7 @@ public class PostController {
                         .body("해당 서비스를 이용하기 위해서는 로그인이 필요합니다.");
             }
 
-            postService.getPostById(postId); // 게시글 존재 여부 확인
+            postService.isPostExist(postId); // 게시글 존재 여부 확인
 
             String memberEmail = authentication.getName();
             Member member = memberService.getMemberByEmail(memberEmail);
@@ -248,6 +252,45 @@ public class PostController {
                     .body("게시글 삭제 중 오류가 발생하였습니다."+ e.getMessage());
         }
     }
+
+//    @PatchMapping(value = "/{postId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+//    public ResponseEntity<?> updatePost(@PathVariable Long postId,
+//                                        Authentication authentication,
+//                                        @RequestPart("postDto") String postUpdateDtoJson,
+//                                        @RequestPart(value = "postImages", required = false) List<MultipartFile> postImages) throws JsonProcessingException {
+//        try{
+//            PostUpdateDto postUpdateDto =  objectMapper.readValue(postUpdateDtoJson, PostUpdateDto.class);
+//
+//            if (authentication == null || !authentication.isAuthenticated()) {
+//                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+//                        .body("해당 서비스를 이용하기 위해서는 로그인이 필요합니다.");
+//            }
+//
+//            String memberEmail = authentication.getName();
+//            Member member = memberService.getMemberByEmail(memberEmail);
+//            if (member == null) {
+//                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("사용자를 찾을 수 없습니다.");
+//            }
+//
+//            postUpdateDto.validate(); // 제목, 본문, 해시태그 검증
+//
+//            if (postImages != null && !postImages.isEmpty() && postImages.size() > 3)  { // 이미지 변경이 있는 경우
+//                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("이미지는 최대 3장까지 업로드 가능합니다.");
+//            }
+//
+//            postService.updatePost(postId, postUpdateDto, member, postImages);
+//
+//            return ResponseEntity.status(HttpStatus.OK).body("게시글을 성공적으로 수정했습니다.");
+//        }  catch (EntityNotFoundException e) {
+//            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("해당 게시글이 존재하지 않습니다.");
+//        } catch (AccessDeniedException e) {
+//            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
+//        } catch (RuntimeException e) {
+//            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+//        } catch (Exception e) {
+//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("게시글 수정 중 오류가 발생하였습니다." + e.getMessage());
+//        }
+//    }
 
     @PatchMapping(value = "/{postId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> updatePost(@PathVariable Long postId,
@@ -268,12 +311,20 @@ public class PostController {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body("사용자를 찾을 수 없습니다.");
             }
 
-            postUpdateDto.validate(); // 제목, 본문, 해시태그 검증
-            
-            if (!postImages.isEmpty() && postImages.size() > 3)  { // 이미지 변경이 있는 경우
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("이미지는 최대 3장까지 업로드 가능합니다.");
-            }
+            int nowImageCnt = postService.getPostById(postId, member).getImages().size();
+            int validImageCnt = 0;
 
+            if (postImages != null && !postImages.isEmpty())  { // 이미지 변경이 있는 경우
+                int nextImageCnt = nowImageCnt - postUpdateDto.getDeleteImageUrl().size(); // 삭제 작업만 진행했을 때의 이미지 개수
+
+
+                for (MultipartFile postImage : postImages) { // 추가할 이미지 개수
+                    if (postImage != null && !postImage.isEmpty()) validImageCnt++;
+                }
+                if (nextImageCnt + validImageCnt > 3) // 최종 이미지 개수
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("이미지는 최대 3장까지 업로드 가능합니다.");
+            }
+            postUpdateDto.validate(nowImageCnt, validImageCnt); // 제목, 본문, 해시태그, 삭제할 이미지 검증
             postService.updatePost(postId, postUpdateDto, member, postImages);
 
             return ResponseEntity.status(HttpStatus.OK).body("게시글을 성공적으로 수정했습니다.");

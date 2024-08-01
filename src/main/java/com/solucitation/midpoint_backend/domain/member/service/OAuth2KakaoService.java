@@ -11,6 +11,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 import org.springframework.web.util.UriComponentsBuilder;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.core.ParameterizedTypeReference;
@@ -44,18 +45,31 @@ public class OAuth2KakaoService { // 인가 코드 -> 카카오 토큰을 요청
                 .queryParam("redirect_uri", redirectUri)
                 .queryParam("code", code)
                 .toUriString();
+        log.info("code는?!!" + code);
+        log.info("client_id는?!" + clientId);
+        log.info("client_secret" + clientSecret);
+        log.info("redirect_uri" + redirectUri);
+        try {
+            Map<String, Object> response = webClient.post()
+                    .uri(tokenUri)
+                    .header("Content-Type", "application/x-www-form-urlencoded")
+                    .retrieve()
+                    .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {
+                    })
+                    .block();
 
-        Map<String, Object> response = webClient.post()
-                .uri(tokenUri)
-                .retrieve()
-                .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
-                .block();
+            if (response != null && response.get("access_token") instanceof String) {
+                return (String) response.get("access_token");
+            }
 
-        if (response != null && response.get("access_token") instanceof String) {
-            return (String) response.get("access_token");
+            throw new IllegalStateException("Failed to retrieve access token from Kakao");
+        } catch (WebClientResponseException e) {
+            log.error("Error response from Kakao API: {}", e.getResponseBodyAsString());
+            throw e;
+        } catch (Exception e) {
+            log.error("Unexpected error: ", e);
+            throw new IllegalStateException("Unexpected error while retrieving access token from Kakao", e);
         }
-
-        throw new IllegalStateException("Failed to retrieve access token from Kakao");
     }
 
     public Member getKakaoUser(String accessToken) {
@@ -63,7 +77,8 @@ public class OAuth2KakaoService { // 인가 코드 -> 카카오 토큰을 요청
                 .uri("https://kapi.kakao.com/v2/user/me")
                 .header("Authorization", "Bearer " + accessToken)
                 .retrieve()
-                .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
+                .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {
+                })
                 .block();
 
         if (response != null) {

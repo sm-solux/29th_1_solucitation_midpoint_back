@@ -128,7 +128,10 @@ public class MemberController {
      * @return 비밀번호 재설정 성공 메시지 또는 오류 메시지
      */
     @PostMapping("/reset-pw")
-    public ResponseEntity<?> resetPassword(@RequestHeader("X-Reset-Password-Token") String resetToken, @RequestBody @Valid ResetPwRequestDto resetPwRequestDto) {
+    public ResponseEntity<?> resetPassword(@RequestHeader("X-Reset-Password-Token") String resetToken,
+                                           @RequestHeader(value = "X-Refresh-Token", required = false) String refreshTokenHeader,
+                                           @RequestBody @Valid ResetPwRequestDto resetPwRequestDto,
+                                           Authentication authentication) {
         String token = jwtTokenProvider.resolveToken(resetToken);
         if (!jwtTokenProvider.validateTokenByPwConfirm(token, "reset-password")) {
             return ResponseEntity.status(401).body(Map.of("error", "unauthorized", "message", "비밀번호를 재설정할 권한이 없습니다"));
@@ -138,6 +141,13 @@ public class MemberController {
         }
         String tokenEmail = jwtTokenProvider.extractEmailFromToken(jwtTokenProvider.resolveToken(resetToken));
         memberService.resetPassword(tokenEmail, resetPwRequestDto.getNewPassword());
+
+        // 로그인 상태인지 확인하고, 로그인 상태라면 로그아웃 처리
+        if (authentication != null && refreshTokenHeader != null) {
+            String refreshToken = jwtTokenProvider.resolveToken(refreshTokenHeader);
+            memberService.logoutMember(refreshToken);
+        }
+
         return ResponseEntity.ok(Map.of("message", "비밀번호 재설정이 성공적으로 완료되었습니다."));
     }
 }
