@@ -27,13 +27,12 @@ public class FavFriendService {
                 });
 
         FavFriend favFriend = FavFriend.builder()
-                .member(member)
                 .address(address)
                 .name(name)
                 .latitude(latitude)
                 .longitude(longitude)
                 .build();
-
+        member.addFavFriend(favFriend);  // 양방향 연관 관계 설정
         return favoriteFriendRepository.save(favFriend);
     }
 
@@ -54,6 +53,7 @@ public class FavFriendService {
         FavFriend favFriend = favoriteFriendRepository.findByFavFriendIdAndMemberId(favFriendId, member.getId())
                 .orElseThrow(() -> new RuntimeException("존재하지 않는 친구입니다."));
 
+        member.removeFavFriend(favFriend);  // 양방향 연관 관계 해제
         favoriteFriendRepository.delete(favFriend);
     }
 
