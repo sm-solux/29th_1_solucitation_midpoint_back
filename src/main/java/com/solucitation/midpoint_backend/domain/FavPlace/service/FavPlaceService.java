@@ -28,13 +28,13 @@ public class FavPlaceService {
                 });
 
         FavPlace favPlace = FavPlace.builder()
-                .member(member)
                 .addr(addr)
                 .latitude(latitude)
                 .longitude(longitude)
                 .addrType(addrType)
                 .build();
 
+        member.addFavPlace(favPlace);  // 양방향 연관 관계 설정
         return favPlaceRepository.save(favPlace);
     }
 
@@ -49,7 +49,7 @@ public class FavPlaceService {
         if (!favPlace.getMember().equals(member)) {
             throw new RuntimeException("접근 권한이 없습니다.");
         }
-
+        member.removeFavPlace(favPlace);  // 양방향 연관 관계 해제
         favPlaceRepository.delete(favPlace);
     }
 
