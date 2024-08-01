@@ -38,6 +38,9 @@ public class Image {
     @JoinColumn(name = "post_id", nullable = true)
     private Post post;
 
+    @Column(name="post_order")
+    private Integer order;
+
     @ManyToOne(fetch = LAZY)
     @JoinColumn(name="member_id", nullable = false)
     private Member member;

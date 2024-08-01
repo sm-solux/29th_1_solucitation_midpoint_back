@@ -21,7 +21,7 @@ public class PostUpdateDto {
 
     private List<String> deleteImageUrl = new ArrayList<>();
 
-    public void validate(int imageCnt) {
+    public void validate(int exist, int add) {
         if (postHashtag != null)  {
             if (postHashtag.size() != 2 || postHashtag.get(0).equals(postHashtag.get(1))) {
                 throw new IllegalArgumentException("서로 다른 두 개의 해시태그를 선택해야 합니다.");
@@ -46,7 +46,7 @@ public class PostUpdateDto {
         }
 
         if (deleteImageUrl != null) {
-            if (deleteImageUrl.size() >= imageCnt) { // 이미지를 전부 삭제하는 경우 방지
+            if (exist - deleteImageUrl.size() + add  <= 0) { // 이미지를 올리지 않는 경우 처리
                 throw new IllegalArgumentException("이미지는 최소 한 장 업로드해야 합니다.");
             }
 

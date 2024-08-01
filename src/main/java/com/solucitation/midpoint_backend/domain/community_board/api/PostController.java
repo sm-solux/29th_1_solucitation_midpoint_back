@@ -312,19 +312,19 @@ public class PostController {
             }
 
             int nowImageCnt = postService.getPostById(postId, member).getImages().size();
-            postUpdateDto.validate(nowImageCnt); // 제목, 본문, 해시태그, 삭제할 이미지 검증
+            int validImageCnt = 0;
 
             if (postImages != null && !postImages.isEmpty())  { // 이미지 변경이 있는 경우
                 int nextImageCnt = nowImageCnt - postUpdateDto.getDeleteImageUrl().size(); // 삭제 작업만 진행했을 때의 이미지 개수
 
-                int validImageCnt = 0;
+
                 for (MultipartFile postImage : postImages) { // 추가할 이미지 개수
                     if (postImage != null && !postImage.isEmpty()) validImageCnt++;
                 }
                 if (nextImageCnt + validImageCnt > 3) // 최종 이미지 개수
                     return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("이미지는 최대 3장까지 업로드 가능합니다.");
             }
-
+            postUpdateDto.validate(nowImageCnt, validImageCnt); // 제목, 본문, 해시태그, 삭제할 이미지 검증
             postService.updatePost(postId, postUpdateDto, member, postImages);
 
             return ResponseEntity.status(HttpStatus.OK).body("게시글을 성공적으로 수정했습니다.");

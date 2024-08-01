@@ -42,8 +42,9 @@ public class PostService {
         MemberProfileResponseDto memberProfileResponseDto = memberService.getMemberProfile(memberEmail);
 
         List<String> images = post.getImages().stream()
-                .map(Image::getImageUrl)
-                .toList();
+                .sorted(Comparator.comparingInt(Image::getOrder)) // order 값에 따라 정렬
+                .map(Image::getImageUrl) // 이미지 URL 추출
+                .toList(); // 리스트로 변환
 
         List<Long> hashtags = post.getPostHashtags().stream()
                 .map(postHashtag -> postHashtag.getHashtag().getId())
@@ -139,6 +140,7 @@ public class PostService {
         List<Image> images = new ArrayList<>();
         if (!postImages.isEmpty()) {
             try {
+                int cnt = 1;
                 for (MultipartFile postImage : postImages) {
                     if (postImage.isEmpty()) {
                         log.error("게시글 이미지 업로드 실패");
@@ -147,9 +149,10 @@ public class PostService {
                     String postImageUrl = s3Service.upload("post-images", postImage.getOriginalFilename(), postImage);
 
                     Image image = Image.builder()
-                            .imageUrl(postImageUrl).member(member).post(post).build();
+                            .imageUrl(postImageUrl).member(member).post(post).order(cnt).build();
                     imageRepository.save(image);
                     images.add(image);
+                    cnt++;
                 }
             } catch (IOException e){
                 log.error("게시글 이미지 업로드 실패: {}", e.getMessage());
@@ -257,50 +260,6 @@ public class PostService {
         return resultSet;
     }
 
-//    @Transactional
-//    public void updatePost(Long postId, PostUpdateDto postUpdateDto, Member member, List<MultipartFile> postImages)
-//            throws AccessDeniedException {
-//        Post post = postRepository.findById(postId)
-//                .orElseThrow(() -> new EntityNotFoundException("해당 게시글이 존재하지 않습니다."));
-//
-//        if (!post.getMember().getId().equals(member.getId())) {
-//            throw new AccessDeniedException("해당 게시글을 수정할 권한이 없습니다. 본인이 작성한 글만 수정할 수 있습니다.");
-//        }
-//
-//        List<PostHashtag> newPostHashtag = null;
-//        if (postUpdateDto.getPostHashtag() != null)  // 해시태그 변경 시 수정
-//            newPostHashtag = addHashtags(post, postUpdateDto.getPostHashtag());
-//
-//        List<Image> existImages = new ArrayList<>(post.getImages());
-//        List<Image> newImages = null;
-//
-//        try {
-//            if (postImages != null && !postImages.isEmpty()) // 이미지 변경 시 수정
-//                newImages = addImages(post, member, postImages);
-//
-//            // 기존 이미지 삭제
-//            if (newImages != null && !newImages.isEmpty()) {
-//                deleteImages(existImages);
-//            }
-//
-//            post = Post.builder()
-//                    .id(post.getId())
-//                    .member(post.getMember())
-//                    .createDate(post.getCreateDate())
-//                    .title(postUpdateDto.getTitle() != null ? postUpdateDto.getTitle() : post.getTitle())
-//                    .content(postUpdateDto.getContent() != null ? postUpdateDto.getContent() : post.getContent())
-//                    .postHashtags(newPostHashtag != null && !newPostHashtag.isEmpty() ? newPostHashtag : post.getPostHashtags())
-//                    .images(newImages != null && !newImages.isEmpty() ? newImages : existImages)
-//                    .build();
-//
-//            postRepository.save(post);
-//        } catch (Exception e) {
-//            // 트랜잭션 롤백
-//            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
-//            throw e; // 오류를 다시 던집니다.
-//        }
-//    }
-
     @Transactional
     public void updatePost(Long postId, PostUpdateDto postUpdateDto, Member member, List<MultipartFile> postImages)
             throws AccessDeniedException {
@@ -316,25 +275,32 @@ public class PostService {
             newPostHashtag = addHashtags(post, postUpdateDto.getPostHashtag());
 
         List<Image> existImages = new ArrayList<>(post.getImages());
+        updateImageOrders(existImages);
         List<Image> newImages = null;
 
         try {
-            if (postImages != null && !postImages.isEmpty()) {
-                newImages = addForUpdateImages(post, member, postImages); // 새 이미지 추가
-                if (newImages != null && !newImages.isEmpty()) {
-                    existImages.addAll(newImages);
-                }
-            }
-
+            List<Integer> deleteIdx = new ArrayList<>();
             // 기존 이미지 삭제
             if (postUpdateDto.getDeleteImageUrl() != null && !postUpdateDto.getDeleteImageUrl().isEmpty()) {
                 for (String imageUrl : postUpdateDto.getDeleteImageUrl()) {
                     Long cnt = imageRepository.countByImageUrlAndPostId(imageUrl, postId);
                     if (cnt == 0) {
-                        throw new  RuntimeException("해당 게시글에 존재하지 않는 이미지는 삭제할 수 없습니다.");
+                        throw new RuntimeException("해당 게시글에 존재하지 않는 이미지는 삭제할 수 없습니다.");
                     }
                 }
-                deleteImagesWithUrl(postUpdateDto.getDeleteImageUrl(), postId);
+                deleteIdx = deleteImagesWithUrl(postUpdateDto.getDeleteImageUrl(), postId);
+            }
+
+            if (postImages != null && !postImages.isEmpty()) {
+                newImages = addForUpdateImages(post, member, postImages, deleteIdx);
+                if (newImages != null && !newImages.isEmpty()) {
+                    existImages.addAll(newImages);
+                }
+            }
+
+            // Debug: 정렬된 이미지 리스트 출력
+            for (Image image : existImages) {
+                System.out.println(image.getOrder() + " : " + image.getImageUrl());
             }
 
             post = Post.builder()
@@ -354,26 +320,65 @@ public class PostService {
         }
     }
 
-    private List<Image> addForUpdateImages(Post post, Member member, List<MultipartFile> postImages) {
+    @Transactional
+    protected List<Image> addForUpdateImages(Post post, Member member, List<MultipartFile> postImages, List<Integer> deleteId) {
         List<Image> images = new ArrayList<>();
+
+        int idx = 0;
+
+        // Debug: 초기 idx 값 출력
+        System.out.println("Initial idx = " + idx);
+
         if (!postImages.isEmpty()) {
             try {
                 for (MultipartFile postImage : postImages) {
                     if (postImage.isEmpty())  // 사용자가 이미지 변경을 요청하지 않음
-                        return null;
+                        continue;
+
                     String postImageUrl = s3Service.upload("post-images", postImage.getOriginalFilename(), postImage);
 
+                    int order;
+                    if (!deleteId.isEmpty() && idx < deleteId.size()) {
+                        order = deleteId.get(idx);
+                    } else {
+                        order = post.getImages().size() + idx + 1; // 기존 이미지 개수 + 현재 추가된 이미지 순서
+                    }
+
+                    // Debug: 현재 이미지의 order 값 출력
+                    System.out.println("Order for new image = " + order);
+
                     Image image = Image.builder()
-                            .imageUrl(postImageUrl).member(member).post(post).build();
+                            .imageUrl(postImageUrl).member(member).post(post)
+                            .order(order)
+                            .build();
+
                     imageRepository.save(image);
                     images.add(image);
+                    idx++;
                 }
-            } catch (IOException e){
+            } catch (IOException e) {
                 log.error("게시글 이미지 업로드 실패: {}", e.getMessage());
                 throw new RuntimeException("게시글 이미지 업로드에 실패하였습니다.");
             }
         }
         return images;
+    }
+
+    // 이미지의 order 값을 연속적으로 설정하는 메서드
+    @Transactional
+    protected void updateImageOrders(List<Image> images) {
+        // 이미지 리스트를 order 값에 따라 오름차순으로 정렬
+        images.sort(Comparator.comparingInt(image -> image.getOrder() != null ? image.getOrder() : Integer.MAX_VALUE));
+
+        int order = 1;
+        for (Image image : images) {
+            System.out.println("image.getImageUrl() = " + image.getImageUrl());
+            System.out.println("order = " + order);
+            image.setOrder(order++);
+        }
+
+        // 이미지의 order 값을 데이터베이스에 반영
+        imageRepository.saveAll(images);
     }
 
     @Transactional
@@ -385,10 +390,17 @@ public class PostService {
     }
 
     @Transactional
-    protected void deleteImagesWithUrl(List<String> images, Long postId) {
+    protected List<Integer> deleteImagesWithUrl(List<String> images, Long postId) {
+        List<Integer> deleteImageIdx = new ArrayList<>();
         for (String imageUrl : images) {
-            s3Service.delete(imageUrl);
-            imageRepository.deleteImageByImageUrlAndPostId(imageUrl, postId);
+            Integer idx = imageRepository.findOrderByImageUrlAndPostId(imageUrl, postId);
+            System.out.println("remove idx = " + idx);
+            if (idx != null) {
+                s3Service.delete(imageUrl);
+                imageRepository.deleteImageByImageUrlAndPostId(imageUrl, postId);
+                deleteImageIdx.add(idx);
+            }
         }
+        return deleteImageIdx;
     }
 }
