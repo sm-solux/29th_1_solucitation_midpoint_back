@@ -35,7 +35,7 @@ public class PostService {
     private final PostHashtagRepository postHashtagsRepository;
 
     @Transactional(readOnly = true)
-    public PostDetailDto getPostById(Long postId, Member member) {
+    public PostDetailDto getPostById(Long postId, Member read_member) {
         Post post = postRepository.findById(postId).orElseThrow(EntityNotFoundException::new);
         String memberEmail = post.getMember().getEmail();
 
@@ -52,6 +52,11 @@ public class PostService {
 
         int likeCnt = likesRepository.countByPostIdAndIsLiked(postId);
 
+        Boolean likes = false;
+        if (read_member != null) {
+            likes = likesRepository.isMemberLikesPostByEmail(post.getId(), read_member.getEmail());
+        }
+
         return new PostDetailDto(
                 memberProfileResponseDto.getNickname(),
                 memberProfileResponseDto.getProfileImageUrl(),
@@ -61,7 +66,7 @@ public class PostService {
                 hashtags,
                 images,
                 likeCnt,
-                likesRepository.isMemberLikesPostByEmail(post.getId(), member.getEmail())
+                likes
         );
     }
 

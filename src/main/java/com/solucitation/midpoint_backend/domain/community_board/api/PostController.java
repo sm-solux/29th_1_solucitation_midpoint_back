@@ -70,14 +70,14 @@ public class PostController {
     @GetMapping("/{postId}")
     public ResponseEntity<?> getPost(@PathVariable Long postId, Authentication authentication) {
         try {
-            Member member = null;
+            Member read_member = null;
 
             if (!(authentication == null || !authentication.isAuthenticated())) {
                 String memberEmail = authentication.getName();
-                member = memberService.getMemberByEmail(memberEmail);
+                read_member = memberService.getMemberByEmail(memberEmail);
             }
 
-            PostDetailDto postDetailDto = postService.getPostById(postId, member);
+            PostDetailDto postDetailDto = postService.getPostById(postId, read_member);
             return ResponseEntity.ok(postDetailDto);
         } catch (EntityNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("해당 게시글이 존재하지 않습니다.");
