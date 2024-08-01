@@ -57,7 +57,7 @@ public class FavPlaceController {
                         .body(new ApiResponse(false, e.getMessage()));
             } else {
                 return ResponseEntity
-                        .status(HttpStatus.FORBIDDEN)
+                        .status(HttpStatus.BAD_REQUEST)
                         .body(new ApiResponse(false, e.getMessage()));
             }
         } catch (Exception e) {
