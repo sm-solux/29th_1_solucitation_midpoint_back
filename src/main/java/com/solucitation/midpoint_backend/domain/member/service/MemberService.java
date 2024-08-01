@@ -271,17 +271,11 @@ public class MemberService {
         // 비밀번호 암호화
         String encodedPassword = passwordEncoder.encode(newPassword);
 
-        // 변경된 비밀번호로 새로운 Member 객체 생성
-        Member updatedMember = Member.builder()
-                .id(member.getId())
-                .name(member.getName())
-                .email(member.getEmail())
-                .nickname(member.getNickname())
-                .pwd(encodedPassword)
-                .build();
+        // pwd 필드를 암호화된 새로운 비밀번호로 할당
+        member.assignPwd(encodedPassword);
 
         // 변경된 비밀번호 저장
-        memberRepository.save(updatedMember);
+        memberRepository.save(member);
     }
 
 
@@ -378,15 +372,9 @@ public class MemberService {
      */
     @Transactional
     public void updateMemberDetails(Member member, ProfileUpdateRequestDto profileUpdateRequestDto) {
-        Member updatedMember = Member.builder()
-                .id(member.getId())
-                .name(profileUpdateRequestDto.getName())
-                .loginId(member.getLoginId())
-                .nickname(member.getNickname())
-                .email(member.getEmail())
-                .pwd(member.getPwd())
-                .build();
-        memberRepository.save(updatedMember);
+        member.assignName(profileUpdateRequestDto.getName());
+        member.assignNickname(profileUpdateRequestDto.getNickname());
+        memberRepository.save(member);
     }
 
     /**
