@@ -39,4 +39,12 @@ public class FavFriend {
     public void setName(String name) {
         this.name = name;
     }
+
+    public void setLatitude(Float latitude) {
+        this.latitude = latitude;
+    }
+
+    public void setLongitude(Float longitude) {
+        this.longitude = longitude;
+    }
 }

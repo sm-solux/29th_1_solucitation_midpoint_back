@@ -110,10 +110,26 @@ public class FavFriendController {
     }
 
     @PatchMapping("/update")
-    public ResponseEntity<?> updateFavFriend(Authentication authentication, @RequestParam Long favFriendId, @RequestParam(required = false) String name, @RequestParam(required = false) String address) {
+    public ResponseEntity<?> updateFavFriend(Authentication authentication, @Valid @RequestBody FavFriendRequest updateRequest, BindingResult result) {
         String email = authentication.getName();
+        if (result.hasErrors()) {
+            String errorMessage = result.getAllErrors().stream()
+                    .map(error -> error.getDefaultMessage())
+                    .collect(Collectors.joining(", "));
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body(new ApiResponse(false, "입력 값이 잘못되었습니다: " + errorMessage));
+        }
+
         try {
-            FavFriend updatedFriend = favFriendService.updateFavoriteFriend(favFriendId, name, address, email);
+            FavFriend updatedFriend = favFriendService.updateFavoriteFriend(
+                    updateRequest.getFavFriendId(),
+                    updateRequest.getName(),
+                    updateRequest.getAddress(),
+                    updateRequest.getLatitude(),
+                    updateRequest.getLongitude(),
+                    email
+            );
             return ResponseEntity.ok(new ApiResponse(true, "즐겨찾는 친구 수정에 성공했습니다.", updatedFriend.getFavFriendId()));
         } catch (IllegalArgumentException e) {
             return ResponseEntity
@@ -142,6 +158,14 @@ public class FavFriendController {
             this.name = name;
             this.address = address;
         }
+    }
+
+    @Getter
+    @Setter
+    public static class FavFriendUpdateRequest {
+        private Long favFriendId;
+        private String name;
+        private String address;
     }
 
     public static class ApiResponse {

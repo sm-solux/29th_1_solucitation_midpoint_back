@@ -66,29 +66,36 @@ public class FavFriendService {
     }
 
     @Transactional
-    public FavFriend updateFavoriteFriend(Long favFriendId, String name, String address, String email) {
+    public FavFriend updateFavoriteFriend(Long favFriendId, String name, String address, Float latitude, Float longitude, String email) {
         Member member = memberRepository.findByEmail(email)
                 .orElseThrow(() -> new IllegalArgumentException("해당 이메일의 회원이 존재하지 않습니다."));
 
         FavFriend favFriend = favoriteFriendRepository.findByFavFriendIdAndMemberId(favFriendId, member.getId())
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 즐겨찾는 친구입니다."));
 
-        if (name == null || name.trim().isEmpty() || name.length() > 100) {
+        if (name != null && !name.trim().isEmpty() && name.length() <= 100) {
+            if (!name.equals(favFriend.getName())) {
+                if (favoriteFriendRepository.findByNameAndMemberId(name, member.getId()).isPresent()) {
+                    throw new IllegalArgumentException("이미 존재하는 친구 이름입니다.");
+                }
+                favFriend.setName(name);
+            }
+        } else if (name != null) {
             throw new IllegalArgumentException("이름은 최소 1글자 이상 최대 100글자 이하로 입력해야 합니다.");
         }
-        if (address == null || address.trim().isEmpty() || address.length() > 255) {
+
+        if (address != null && !address.trim().isEmpty() && address.length() <= 255) {
+            favFriend.setAddress(address);
+        } else if (address != null) {
             throw new IllegalArgumentException("주소는 최소 1글자 이상 최대 255글자 이하로 입력해야 합니다.");
         }
 
-        if (!address.equals(favFriend.getAddress())) {
-            favFriend.setAddress(address);
+        if (latitude != null) {
+            favFriend.setLatitude(latitude);
         }
 
-        if (!name.equals(favFriend.getName())) {
-            if (favoriteFriendRepository.findByNameAndMemberId(name, member.getId()).isPresent()) {
-                throw new IllegalArgumentException("이미 존재하는 친구 이름입니다.");
-            }
-            favFriend.setName(name);
+        if (longitude != null) {
+            favFriend.setLongitude(longitude);
         }
 
         return favoriteFriendRepository.save(favFriend);
