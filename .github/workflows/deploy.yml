@@ -66,4 +66,4 @@ jobs:
             echo "Starting Docker containers with docker-compose..."
             docker-compose --env-file .env up -d
             echo "Deployment completed successfully!"
-          timeout: 30m
+          timeout: 60m
