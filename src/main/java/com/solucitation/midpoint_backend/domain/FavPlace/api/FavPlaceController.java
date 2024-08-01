@@ -149,10 +149,28 @@ public class FavPlaceController {
     }
 
     @PatchMapping("/update")
-    public ResponseEntity<?> updateFavPlace(Authentication authentication, @RequestParam Long favPlaceId, @RequestParam String addr) {
+    public ResponseEntity<?> updateFavPlace(
+            Authentication authentication,
+            @Valid @RequestBody FavPlaceRequest favPlaceUpdateRequest,
+            BindingResult result) {
+
         String email = authentication.getName();
+        if (result.hasErrors()) {
+            String errorMessage = result.getAllErrors().stream()
+                    .map(error -> error.getDefaultMessage())
+                    .collect(Collectors.joining(", "));
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body(new ApiResponse(false, "입력 값이 잘못되었습니다: " + errorMessage));
+        }
+
         try {
-            FavPlace updatedPlace = favPlaceService.updateFavoritePlace(favPlaceId, addr, email);
+            FavPlace updatedPlace = favPlaceService.updateFavoritePlace(
+                    favPlaceUpdateRequest.getFavPlaceId(),
+                    favPlaceUpdateRequest.getAddr(),
+                    favPlaceUpdateRequest.getLatitude(),
+                    favPlaceUpdateRequest.getLongitude(),
+                    email);
             return ResponseEntity.ok(new ApiResponse(true, "즐겨찾는 장소 수정에 성공했습니다.", updatedPlace.getFavPlaceId()));
         } catch (IllegalArgumentException e) {
             return ResponseEntity

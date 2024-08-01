@@ -98,7 +98,7 @@ public class FavPlaceService {
     }
 
     @Transactional
-    public FavPlace updateFavoritePlace(Long favPlaceId, String addr, String email) {
+    public FavPlace updateFavoritePlace(Long favPlaceId, String addr, Float latitude, Float longitude, String email) {
         Member member = memberRepository.findByEmail(email)
                 .orElseThrow(() -> new IllegalArgumentException("해당 이메일의 회원이 존재하지 않습니다."));
 
@@ -109,11 +109,18 @@ public class FavPlaceService {
             throw new RuntimeException("접근 권한이 없습니다.");
         }
 
-        if (addr == null || addr.trim().isEmpty()|| addr.length() >255) {
+        if (addr == null || addr.trim().isEmpty() || addr.length() > 255) {
             throw new IllegalArgumentException("주소는 최소 1글자 이상 최대 255글자 이하로 입력해야 합니다.");
         }
 
+        if (latitude == null || longitude == null) {
+            throw new IllegalArgumentException("위도와 경도는 필수 입력 값입니다.");
+        }
+
         favPlace.setAddr(addr);
+        favPlace.setLatitude(latitude);
+        favPlace.setLongitude(longitude);
+
         return favPlaceRepository.save(favPlace);
     }
 }

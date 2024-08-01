@@ -39,6 +39,14 @@ public class FavPlace {
         this.addr = addr;
     }
 
+    public void setLatitude(Float latitude) {
+        this.latitude = latitude;
+    }
+
+    public void setLongitude(Float longitude) {
+        this.longitude = longitude;
+    }
+
     public enum AddrType {
         HOME, WORK
     }
