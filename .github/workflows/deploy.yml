@@ -52,11 +52,18 @@ jobs:
           username: ${{ secrets.SSH_USERNAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            cd ~/midpoint-backend && \
-            git pull origin main && \
-            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/${{ secrets.DOCKERHUB_REPOSITORY }}:${{ github.sha }} && \
-            echo "POSTGRES_DB=${{ secrets.POSTGRES_DB }}" > .env && \
-            echo "POSTGRES_USER=${{ secrets.POSTGRES_USER }}" >> .env && \
-            echo "POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}" >> .env && \
-            echo "DOCKER_IMAGE=${{ secrets.DOCKERHUB_USERNAME }}/${{ secrets.DOCKERHUB_REPOSITORY }}:${{ github.sha }}" >> .env && \
+            echo "Starting deployment..."
+            cd ~/midpoint-backend
+            echo "Pulling latest changes from main branch..."
+            git pull origin main
+            echo "Pulling latest Docker image..."
+            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/${{ secrets.DOCKERHUB_REPOSITORY }}:${{ github.sha }}
+            echo "Setting environment variables..."
+            echo "POSTGRES_DB=${{ secrets.POSTGRES_DB }}" > .env
+            echo "POSTGRES_USER=${{ secrets.POSTGRES_USER }}" >> .env
+            echo "POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}" >> .env
+            echo "DOCKER_IMAGE=${{ secrets.DOCKERHUB_USERNAME }}/${{ secrets.DOCKERHUB_REPOSITORY }}:${{ github.sha }}" >> .env
+            echo "Starting Docker containers with docker-compose..."
             docker-compose --env-file .env up -d
+            echo "Deployment completed successfully!"
+          timeout: 30m
