@@ -311,13 +311,27 @@ public class MemberService {
         Member member = memberRepository.findByEmail(currentEmail)
                 .orElseThrow(() -> new IllegalArgumentException("해당 이메일의 회원이 존재하지 않습니다."));
 
-        // 닉네임이 이미 사용 중인지 확인
-        if (isNicknameAlreadyInUse(profileUpdateRequestDto.getNickname())) {
-            throw new NicknameAlreadyInUseException("이미 사용중인 닉네임입니다.");
+        String newNickname = profileUpdateRequestDto.getNickname();
+
+        // 새로운 닉네임이 현재 닉네임과 다른 경우에만 중복 확인
+        if (!newNickname.equals(member.getNickname())) {
+            Optional<Member> byNickname = memberRepository.findByNickname(newNickname);
+
+            // 중복된 닉네임이 존재하고, 그것이 다른 사람의 닉네임인 경우 에러 처리
+            if (byNickname.isPresent() && !byNickname.get().getId().equals(member.getId())) {
+                throw new NicknameAlreadyInUseException("이미 사용중인 닉네임입니다.");
+            }
+            // 새로운 닉네임으로 업데이트
+            member.assignNickname(newNickname);
+        }
+
+        // 이름이 기존과 동일하지 않으면 업데이트
+        if (!profileUpdateRequestDto.getName().equals(member.getName())) {
+            member.assignName(profileUpdateRequestDto.getName());
         }
 
         // 회원 정보 업데이트
-        updateMemberDetails(member, profileUpdateRequestDto);
+        updateMemberDetails(member);
 
         String profileImageUrl = null;
         boolean isDefaultImage = false;
@@ -368,12 +382,9 @@ public class MemberService {
      * member 업데이트
      *
      * @param member
-     * @param profileUpdateRequestDto
      */
     @Transactional
-    public void updateMemberDetails(Member member, ProfileUpdateRequestDto profileUpdateRequestDto) {
-        member.assignName(profileUpdateRequestDto.getName());
-        member.assignNickname(profileUpdateRequestDto.getNickname());
+    public void updateMemberDetails(Member member) {
         memberRepository.save(member);
     }
 

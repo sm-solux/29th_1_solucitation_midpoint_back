@@ -59,8 +59,6 @@ public class MemberController2 {
             return ResponseEntity.badRequest().body(Map.of("error", "profile_update_empty_dto", "message", "프로필 수정 요청 dto가 비었습니다."));
         }
         ProfileUpdateRequestDto profileUpdateRequestDto = objectMapper.readValue(profileUpdateRequestDtoJson, ProfileUpdateRequestDto.class);
-        log.info("profileUpdateRequestDto = " + profileUpdateRequestDto);
-
         Set<ConstraintViolation<ProfileUpdateRequestDto>> violations = validator.validate(profileUpdateRequestDto);
         if (!violations.isEmpty()) {
             List<ValidationErrorResponse.FieldError> fieldErrors = violations.stream()
