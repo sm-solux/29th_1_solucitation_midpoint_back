@@ -1,6 +1,7 @@
 package com.solucitation.midpoint_backend.domain.FavPlace.api;
 
 import com.solucitation.midpoint_backend.domain.FavPlace.dto.FavPlaceRequest;
+import com.solucitation.midpoint_backend.domain.FavPlace.dto.FavPlaceResponse;
 import com.solucitation.midpoint_backend.domain.FavPlace.entity.FavPlace;
 import com.solucitation.midpoint_backend.domain.FavPlace.service.FavPlaceService;
 import jakarta.validation.Valid;

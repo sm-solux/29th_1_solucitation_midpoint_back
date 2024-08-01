@@ -1,6 +1,6 @@
 package com.solucitation.midpoint_backend.domain.FavPlace.service;
 
-import com.solucitation.midpoint_backend.domain.FavPlace.api.FavPlaceResponse;
+import com.solucitation.midpoint_backend.domain.FavPlace.dto.FavPlaceResponse;
 import com.solucitation.midpoint_backend.domain.FavPlace.entity.FavPlace;
 import com.solucitation.midpoint_backend.domain.FavPlace.repository.FavPlaceRepository;
 import com.solucitation.midpoint_backend.domain.member.entity.Member;
@@ -10,8 +10,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor

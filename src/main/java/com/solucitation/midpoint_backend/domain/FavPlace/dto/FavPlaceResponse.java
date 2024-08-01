@@ -1,4 +1,4 @@
-package com.solucitation.midpoint_backend.domain.FavPlace.api;
+package com.solucitation.midpoint_backend.domain.FavPlace.dto;
 
 import lombok.Getter;
 import lombok.Setter;

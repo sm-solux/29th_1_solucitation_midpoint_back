@@ -1,6 +1,5 @@
 package com.solucitation.midpoint_backend.domain.member.entity;
 
-import com.solucitation.midpoint_backend.domain.FavFriend.entity.FavFriend;
 import com.solucitation.midpoint_backend.domain.FavPlace.entity.FavPlace;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
@@ -25,7 +24,7 @@ public class Member {
 
     @Column(name = "member_login_id", nullable = true, unique = true, length = 100) // loginId는 null 가능하지만 유니크
     private String loginId;
-    
+
     @NotNull
     @Column(name = "member_name", nullable = false, length = 100)
     private String name;
@@ -39,10 +38,7 @@ public class Member {
     private String nickname;
 
     @OneToMany(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Set<FavFriend> favFriends;
-
-    @OneToMany(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Set<com.solucitation.midpoint_backend.domain.FavPlace.entity.FavPlace> favPlaces;
+    private Set<FavPlace> favPlaces;
 
     public Member(String password, String name, String email, String nickname, String loginId) {
         this.email= email;

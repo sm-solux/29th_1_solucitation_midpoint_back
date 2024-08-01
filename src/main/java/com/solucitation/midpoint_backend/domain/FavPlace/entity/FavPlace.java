@@ -9,7 +9,9 @@ import lombok.*;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
-@Table(name = "fav_place")
+@Table(name = "fav_place", uniqueConstraints = {
+        @UniqueConstraint(columnNames = {"member_id", "addr_type"})
+})
 public class FavPlace {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
