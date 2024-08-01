@@ -47,4 +47,8 @@ public class FavFriend {
     public void setLongitude(Float longitude) {
         this.longitude = longitude;
     }
+
+    public void assignMember(Member member) {
+        this.member = member;
+    }
 }

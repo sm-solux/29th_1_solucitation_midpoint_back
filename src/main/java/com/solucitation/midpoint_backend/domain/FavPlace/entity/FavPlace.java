@@ -47,6 +47,10 @@ public class FavPlace {
         this.longitude = longitude;
     }
 
+    public void assignMember(Member member) {
+        this.member = member;
+    }
+
     public enum AddrType {
         HOME, WORK
     }
