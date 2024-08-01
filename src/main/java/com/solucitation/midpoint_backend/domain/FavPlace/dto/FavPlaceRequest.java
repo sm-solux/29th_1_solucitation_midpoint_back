@@ -1,6 +1,5 @@
 package com.solucitation.midpoint_backend.domain.FavPlace.dto;
 
-import com.solucitation.midpoint_backend.domain.FavPlace.entity.FavPlace;
 import com.solucitation.midpoint_backend.domain.FavPlace.validation.ValidAddrType;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -12,7 +11,6 @@ import lombok.Setter;
 @Setter
 public class FavPlaceRequest {
 
-    @NotNull(message = "favPlaceId is required")
     private Long favPlaceId;
 
     @NotBlank(message = "Address is required")
