@@ -49,11 +49,6 @@ public class SearchHistoryControllerV2 {
             String neighborhood = request.getNeighborhood();
             List<PlaceDtoV2> searchHistoryRequestDtos = request.getHistoryDto();
 
-            System.out.println("ssearchHistoryRequestDtos.size()= " +searchHistoryRequestDtos.size());
-            for (PlaceDtoV2 searchHistoryRequestDto : searchHistoryRequestDtos) {
-                System.out.println("searchHistoryRequestDto = " + searchHistoryRequestDto.getPlaceId());
-            }
-
             // neighborhood 검증
             if (neighborhood == null || neighborhood.trim().isEmpty()) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)

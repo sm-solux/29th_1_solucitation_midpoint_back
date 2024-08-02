@@ -301,11 +301,6 @@ public class PostService {
                 }
             }
 
-            // Debug: 정렬된 이미지 리스트 출력
-            for (Image image : existImages) {
-                System.out.println(image.getOrder() + " : " + image.getImageUrl());
-            }
-
             post = Post.builder()
                     .id(post.getId())
                     .member(post.getMember())
@@ -329,9 +324,6 @@ public class PostService {
 
         int idx = 0;
 
-        // Debug: 초기 idx 값 출력
-        System.out.println("Initial idx = " + idx);
-
         if (!postImages.isEmpty()) {
             try {
                 for (MultipartFile postImage : postImages) {
@@ -346,9 +338,6 @@ public class PostService {
                     } else {
                         order = post.getImages().size() + idx + 1; // 기존 이미지 개수 + 현재 추가된 이미지 순서
                     }
-
-                    // Debug: 현재 이미지의 order 값 출력
-                    System.out.println("Order for new image = " + order);
 
                     Image image = Image.builder()
                             .imageUrl(postImageUrl).member(member).post(post)
@@ -375,8 +364,6 @@ public class PostService {
 
         int order = 1;
         for (Image image : images) {
-            System.out.println("image.getImageUrl() = " + image.getImageUrl());
-            System.out.println("order = " + order);
             image.setOrder(order++);
         }
 
@@ -397,7 +384,6 @@ public class PostService {
         List<Integer> deleteImageIdx = new ArrayList<>();
         for (String imageUrl : images) {
             Integer idx = imageRepository.findOrderByImageUrlAndPostId(imageUrl, postId);
-            System.out.println("remove idx = " + idx);
             if (idx != null) {
                 s3Service.delete(imageUrl);
                 imageRepository.deleteImageByImageUrlAndPostId(imageUrl, postId);
