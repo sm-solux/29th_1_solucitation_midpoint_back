@@ -122,8 +122,6 @@ public class PostService {
                 .member(member)
                 .title(postRequestDto.getTitle())
                 .content(postRequestDto.getContent())
-                .createDate(time)
-                .updateDate(time)
                 .postHashtags(postHashtags)
                 .images(images)
                 .build();

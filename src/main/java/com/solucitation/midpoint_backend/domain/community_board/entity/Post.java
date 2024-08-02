@@ -3,6 +3,8 @@ package com.solucitation.midpoint_backend.domain.community_board.entity;
 import com.solucitation.midpoint_backend.domain.member.entity.Member;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,11 +38,11 @@ public class Post {
     @Column(nullable = false, columnDefinition = "text")
     private String content;
 
-    @CreatedDate
+    @CreationTimestamp
     @Column(name="create_date", nullable = false, updatable = false)
     private LocalDateTime createDate;
 
-    @LastModifiedDate
+    @UpdateTimestamp
     @Column(name="update_date")
     private LocalDateTime updateDate;
 
