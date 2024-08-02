@@ -32,7 +32,7 @@ public class FavPlaceController {
                     .collect(Collectors.joining(", "));
             return ResponseEntity
                     .status(HttpStatus.BAD_REQUEST)
-                    .body(new ApiResponse(false,errorMessage));
+                    .body(new ApiResponse(false, errorMessage));
         }
 
         try {
@@ -68,10 +68,10 @@ public class FavPlaceController {
     }
 
     @DeleteMapping("/delete")
-    public ResponseEntity<?> deleteFavPlace(Authentication authentication, @RequestParam Long favPlaceId) {
+    public ResponseEntity<?> deleteFavPlace(Authentication authentication, @RequestParam FavPlace.AddrType addrType) {
         String email = authentication.getName();
         try {
-            favPlaceService.deleteFavoritePlace(favPlaceId, email);
+            favPlaceService.deleteFavoritePlace(addrType, email);
             return ResponseEntity.ok(new ApiResponse(true, "즐겨찾는 장소 삭제에 성공했습니다."));
         } catch (IllegalArgumentException e) {
             return ResponseEntity
@@ -95,10 +95,10 @@ public class FavPlaceController {
     }
 
     @GetMapping("/details")
-    public ResponseEntity<?> getFavPlaceDetails(Authentication authentication, @RequestParam Long favPlaceId) {
+    public ResponseEntity<?> getFavPlaceDetails(Authentication authentication, @RequestParam FavPlace.AddrType addrType) {
         String email = authentication.getName();
         try {
-            FavPlace favPlace = favPlaceService.getFavoritePlaceDetails(favPlaceId, email);
+            FavPlace favPlace = favPlaceService.getFavoritePlaceDetails(addrType, email);
             return ResponseEntity.ok(new FavPlaceResponse(favPlace.getFavPlaceId(), favPlace.getAddr(), favPlace.getAddrType().name()));
         } catch (IllegalArgumentException e) {
             return ResponseEntity
@@ -122,11 +122,11 @@ public class FavPlaceController {
     }
 
     @GetMapping("/list")
-    public ResponseEntity<?> getAllFavPlaces(Authentication authentication) {
+    public ResponseEntity<?> listFavPlaces(Authentication authentication) {
         String email = authentication.getName();
         try {
-            List<FavPlaceResponse> favPlacesList = favPlaceService.getAllFavoritePlaces(email);
-            return ResponseEntity.ok(favPlacesList);
+            List<FavPlaceResponse> favPlaces = favPlaceService.getAllFavoritePlaces(email);
+            return ResponseEntity.ok(favPlaces);
         } catch (IllegalArgumentException e) {
             return ResponseEntity
                     .status(HttpStatus.BAD_REQUEST)
@@ -164,15 +164,15 @@ public class FavPlaceController {
                     .body(new ApiResponse(false, "입력 값이 잘못되었습니다: " + errorMessage));
         }
 
-        if (favPlaceUpdateRequest.getFavPlaceId() == null) {
+        if (favPlaceUpdateRequest.getAddrType() == null) {
             return ResponseEntity
                     .status(HttpStatus.BAD_REQUEST)
-                    .body(new ApiResponse(false, "favPlaceId는 필수 입력 항목입니다."));
+                    .body(new ApiResponse(false, "addrType은 필수 입력 항목입니다."));
         }
 
         try {
             FavPlace updatedPlace = favPlaceService.updateFavoritePlace(
-                    favPlaceUpdateRequest.getFavPlaceId(),
+                    FavPlace.AddrType.valueOf(favPlaceUpdateRequest.getAddrType()),
                     favPlaceUpdateRequest.getAddr(),
                     favPlaceUpdateRequest.getLatitude(),
                     favPlaceUpdateRequest.getLongitude(),

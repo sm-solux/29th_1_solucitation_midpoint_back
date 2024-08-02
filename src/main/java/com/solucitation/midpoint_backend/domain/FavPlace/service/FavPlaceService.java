@@ -5,11 +5,17 @@ import com.solucitation.midpoint_backend.domain.FavPlace.entity.FavPlace;
 import com.solucitation.midpoint_backend.domain.FavPlace.repository.FavPlaceRepository;
 import com.solucitation.midpoint_backend.domain.member.entity.Member;
 import com.solucitation.midpoint_backend.domain.member.repository.MemberRepository;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -39,11 +45,11 @@ public class FavPlaceService {
     }
 
     @Transactional
-    public void deleteFavoritePlace(Long favPlaceId, String email) {
+    public void deleteFavoritePlace(FavPlace.AddrType addrType, String email) {
         Member member = memberRepository.findByEmail(email)
                 .orElseThrow(() -> new IllegalArgumentException("해당 이메일의 회원이 존재하지 않습니다."));
 
-        FavPlace favPlace = favPlaceRepository.findById(favPlaceId)
+        FavPlace favPlace = favPlaceRepository.findByAddrTypeAndMemberId(addrType, member.getId())
                 .orElseThrow(() -> new RuntimeException("존재하지 않는 장소입니다."));
 
         if (!favPlace.getMember().equals(member)) {
@@ -54,11 +60,11 @@ public class FavPlaceService {
     }
 
     @Transactional(readOnly = true)
-    public FavPlace getFavoritePlaceDetails(Long favPlaceId, String email) {
+    public FavPlace getFavoritePlaceDetails(FavPlace.AddrType addrType, String email) {
         Member member = memberRepository.findByEmail(email)
                 .orElseThrow(() -> new IllegalArgumentException("해당 이메일의 회원이 존재하지 않습니다."));
 
-        FavPlace favPlace = favPlaceRepository.findById(favPlaceId)
+        FavPlace favPlace = favPlaceRepository.findByAddrTypeAndMemberId(addrType, member.getId())
                 .orElseThrow(() -> new RuntimeException("존재하지 않는 장소입니다."));
 
         if (!favPlace.getMember().equals(member)) {
@@ -70,39 +76,37 @@ public class FavPlaceService {
 
     @Transactional(readOnly = true)
     public List<FavPlaceResponse> getAllFavoritePlaces(String email) {
+        // 회원 조회
         Member member = memberRepository.findByEmail(email)
                 .orElseThrow(() -> new IllegalArgumentException("해당 이메일의 회원이 존재하지 않습니다."));
-
-        FavPlaceResponse homeResponse = new FavPlaceResponse("HOME");
-        FavPlaceResponse workResponse = new FavPlaceResponse("WORK");
 
         List<FavPlace> favPlaces = favPlaceRepository.findAllByMemberId(member.getId());
 
+        Map<FavPlace.AddrType, FavPlaceResponse> responseMap = new HashMap<>();
+
         for (FavPlace favPlace : favPlaces) {
-            if (favPlace.getAddrType() == FavPlace.AddrType.HOME) {
-                homeResponse = new FavPlaceResponse(
+            FavPlace.AddrType addrType = favPlace.getAddrType();
+            if (!responseMap.containsKey(addrType)) {
+                responseMap.put(addrType, new FavPlaceResponse(
                         favPlace.getFavPlaceId(),
                         favPlace.getAddr(),
-                        favPlace.getAddrType().name()
-                );
-            } else if (favPlace.getAddrType() == FavPlace.AddrType.WORK) {
-                workResponse = new FavPlaceResponse(
-                        favPlace.getFavPlaceId(),
-                        favPlace.getAddr(),
-                        favPlace.getAddrType().name()
-                );
+                        addrType.name()
+                ));
             }
         }
 
-        return List.of(homeResponse, workResponse);
+        List<FavPlaceResponse> responses = responseMap.values().stream()
+                .collect(Collectors.toList());
+
+        return responses;
     }
 
     @Transactional
-    public FavPlace updateFavoritePlace(Long favPlaceId, String addr, Float latitude, Float longitude, String email) {
+    public FavPlace updateFavoritePlace(FavPlace.AddrType addrType, String addr, Float latitude, Float longitude, String email) {
         Member member = memberRepository.findByEmail(email)
                 .orElseThrow(() -> new IllegalArgumentException("해당 이메일의 회원이 존재하지 않습니다."));
 
-        FavPlace favPlace = favPlaceRepository.findById(favPlaceId)
+        FavPlace favPlace = favPlaceRepository.findByAddrTypeAndMemberId(addrType, member.getId())
                 .orElseThrow(() -> new RuntimeException("존재하지 않는 장소입니다."));
 
         if (!favPlace.getMember().equals(member)) {
