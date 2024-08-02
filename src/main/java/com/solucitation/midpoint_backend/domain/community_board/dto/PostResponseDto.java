@@ -14,7 +14,7 @@ import java.util.stream.Collectors;
 @Getter @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class PostResponseDto {
+public class PostResponseDto { // 게시글 정보를 게시글 전체 리스트 상태에서 보기 위해 사용하는 DTO
     private Long postId;
     private String firstImageUrl;
     private String title;

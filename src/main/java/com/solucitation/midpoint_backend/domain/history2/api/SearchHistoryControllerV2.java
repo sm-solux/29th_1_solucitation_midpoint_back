@@ -76,7 +76,6 @@ public class SearchHistoryControllerV2 {
                 }
             }
 
-            // 데이터 저장
             searchHistoryService.save(neighborhood, memberEmail, searchHistoryRequestDtos);
             return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("message", "장소를 저장하였습니다."));
 

@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
-public class PlaceDtoV2 {
+public class PlaceDtoV2 { // 장소 정보 DTO
     @NotBlank(message = "장소ID가 누락되었습니다.")
     private String placeId;        // 장소의 고유 ID
 
