@@ -81,7 +81,7 @@ public class Member {
         this.nickname = nickname;
     }
 
-    public void assignPwd(String encodedPassword) {
+    public void assignPwd(String pwd) {
         this.pwd = pwd;
     }
 }
