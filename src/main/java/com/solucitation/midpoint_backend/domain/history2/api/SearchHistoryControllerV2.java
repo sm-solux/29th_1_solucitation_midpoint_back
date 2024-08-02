@@ -89,7 +89,7 @@ public class SearchHistoryControllerV2 {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(Map.of("error", "USER_NOT_FOUND", "message", "사용자를 찾을 수 없습니다."));
+                    .body(Map.of("error", "NOT_FOUND", "message", e.getMessage()));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", e.getMessage(), "message", "장소 저장 중 오류가 발생하였습니다."));

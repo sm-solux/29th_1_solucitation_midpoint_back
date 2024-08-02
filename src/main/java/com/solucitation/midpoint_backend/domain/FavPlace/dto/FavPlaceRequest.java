@@ -10,9 +10,6 @@ import lombok.Setter;
 @Getter
 @Setter
 public class FavPlaceRequest {
-
-    private Long favPlaceId;
-
     @NotBlank(message = "Address is required")
     @Size(max = 255, message = "Address must be less than 255 characters")
     private String addr;
