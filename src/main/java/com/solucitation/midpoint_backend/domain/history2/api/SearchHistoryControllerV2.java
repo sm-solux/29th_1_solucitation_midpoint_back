@@ -49,16 +49,16 @@ public class SearchHistoryControllerV2 {
             String neighborhood = request.getNeighborhood();
             List<PlaceDtoV2> searchHistoryRequestDtos = request.getHistoryDto();
 
-            // neighborhood 검증
-            if (neighborhood == null || neighborhood.trim().isEmpty()) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                        .body(Map.of("error", "EMPTY_FIELD", "message", "동 정보가 누락되었습니다."));
-            }
-
             // 인증 검증
             if (authentication == null || !authentication.isAuthenticated()) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                         .body(Map.of("error", "UNAUTHORIZED", "message", "해당 서비스를 이용하기 위해서는 로그인이 필요합니다."));
+            }
+
+            // neighborhood 검증
+            if (neighborhood == null || neighborhood.trim().isEmpty()) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(Map.of("error", "EMPTY_FIELD", "message", "동 정보가 누락되었습니다."));
             }
 
             String memberEmail = authentication.getName();
@@ -82,9 +82,6 @@ public class SearchHistoryControllerV2 {
 
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(Map.of("error", "NOT_FOUND", "message", e.getMessage()));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", e.getMessage(), "message", "장소 저장 중 오류가 발생하였습니다."));
