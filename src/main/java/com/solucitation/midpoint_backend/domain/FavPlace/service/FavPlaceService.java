@@ -76,7 +76,6 @@ public class FavPlaceService {
 
     @Transactional(readOnly = true)
     public List<FavPlaceResponse> getAllFavoritePlaces(String email) {
-        // 회원 조회
         Member member = memberRepository.findByEmail(email)
                 .orElseThrow(() -> new IllegalArgumentException("해당 이메일의 회원이 존재하지 않습니다."));
 
@@ -84,9 +83,12 @@ public class FavPlaceService {
 
         Map<FavPlace.AddrType, FavPlaceResponse> responseMap = new HashMap<>();
 
+        responseMap.put(FavPlace.AddrType.HOME, new FavPlaceResponse(null, null, FavPlace.AddrType.HOME.name()));
+        responseMap.put(FavPlace.AddrType.WORK, new FavPlaceResponse(null, null, FavPlace.AddrType.WORK.name()));
+
         for (FavPlace favPlace : favPlaces) {
             FavPlace.AddrType addrType = favPlace.getAddrType();
-            if (!responseMap.containsKey(addrType)) {
+            if (responseMap.containsKey(addrType)) {
                 responseMap.put(addrType, new FavPlaceResponse(
                         favPlace.getFavPlaceId(),
                         favPlace.getAddr(),
