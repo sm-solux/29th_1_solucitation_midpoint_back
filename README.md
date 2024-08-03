@@ -65,5 +65,6 @@
 │                  ├─config
 │                  └─exception
 └─resources
-    └─templates
+    ├─templates
+    └─application.properties
 ```
