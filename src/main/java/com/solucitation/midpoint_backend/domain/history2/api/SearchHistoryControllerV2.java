@@ -107,10 +107,6 @@ public class SearchHistoryControllerV2 {
 
             String memberEmail = authentication.getName();
             Member member = memberService.getMemberByEmail(memberEmail);
-            if (member == null) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(Map.of("error", "USER_NOT_FOUND", "message", "사용자를 찾을 수 없습니다."));
-            }
 
             List<SearchHistoryResponseDtoV2> searchHistoryResponseDtos = searchHistoryService.getHistory(member);
             return ResponseEntity.ok(searchHistoryResponseDtos);
@@ -120,4 +116,30 @@ public class SearchHistoryControllerV2 {
         }
     }
 
+//    /**
+//     * 검색 기록을 일괄 삭제합니다. (내부용)
+//     * @param authentication 인증 정보
+//     * @return
+//     *        삭제 성공 시 204 NO_CONTENT를 반환합니다.
+//     *        로그인하지 않은 계정일 경우 401 UNAUTHORIZED 를 반환합니다.
+//     *        기타 오류 발생 시 500 INTERNAL_SERVER_ERROR 를 반환합니다.
+//     */
+//    @DeleteMapping("/all")
+//    public ResponseEntity<?> removeAll(Authentication authentication) {
+//        try {
+//            if (authentication == null || !authentication.isAuthenticated()) {
+//                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+//                        .body(Map.of("error", "UNAUTHORIZED", "message", "해당 서비스를 이용하기 위해서는 로그인이 필요합니다."));
+//            }
+//
+//            String memberEmail = authentication.getName();
+//            Member member = memberService.getMemberByEmail(memberEmail);
+//
+//            searchHistoryService.removeAll(member);
+//            return ResponseEntity.status(HttpStatus.NO_CONTENT).body(Map.of("message", "감색 기록을 일괄 삭제하였습니다."));
+//        } catch (Exception e) {
+//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+//                    .body(Map.of("error", e.getMessage(), "message", "검색 기록 삭제 중 오류가 발생하였습니다."));
+//        }
+//    }
 }
