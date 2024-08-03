@@ -10,6 +10,7 @@ import com.solucitation.midpoint_backend.domain.member.service.MemberService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,6 +34,9 @@ public class PostService {
     private final ImageRepository imageRepository;
     private final MemberService memberService;
     private final PostHashtagRepository postHashtagsRepository;
+
+    @Value("${cloud.aws.s3.bucket}")
+    private String bucket;
 
     /**
      * 특정 게시글을 상세조회 합니다.
@@ -64,9 +68,13 @@ public class PostService {
             likes = likesRepository.isMemberLikesPostByEmail(post.getId(), read_member.getEmail());
         }
 
+        String defaultProfileImageUrl = String.format("https://%s.s3.%s.amazonaws.com/%s", bucket, "ap-northeast-2", "profile-images/default_image.png"); // 여기에 기본 이미지 URL을 넣으세요.
+        String writerProfileImages = Optional.ofNullable(memberProfileResponseDto.getProfileImageUrl())
+                .orElse(defaultProfileImageUrl);
+
         return new PostDetailDto(
                 memberProfileResponseDto.getNickname(),
-                memberProfileResponseDto.getProfileImageUrl(),
+                writerProfileImages,
                 post.getTitle(),
                 post.getContent(),
                 post.getCreateDate(),

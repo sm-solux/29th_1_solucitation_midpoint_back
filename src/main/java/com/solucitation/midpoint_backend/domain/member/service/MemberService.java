@@ -2,8 +2,14 @@ package com.solucitation.midpoint_backend.domain.member.service;
 
 import com.solucitation.midpoint_backend.domain.community_board.entity.Image;
 import com.solucitation.midpoint_backend.domain.community_board.repository.ImageRepository;
+import com.solucitation.midpoint_backend.domain.community_board.repository.LikesRepository;
+import com.solucitation.midpoint_backend.domain.community_board.repository.PostRepository;
 import com.solucitation.midpoint_backend.domain.email.service.EmailService;
 import com.solucitation.midpoint_backend.domain.file.service.S3Service;
+import com.solucitation.midpoint_backend.domain.history2.entity.PlaceInfoV2;
+import com.solucitation.midpoint_backend.domain.history2.entity.SearchHistoryV2;
+import com.solucitation.midpoint_backend.domain.history2.repository.PlaceInfoRepositoryV2;
+import com.solucitation.midpoint_backend.domain.history2.repository.SearchHistoryRepositoryV2;
 import com.solucitation.midpoint_backend.domain.member.dto.*;
 import com.solucitation.midpoint_backend.domain.member.entity.Member;
 import com.solucitation.midpoint_backend.domain.member.exception.*;
@@ -40,10 +46,14 @@ public class MemberService {
     private final MemberRepository memberRepository;
     private final PasswordEncoder passwordEncoder;
     private final EmailService emailService;
+    private final SearchHistoryRepositoryV2 searchHistoryRepository;
+    private final LikesRepository likesRepository;
     private final S3Service s3Service;
     private final ImageRepository imageRepository;
     private final JwtTokenProvider jwtTokenProvider;
     private final AuthenticationManager authenticationManager;
+    private final PostRepository postRepository;
+    private final PlaceInfoRepositoryV2 placeInfoRepository;
 
     @Value("${cloud.aws.s3.bucket}")
     private String bucket;
@@ -412,7 +422,10 @@ public class MemberService {
         Member member = memberRepository.findByEmail(email)
                 .orElseThrow(() -> new IllegalArgumentException("해당 이메일의 회원이 존재하지 않습니다."));
 
-        // 관련 이미지 삭제
+        Member delete = memberRepository.findByName("delete_member")
+                .orElseThrow(() -> new IllegalArgumentException("회원 탈퇴가 불가합니다. 관리자에게 문의하세요."));
+
+        // 관련 이미지 삭제 (프로필 이미지)
         Optional<Image> image = imageRepository.findByMemberIdAndPostIsNull(member.getId());
         String imageUrl = null;
 
@@ -423,7 +436,20 @@ public class MemberService {
             imageRepository.delete(presentImage); // Image 엔티티 삭제
         }
 
-        memberRepository.delete(member);
+        likesRepository.deleteByMemberId(member.getId()); // 좧아요 기록 일괄 삭제
+
+        List<SearchHistoryV2> deleteList = searchHistoryRepository.findByMemberOrderBySearchDateDesc(member);
+
+        for (SearchHistoryV2 searchHistory : deleteList) {
+            List<PlaceInfoV2> placeInfos = searchHistory.getPlaceList(); // 해당 검색 기록과 연관된 PlaceInfoV2 삭제
+            placeInfoRepository.deleteAll(placeInfos);
+
+            searchHistoryRepository.delete(searchHistory); // 검색 기록 삭제
+        }
+
+        postRepository.updateMemberForPosts(member.getId(), delete.getId()); // 회원이 작성한 글의 소유자를 탈퇴 회원으로 변경
+        imageRepository.updateMemberForImages(member.getId(), delete.getId()); // 회원이 작성한 게시글 내 이미지의 소유자를 탈퇴 회원으로 변경
+        memberRepository.delete(member); // 회원 삭제
 
         return imageUrl;
     }

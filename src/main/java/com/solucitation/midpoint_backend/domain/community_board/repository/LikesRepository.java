@@ -24,5 +24,11 @@ public interface LikesRepository extends JpaRepository<Likes, Long> {
     void deleteByMemberEmailAndPostId(String memberEmail, Long postId);
 
     void deleteByPostId(Long postId);
+
+    // 회원 탈퇴 시 사용자가 누른 좋아요 기록 일괄 삭제
+    @Transactional
+    @Modifying
+    @Query("DELETE FROM Likes l WHERE l.member.id = :memberId")
+    void deleteByMemberId(@Param("memberId") Long memberId);
 }
 
